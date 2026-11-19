@@ -169,6 +169,9 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
 
     sceneState.setBlocking(startLidOpen(sceneState.getBlocking(), Date.now()))
 
+    // Whatever angle the box was turned to, it glides back to the base pose so the opened box always reads the same.
+    dragState.setBlocking(requestReset(dragState.getBlocking(), Date.now()))
+
     dispatchEvent(EOpeningEvent.OpenPressed)
 
     void hapticFeedback.anticipation()

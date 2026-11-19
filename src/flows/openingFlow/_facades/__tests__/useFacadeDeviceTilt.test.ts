@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react-native'
 
 import { useFacadeDeviceTilt } from '@flows/openingFlow/_facades/useFacadeDeviceTilt'
 
-type TMotionListener = (data: { rotation: { beta: number; gamma: number } }) => void
+type TMotionListener = (data: { rotation?: { beta: number; gamma: number } }) => void
 
 let mockListener: TMotionListener | undefined
 let mockIsAvailable = true
@@ -116,5 +116,25 @@ describe('useFacadeDeviceTilt', () => {
     await flush()
 
     expect(mockListener).toBeUndefined()
+  })
+
+  it('ignores readings without a rotation (an emulator without a motion sensor) instead of crashing', async () => {
+    const { tilt, writes } = createTilt()
+
+    await renderHook(() => {
+      useFacadeDeviceTilt({ isActive: true, tilt })
+    })
+
+    await flush()
+
+    await expect(
+      act(async () => {
+        mockListener?.({})
+
+        await Promise.resolve()
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(writes).toEqual([])
   })
 })

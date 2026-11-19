@@ -36,7 +36,14 @@ export const useFacadeDeviceTilt = ({ isActive, tilt }: IUseFacadeDeviceTiltPara
 
       DeviceMotion.setUpdateInterval(UPDATE_INTERVAL_MILLISECONDS)
 
-      subscription = DeviceMotion.addListener(({ rotation }) => {
+      subscription = DeviceMotion.addListener(measurement => {
+        // An emulator (or a phone without the sensor) can report a reading without a rotation: ignore it.
+        const { rotation }: Partial<typeof measurement> = measurement
+
+        if (!rotation) {
+          return
+        }
+
         baselineBeta ??= rotation.beta
 
         smoothedX += (clampToUnit(rotation.gamma / FULL_TILT_RADIANS) - smoothedX) * SMOOTHING

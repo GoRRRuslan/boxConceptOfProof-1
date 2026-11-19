@@ -104,6 +104,10 @@ Tapping a card sends its box to the middle in 500 ms. It also moves towards the 
 
 - **Where:** `openingFlow/_facadesLogic/computeOpeningPose.ts`, `openingSceneState.ts`, `openingEasing.ts` (`easeInOutCubic`, `easeOutBack`). Values: `openingConfig.ts` (`FOCUS_DURATION_MILLISECONDS`, `DOLLY_DEPTH_UNITS`).
 
+While a box is inspected the **Back** button sits in the top left corner and the box name and price are centred on the screen below it, in line with the button at the bottom.
+
+![](media/animations/02-inspect-header.png)
+
 ### Gestures on the focused box
 
 | Gesture | What happens | Values |
@@ -152,9 +156,11 @@ The prize is revealed on a clean stage. From the top: a **rarity pill**, the **w
 | Extra haptic taps | 0 | 1 | 2 | 3 |
 | Sound | short chime | rising triad | rising triad (same as Rare) | full fanfare |
 
-| Common | Rare | Legendary |
+| Common | Rare (current layout, no tab bar) | Legendary |
 |---|---|---|
 | ![](media/animations/05-reveal-common.png) | ![](media/animations/05-reveal-rare.png) | ![](media/animations/06-reveal-legendary-swipe.png) |
+
+The Common and Legendary pictures were taken before the tab bar was hidden during a reveal; everything else on them is current.
 
 What happens, in order:
 
@@ -162,13 +168,13 @@ What happens, in order:
 2. The **watch** rises out of the box and flips like a coin (a flat `scaleX` flip with a spring, so it settles with a small bounce).
 3. The two **circles** behind the watch pulse softly and without end (inner 22 to 42 % opacity, outer 10 to 20 %).
 4. The **price, name and brand** fade in from below after 450 ms.
-5. After 1.8 s the **opened box is put away**: it shrinks to nothing and sinks a little in 700 ms, so the prize and the Done button are alone on the screen. Pressing Done (or Back) at any moment brings the box back smoothly and flies it home.
+5. After 1.8 s the **opened box is put away**: it shrinks to nothing and sinks a little in 700 ms. Only then does the **Done** button appear, centred at the bottom, so the prize is alone on the screen. While a prize is shown the bottom tab bar (Boxes / Collection) is invisible and cannot be tapped; its place is kept so the 3D scene does not move. Done brings the tab bar back and flies the box home.
 
 | Still open, just revealed | Put away |
 |---|---|
 | ![](media/animations/06-legendary-box-still-open.png) | ![](media/animations/06-reveal-legendary-swipe.png) |
 
-- **Where:** `openingFlow/screens/OpeningOverlay/` (`OpeningOverlay.tsx` and the `RevealEffects`, `WatchRevealImage`, `Particle` parts, each with its hook in `_facades/`), `openingFlow/_config/rarityConfig.ts` (the table above), `getWatchRarity.ts`, `computeParticleTrajectory.ts`, `computeOpeningPose.ts` (`tuckProgress`), `openingSceneState.ts` (`startTuck`).
+- **Where:** the tab bar is hidden through the `isTabBarHidden` route parameter set by `useCatalogueFacade` and read in `TabNavigator.tsx`. Also: `openingFlow/screens/OpeningOverlay/` (`OpeningOverlay.tsx` and the `RevealEffects`, `WatchRevealImage`, `Particle` parts, each with its hook in `_facades/`), `openingFlow/_config/rarityConfig.ts` (the table above), `getWatchRarity.ts`, `computeParticleTrajectory.ts`, `computeOpeningPose.ts` (`tuckProgress`), `openingSceneState.ts` (`startTuck`).
 - **Two design decisions worth knowing:**
   - The watch flips **flat**, not in 3D. A 3D-turned layer slides behind the glow circles for a moment, and half of the watch looked washed out.
   - The flash and the particles are drawn **under** the watch and its texts, so nothing ever covers the watch.

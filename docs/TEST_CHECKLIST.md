@@ -60,7 +60,7 @@ Details of every animation: [ANIMATIONS.md](ANIMATIONS.md). "—" means not run 
 | A7 | Reveal Common | Grey pill, grey circles, price, name, brand; nothing over the watch | ✅ | ✅ |
 | A8 | Reveal Rare / Epic | Blue / purple pill and circles, particles; Epic with a flash | — | ✅ Rare, ✅ Epic (earlier layout) |
 | A9 | Reveal Legendary (5th purchase, Classic box) | Gold pill and circles, flash, 28 particles, price in gold | — | ✅ |
-| A10 | After the reveal | Box waits 1.8 s, shrinks away; Done stays centred at the bottom | ✅ | ✅ |
+| A10 | After the reveal | Box waits 1.8 s, shrinks away; only then Done appears, centred at the bottom; the tab bar is invisible while the prize is shown and back after Done | ✅ (Done, put away; tab bar not re-checked) | ✅ |
 | A10a | Done after the box is put away | The box is back in its card, closed, normal size, texts in place | ✅ | ✅ |
 | A10b | Done in the middle of putting the box away, then select another box at once | The new box opens in inspect mode at normal size (no late timer shrinks it) | ✅ | ✅ |
 | A11 | Collection and detail sheet | Rows slide in; detail sheet with a rarity-coloured border; total value counts up | — | ✅ |

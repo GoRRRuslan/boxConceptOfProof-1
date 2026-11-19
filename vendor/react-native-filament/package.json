@@ -1,0 +1,82 @@
+{
+  "name": "react-native-filament",
+  "version": "2.0.0-rc.6",
+  "description": "A real-time physically based 3D rendering engine for React Native",
+  "main": "lib/commonjs/index",
+  "module": "lib/module/index",
+  "types": "lib/typescript/index.d.ts",
+  "react-native": "src/index",
+  "source": "src/index",
+  "test": "src/test/RunTests",
+  "files": [
+    "src",
+    "lib",
+    "android",
+    "ios",
+    "cpp",
+    "assets",
+    "*.podspec",
+    "!ios/build",
+    "!android/build",
+    "!android/gradle",
+    "!android/gradlew",
+    "!android/gradlew.bat",
+    "!android/local.properties",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__",
+    "!**/.*"
+  ],
+  "keywords": [
+    "react-native",
+    "filament",
+    "3d",
+    "rendering",
+    "engine",
+    "gltf",
+    "model",
+    "threejs",
+    "ios",
+    "android",
+    "physics",
+    "opengl",
+    "metal",
+    "vulkan"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/margelo/react-native-filament.git"
+  },
+  "author": "Marc Rousavy <me@mrousavy.com> (https://github.com/mrousavy)",
+  "contributors": [
+    {
+      "name": "Hanno G\u00f6decke",
+      "url": "https://github.com/hannojg",
+      "email": "hanno@margelo.com"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/margelo/react-native-filament/issues"
+  },
+  "homepage": "https://margelo.github.io/react-native-filament",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-reanimated": ">=4.0.0",
+    "react-native-worklets": ">=0.12.0"
+  },
+  "codegenConfig": {
+    "name": "rnfilament",
+    "type": "all",
+    "jsSrcsDir": "src/native/specs",
+    "android": {
+      "javaPackageName": "com.margelo.filament"
+    },
+    "ios": {
+      "componentProvider": {
+        "FilamentView": "FilamentComponent"
+      }
+    }
+  }
+}

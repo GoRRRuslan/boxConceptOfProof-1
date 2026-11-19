@@ -2,5 +2,13 @@
   "app": {
     "title": "Mystery Watch",
     "stageZeroSubtitle": "Stage 0 scaffold is running"
+  },
+  "spike": {
+    "angleLabel": "{{angle}}°",
+    "open": "Open",
+    "close": "Close",
+    "decrease": "−5°",
+    "increase": "+5°",
+    "modelCount": "Boxes: {{count}}"
   }
 }

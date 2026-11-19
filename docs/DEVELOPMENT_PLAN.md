@@ -13,7 +13,7 @@ Budget from the estimate: 17–24 h total.
 | # | Risk | Mitigation |
 |---|---|---|
 | R1 | `react-native-filament` 1.11 depends on `react-native-worklets-core`; Reanimated 4 depends on `react-native-worklets`. Open Filament issues mention `TurboModuleRegistry 'Worklets'` errors and Expo 54 + New Arch crashes | Stage 1 spike with go/no-go. Options: pinned versions + `patch-package`; Filament v2 branch (run on `react-native-worklets`); gestures via Gesture Handler shared values; last resort `three` + `expo-gl` |
-| R2 | Several live 3D views in a scrolling list | Render live only the visible cards (viewability), freeze/placeholder others, lower preview cost |
+| R2 | Several live 3D views in a scrolling list | **Resolved in Stage 1:** several `FilamentScene`s do not work on Android (only the first draws). Use ONE shared scene/canvas; box models positioned from the list scroll offset |
 | R3 | Lid + wordmark must rotate about pivot `[0, 0.914876, 0.359181]` around +X, nodes have identity transforms | Pure function `T(p)·Rx(θ)·T(−p)` applied to both parts, unit-tested |
 | R4 | Scene lifecycle (background/foreground, teardown, source change) | One scene owner per screen, explicit dispose, manual checklist |
 
@@ -25,7 +25,7 @@ Gate A: structure + both devices running.
 
 **Stage 2 — Domain, mock API, state (≈2 h)**: types/enums, mock API (`getBoxes`, `purchaseBox` with latency, failure switch, idempotency key), Wallet/Collection/Purchase stores, purchase mutation (one deduction + one watch, only on success; repeated taps ignored; failure changes nothing). Unit tests: success, insufficient balance, failure, repeated taps. Gate C.
 
-**Stage 3 — Live 3D catalogue (≈3–4 h)**: FlashList, `BoxCard` with Filament preview, per-box material colors, price, prize pool, balance header, visibility-gated rendering. Gate D.
+**Stage 3 — Live 3D catalogue (≈3–4 h)**: FlashList with transparent cells over ONE shared Filament canvas (box models synced to scroll offset), per-box material colors, price, prize pool, balance header, visibility-gated rendering. Gate D.
 
 **Stage 4 — Opening experience (≈4–5 h)**: state machine (inspect → purchasing → ready → opening → revealed), drag-to-inspect (Gesture Handler → Reanimated → Filament), lid animation + camera + light, watch PNG reveal, haptics, error handling. Gate E.
 

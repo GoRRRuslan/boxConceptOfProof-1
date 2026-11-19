@@ -27,7 +27,8 @@
     "cleanAndroid": "cd android && ./gradlew clean && cd ..",
     "cleanIosData": "rm -rf ~/Library/Developer/Xcode/DerivedData",
     "watchman": "watchman watch-del-all",
-    "doctor": "npx expo-doctor"
+    "doctor": "npx expo-doctor",
+    "postinstall": "bash scripts/installFilamentBinaries.sh"
   },
   "engines": {
     "node": ">=24"
@@ -53,6 +54,7 @@
     "react": "19.3.0",
     "react-i18next": "^18",
     "react-native": "0.88.1",
+    "react-native-filament": "file:./vendor/react-native-filament",
     "react-native-gesture-handler": "~3.3.0",
     "react-native-get-random-values": "~1.11.0",
     "react-native-reanimated": "4.7.1",

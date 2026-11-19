@@ -1,0 +1,85 @@
+import { FilamentBuffer } from './FilamentBuffer';
+import type { Engine } from '../types/Engine';
+import { FilamentView } from './FilamentViewTypes';
+import type { BulletAPI } from '../bullet/types/api';
+import { EngineBackend, EngineConfig } from '../types';
+import { TFilamentRecorder } from '../types/FilamentRecorder';
+import { Choreographer } from '../types/Choreographer';
+import { Dispatcher } from './Dispatcher';
+import { type WorkletRuntime } from 'react-native-worklets';
+interface TestHybridObject {
+    int: number;
+    string: string;
+    nullableString: string | undefined;
+    multipleArguments(first: number, second: boolean, third: string): Record<string, number>;
+    getIntGetter(): () => number;
+    sayHelloCallback(callback: () => string): void;
+    createNewHybridObject: () => TestHybridObject;
+    calculateFibonacciAsync: (count: number) => Promise<BigInt>;
+    calculateFibonacci: (count: number) => number;
+    enum: 'first' | 'second' | 'third';
+}
+export interface TFilamentProxy {
+    /**
+     * Asynchronously loads the the given asset into a ByteBuffer.
+     * @param path A web URL (http:// or https://), local file (file://) or resource ID. (Only resource ID supported for now)
+     */
+    loadAsset(path: string): Promise<FilamentBuffer>;
+    /**
+     * @private
+     */
+    createTestObject(): TestHybridObject;
+    /**
+     * @private
+     */
+    findFilamentView(viewTag: number): Promise<FilamentView>;
+    /**
+     * Creates a new engine. You should only call this once.
+     */
+    createEngine(backend: EngineBackend | undefined, config: EngineConfig | undefined): Engine;
+    /**
+     * Creates the bullet API wrapper.
+     * @private
+     */
+    createBullet(): BulletAPI;
+    /**
+     * Creates a Dispatcher interface that can dispatch to the current JS Runtime.
+     *
+     * @throws If the current JS Runtime does not have a Dispatcher.
+     * This may happen if a JS Runtime was not created by Filament
+     */
+    getCurrentDispatcher(): Dispatcher;
+    /**
+     * Creates a Filament Recorder instance that can be used to render offscreen and
+     * record to a video file.
+     * @param width The width of the target video and the target scene.
+     * @param height The height of the target video and the target scene.
+     * @param fps The FPS of the rendered video. Offscreen rendering does not happen at the same
+     * FPS rate as set here, but the resulting video will be displayed at this rate.
+     * @param bitRate The target bit-rate of the video, in bits per second. For example, 2_000_000 is 2 Mbps.
+     */
+    createRecorder(width: number, height: number, fps: number, bitRate: number): TFilamentRecorder;
+    /**
+     * Whether Worklets are installed, or not.
+     */
+    readonly hasWorklets: boolean;
+    /**
+     * Creates the queue the Filament worklet runtime drains its jobs from.
+     * Every job runs on Filament's render thread. Pass it as `queue` to `createWorkletRuntime`.
+     * @private
+     */
+    createWorkletAsyncQueue(): object;
+    /**
+     * Installs Filament's render thread dispatcher into the worklet runtime this is called from.
+     * Call it from the worklet runtime's `initializer`.
+     * @private
+     */
+    installDispatcher(): void;
+    createChoreographer(): Choreographer;
+}
+export declare const FilamentProxy: TFilamentProxy;
+/**
+ * The worklet runtime all Filament calls run on. Its jobs are executed on Filament's render thread.
+ */
+export declare const FilamentWorkletRuntime: WorkletRuntime;
+export {};

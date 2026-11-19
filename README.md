@@ -49,6 +49,7 @@ The code base follows the conventions of an enterprise React Native app: feature
 - 🔄 Zustand (session-scoped, no persistence) + React Query over an asynchronous mock API with a failure switch
 - 🧪 Jest + React Native Testing Library, ESLint 9 + Prettier, `ciPipeline`
 - 📦 **Vendored** 3D dependency with a reproducible binary installer — builds on a clean machine
+- ✨ A full set of animations (push-in, anticipation, rarity reveal, gestures, sound) described with screenshots in [docs/ANIMATIONS.md](docs/ANIMATIONS.md)
 - 📊 Reproducible performance tooling and a plain-English [performance report](docs/PERFORMANCE.md)
 
 **Tech Stack:**
@@ -146,7 +147,7 @@ Two tabs: **Boxes** and **Collection**.
 4. **Open.** The lid swings open about its hinge (with a small "pop" and a haptic tap) and the watch image zooms in with its name and value.
 5. **Collection tab.** Your watches, newest first, with the total value; an empty state with a "Browse boxes" button when you have none. A restart starts a new session (nothing is persisted, as required).
 
-Detailed write-ups with screenshots, per stage: [Stage 2 domain](docs/STAGE_2_DOMAIN.md) · [Stage 3 catalogue](docs/STAGE_3_CATALOGUE.md) · [Stage 4 opening](docs/STAGE_4_OPENING.md) · [Stage 5 collection](docs/STAGE_5_COLLECTION.md) · [manual test checklist](docs/TEST_CHECKLIST.md).
+Detailed write-ups with screenshots, per stage: [Stage 2 domain](docs/STAGE_2_DOMAIN.md) · [Stage 3 catalogue](docs/STAGE_3_CATALOGUE.md) · [Stage 4 opening](docs/STAGE_4_OPENING.md) · [Stage 5 collection](docs/STAGE_5_COLLECTION.md) · [animations](docs/ANIMATIONS.md) · [manual test checklist](docs/TEST_CHECKLIST.md).
 
 ### The purchase guarantee
 

@@ -4,29 +4,26 @@ export const makeStyles = (colorHex: string) =>
   ScaledSheet.create({
     glowContainer: {
       position: 'absolute',
-      // Centred on the watch image and smaller than it is tall: the glow touches neither "You got" above nor the texts below.
-      top: ms(28),
+      // Big, pulsing circles centred on the watch image (the pill above it is about ms(38) high); the prize texts start below them.
+      top: ms(13),
       alignSelf: 'center',
-      width: ms(184),
-      height: ms(184),
+      width: ms(250),
+      height: ms(250),
       alignItems: 'center',
       justifyContent: 'center',
     },
     outerGlow: {
       position: 'absolute',
-      width: ms(184),
-      height: ms(184),
-      borderRadius: ms(92),
-      backgroundColor: `${colorHex}22`,
-      // A crisp ring in the rarity colour outlines the glow, so the (often silver) watch never melts into it.
-      borderWidth: ms(2),
-      borderColor: colorHex,
+      width: ms(250),
+      height: ms(250),
+      borderRadius: ms(125),
+      backgroundColor: colorHex,
     },
     innerGlow: {
       position: 'absolute',
-      width: ms(130),
-      height: ms(130),
-      borderRadius: ms(65),
+      width: ms(176),
+      height: ms(176),
+      borderRadius: ms(88),
       backgroundColor: colorHex,
     },
     flash: {
@@ -40,8 +37,8 @@ export const makeStyles = (colorHex: string) =>
     // Particles fly out from the middle of the watch image.
     particleOrigin: {
       position: 'absolute',
-      // Middle of the watch image: the reveal block starts at mvs(52), the title above the image is about ms(20).
-      top: mvs(52) + ms(120),
+      // Middle of the watch image: the reveal block starts at mvs(24), the rarity pill above the image is about ms(38).
+      top: mvs(24) + ms(138),
       alignSelf: 'center',
       width: 1,
       height: 1,

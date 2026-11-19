@@ -25,17 +25,18 @@ export const OpeningOverlay = ({ opening }: IOpeningOverlayProps) => {
     reveal ? (
       <View style={styles.reveal} pointerEvents="none" testID="revealedWatch">
         <RevealGlow colorHex={reveal.rarityColorHex} />
-        <AppText style={styles.revealTitle}>{reveal.titleText}</AppText>
-        <WatchRevealImage source={reveal.imageSource} />
-        <Animated.View entering={FadeInUp.delay(450).duration(450)} style={styles.revealTexts}>
+        <View style={styles.rarityPill}>
           <AppText style={styles.rarity} testID="revealedRarity">
             {reveal.rarityLabelText}
           </AppText>
+        </View>
+        <WatchRevealImage source={reveal.imageSource} />
+        <Animated.View entering={FadeInUp.delay(450).duration(450)} style={styles.revealTexts}>
+          <AppText style={styles.watchValue}>{reveal.valueText}</AppText>
           <AppText style={styles.watchName} testID="revealedWatchName">
             {reveal.nameText}
           </AppText>
           <AppText style={styles.watchBrand}>{reveal.brandText}</AppText>
-          <AppText style={styles.watchValue}>{reveal.valueText}</AppText>
         </Animated.View>
       </View>
     ) : null

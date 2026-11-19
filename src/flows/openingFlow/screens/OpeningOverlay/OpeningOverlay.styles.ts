@@ -39,46 +39,44 @@ export const makeStyles = (theme: IThemePalette, rarityColorHex: string) =>
     },
     reveal: {
       position: 'absolute',
-      top: mvs(52),
+      // High up: the watch sits in the upper third, the prize texts and the box below it.
+      top: mvs(24),
       left: 0,
       right: 0,
       alignItems: 'center',
     },
-    revealTitle: {
-      fontSize: ms(14),
-      color: theme.Colors.textSecondary,
-    },
-    // The prize texts sit on their own dark plaque with a hairline in the rarity colour: they never mix with the glow or the box.
-    revealTexts: {
-      alignItems: 'center',
-      gap: mvs(2),
-      marginTop: mvs(14),
-      paddingVertical: mvs(10),
-      paddingHorizontal: ms(28),
-      borderRadius: ms(16),
-      borderWidth: 1,
-      borderColor: `${rarityColorHex}66`,
-      // Fully opaque (the app background colour), so the lid of the box behind it never shows through.
-      backgroundColor: theme.Colors.background,
+    // The rarity as a solid pill in the rarity colour (dark text on it): readable on any glow.
+    rarityPill: {
+      paddingVertical: mvs(3),
+      paddingHorizontal: ms(16),
+      marginBottom: ms(10),
+      borderRadius: ms(14),
+      backgroundColor: rarityColorHex,
     },
     rarity: {
-      fontSize: ms(15),
+      fontSize: ms(13),
       fontWeight: '800',
-      letterSpacing: 1,
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+      color: theme.Colors.background,
+    },
+    // Below the glow, the price is the hero: big and in the rarity colour; name and brand are quiet.
+    revealTexts: {
+      alignItems: 'center',
+      marginTop: ms(34),
+    },
+    watchValue: {
+      fontSize: ms(30),
+      fontWeight: '800',
       color: rarityColorHex,
     },
     watchName: {
-      fontSize: ms(22),
-      fontWeight: '700',
+      fontSize: ms(17),
+      fontWeight: '600',
     },
     watchBrand: {
       fontSize: ms(14),
       color: theme.Colors.textSecondary,
-    },
-    watchValue: {
-      fontSize: ms(16),
-      fontWeight: '600',
-      color: theme.Colors.accent,
     },
     footer: {
       alignItems: 'center',

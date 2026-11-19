@@ -39,4 +39,17 @@ describe('rollWatchForPurchase', () => {
       expect(Math.abs(actualShare - expectedShare)).toBeLessThan(0.05)
     }
   })
+
+  it('gives different watches to the first few purchases (keys that differ only in the last digit)', () => {
+    const watches = Array.from({ length: 12 }, (_, index) => rollWatchForPurchase(dropTable, `purchase-${index + 1}`).watchIdentifier)
+
+    expect(new Set(watches).size).toBeGreaterThan(1)
+  })
+
+  it('does not always give the best (or the worst) watch to the first purchases of a box with real odds', () => {
+    const [, classicBox] = BOX_CATALOGUE
+    const watches = Array.from({ length: 30 }, (_, index) => rollWatchForPurchase(classicBox.dropTable, `purchase-${index + 1}`).watchIdentifier)
+
+    expect(new Set(watches).size).toBeGreaterThanOrEqual(2)
+  })
 })

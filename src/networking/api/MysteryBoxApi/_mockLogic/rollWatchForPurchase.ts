@@ -1,6 +1,7 @@
 import type { IBoxDropEntry } from '@networking/api/MysteryBoxApi/_types'
 
-// Small deterministic string hash (FNV-1a) so the same idempotency key always rolls the same number.
+// Small deterministic string hash (FNV-1a plus a final bit mixer) so the same idempotency key always rolls the
+// same number, and keys that only differ in their last digit (purchase-1, purchase-2...) still roll very different ones.
 const hashToUnitInterval = (value: string): number => {
   let hash = 2166136261
 
@@ -9,6 +10,16 @@ const hashToUnitInterval = (value: string): number => {
 
     hash = Math.imul(hash, 16777619)
   }
+
+  hash ^= hash >>> 16
+
+  hash = Math.imul(hash, 0x85ebca6b)
+
+  hash ^= hash >>> 13
+
+  hash = Math.imul(hash, 0xc2b2ae35)
+
+  hash ^= hash >>> 16
 
   return (hash >>> 0) / 4294967296
 }

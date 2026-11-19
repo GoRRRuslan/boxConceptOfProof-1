@@ -1,6 +1,6 @@
 # Mystery Watch PoC — development plan (stage-by-stage review)
 
-> **Status: all stages (0–6) are done.** See the README for the result and [TEST_CHECKLIST.md](TEST_CHECKLIST.md) for what was verified. The plan below is kept as it was written; the table of risks notes how each was resolved.
+> **Status: all stages (0–7) are done.** See the README for the result, [TEST_CHECKLIST.md](TEST_CHECKLIST.md) for what was verified, and [TESTING.md](TESTING.md) for how to test. Stage 7 (animation and visual polish) was added after the original plan. The plan below is kept as it was written; the table of risks notes how each was resolved.
 
 Each stage ends with a **review gate**: stop, show the result, wait for approval.
 Budget from the estimate: 17–24 h total.
@@ -36,3 +36,5 @@ Gate A: structure + both devices running.
 **Stage 6 — Tests, polish, handoff (≈5–7 h)**: facade/pure-function tests, manual iOS + Android checklist, fixes, README with build/run/test instructions. Gate G.
 
 Definition of done: full flow on both platforms; each successful purchase = one balance deduction + one watch; a failed purchase leaves balance and collection unchanged.
+
+**Stage 7 — Animation and visual polish (added after the plan)**: render-on-demand watchdog and foreground resync (a frozen renderer after the iOS display link was left paused); anticipation, light from inside the box, flying watch, rarity-based reveal (pill, hero price, glowing circles, flash, particles), swipe up / pinch / double tap / auto-turn / device tilt, camera push-in, staggered entrance, press squeeze, finishes by price, tab fade, animated numbers, collection detail sheet, sounds and haptics; three-light rig, shadows, ambient occlusion and bloom; the opened box is put away after the reveal and Done appears after that; code review fixes. Write-up: [ANIMATIONS.md](ANIMATIONS.md). Verified on both platforms: [TEST_CHECKLIST.md](TEST_CHECKLIST.md).

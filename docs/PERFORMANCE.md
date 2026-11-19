@@ -2,6 +2,8 @@
 
 > **Result in one sentence:** the 3D mystery-box scene runs at a steady **60 FPS on both iOS and Android**, with **0 slow frames**, from 1 box up to **64 boxes (2 million triangles)**, in every quality profile.
 
+> **Before you measure anything, read the rules in [TESTING.md](TESTING.md#2-the-golden-rules).** The most important one: **run only one platform at a time**: either the Android emulator with the iOS simulator shut down, or the iOS simulator with the Android emulator shut down. They share the Mac's GPU and CPU, so running both produces false jank and unusable numbers. Use a **release** build, and do not trust a freshly booted emulator for the first minute.
+
 This page explains, in plain words, what we measured, how we measured it, what we changed to get there, and how anyone can repeat the tests with one command.
 
 - [1. The numbers](#1-the-numbers)
@@ -192,7 +194,14 @@ Memory numbers differ a lot between debug and release builds, so compare only li
 
 ## 7. Run the tests yourself
 
-Run **one platform at a time**.
+Run **one platform at a time**, and read [TESTING.md](TESTING.md) for the full rules (one platform at a time and why, release builds only, headless Android for exact numbers, benchmark builds are not for handing out).
+
+| To test… | Shut this down first | Then |
+|---|---|---|
+| Android | the iOS Simulator: `xcrun simctl shutdown all` | `yarn androidEmulatorStart` and the Android commands below |
+| iOS | the Android emulator: `adb emu kill` | boot the simulator and the iOS commands below |
+
+Why: both run on the same Mac and share its GPU and CPU. With both open, frames are delivered late and unevenly (false jank), so the numbers would not mean anything. Check with `adb devices` and `xcrun simctl list devices booted` that only one device is running.
 
 ### Android
 ```bash
@@ -203,7 +212,7 @@ yarn perfAndroidPresentFps       # independent check via SurfaceFlinger
 yarn perfAndroidTrace            # Perfetto trace (CPU per thread)
 yarn androidEmulatorStop
 ```
-Tip: if `androidRunSuite` seems to use old JavaScript, delete `android/app/build/generated/assets/react` and `android/app/build/intermediates/assets/release`, then run it again.
+Tip: if `androidRunSuite` seems to use old JavaScript, delete `android/app/build/generated/assets/createBundleReleaseJsAndAssets` and `android/app/build/intermediates/assets/release`, then run it again (Gradle does not track environment variables).
 
 ### iOS
 ```bash
@@ -234,6 +243,8 @@ yarn perfCharts                         # redraws docs/media/chart-*.svg from do
 ## 8. Honest limits
 
 - These are **simulator/emulator** results on an Apple M5 Pro. Their GPU is much faster than a phone GPU. The results prove that our pipeline (one scene, hinge animation, JS/worklet threads) is **not** the bottleneck; they do not prove that every phone reaches 60 FPS at 64 boxes. The real catalogue shows only a handful of boxes at once, far below the 64-box stress case.
+- The Android emulator **window** was measured at 60 FPS with the finished app (30 s, twice), but a freshly booted emulator can be slower for about a minute (one reading of 43 FPS right after boot). Headless stays the reference for exact numbers.
+- The Stage 7 reveal (flash, particles, pulsing circles, put-away animation) was not measured separately; the catalogue scroll was measured after the polish.
 - Physical iPhone/Android runs are planned for later. The same scripts work on a real device unchanged.
 - `react-native-filament` 2.0 is an unreleased release candidate (vendored and pinned, see `vendor/react-native-filament/VENDOR.md`).
 - Our render-on-demand code remembers whether the renderer is running. A background → foreground test on both platforms showed no problem (frame rate stays ≤ 60 FPS, the scene is intact), but it is still an assumption about the library; re-check on a real device.

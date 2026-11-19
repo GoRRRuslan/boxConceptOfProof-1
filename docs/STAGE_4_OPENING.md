@@ -1,5 +1,7 @@
 # Stage 4 — Opening experience
 
+> This note describes the **first version** of the opening experience (Stage 4). Stage 7 added anticipation, rarity-based reveals, more gestures, the box being put away and a new layout; those are described in [ANIMATIONS.md](ANIMATIONS.md). The phase machine below is still the one in use, with the Revealed phase now ending after the box is put away and Done appears.
+
 Branch: `feat/stage-4-opening` (on top of Stage 2 + 3).
 
 Tap a box in the catalogue and it flies to the middle of the screen. You can turn it with your finger, buy it, watch the lid open and see which watch you won.

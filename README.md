@@ -100,6 +100,22 @@ yarn start
 
 > Expo Go cannot run Filament — the app is a **development build** (`expo-dev-client`).
 
+### Just try it (recommended for reviewers)
+
+A release build carries its JavaScript inside the app, so it needs no Metro server and no dev client. After `yarn install` and the prebuild commands above:
+
+```bash
+# Android: start any emulator (Android Studio, or: $ANDROID_HOME/emulator/emulator -avd <name> -gpu host), then
+yarn androidRunRelease
+
+# iOS: with a simulator booted
+yarn iosRunRelease
+```
+
+What to expect: scroll the list, tap a box, drag / pinch / double-tap it, buy it, swipe up (or tap *Open the box*), watch the reveal, then look at *Collection*. Each successful purchase costs exactly once and adds exactly one watch.
+
+About smoothness: the app itself renders at a steady 60 FPS (see [Performance](#8-performance)). The **window** of the Android emulator, however, caps every app at roughly 24 FPS because it copies each frame into a macOS window. That is a limit of the emulator window, not of the app: on a real device, on the iOS Simulator, or on a headless emulator (`yarn androidEmulatorStart`, used for all measurements) it is smooth. Use an AVD with at least 4 cores, 4 GB RAM and the host GPU.
+
 ### Run the quality gates
 
 ```bash
@@ -398,6 +414,6 @@ boxConceptOfProof-1/
 | Android emulator crawls / UI shows *Updating…* | Use an AVD with ≥ 4 cores / ≥ 4 GB / host GPU; let the post-boot update finish |
 | The list scrolls up and down by itself / an FPS overlay is on screen | You installed a **benchmark build** (`*RunCatalogueScroll`, `*RunOpening`, `*RunSuite`, `*RunBenchmark`). Install a normal one: `yarn iosRunRelease` / `yarn androidRunRelease` (or the development client: `yarn iosRun` / `yarn androidRun` + `yarn start`) |
 | 3D boxes frozen while the list moves ("Render paused") | Fixed in Stage 6: the renderer assumed it was running; iOS can leave its display link paused after the app returns from the background. `RenderOnDemand` now has a watchdog and restarts the renderer when it comes back to the foreground |
-| Release build shows old JavaScript | Delete `android/app/build/generated/assets/react` and `android/app/build/intermediates/assets/release`, build again |
+| Release build shows old JavaScript (for example no FPS overlay in a benchmark build, or a fix that is not there) | Gradle does not track environment variables or always notice changes: delete `android/app/build/generated/assets/createBundleReleaseJsAndAssets` and `android/app/build/intermediates/assets/release`, then build again |
 | Filament native libraries missing after install | `bash scripts/installFilamentBinaries.sh` (needs network once) |
 | Metro cache issues | `yarn cleanCache` |

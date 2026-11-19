@@ -46,4 +46,46 @@ export const BOX_CATALOGUE: IMysteryBox[] = [
       { watchIdentifier: EWatchIdentifier.SkyDweller, weight: 45 },
     ],
   },
+  {
+    identifier: EBoxIdentifier.Chrono,
+    name: 'Chrono Box',
+    priceInCents: 8_000,
+    colorHex: '#E4572E',
+    dropTable: [
+      { watchIdentifier: EWatchIdentifier.Casio, weight: 60 },
+      { watchIdentifier: EWatchIdentifier.Perpetual, weight: 35 },
+      { watchIdentifier: EWatchIdentifier.Gmt, weight: 5 },
+    ],
+  },
+  {
+    identifier: EBoxIdentifier.Aviator,
+    name: 'Aviator Box',
+    priceInCents: 25_000,
+    colorHex: '#17BEBB',
+    dropTable: [
+      { watchIdentifier: EWatchIdentifier.Perpetual, weight: 55 },
+      { watchIdentifier: EWatchIdentifier.Gmt, weight: 40 },
+      { watchIdentifier: EWatchIdentifier.SkyDweller, weight: 5 },
+    ],
+  },
+  {
+    identifier: EBoxIdentifier.Diver,
+    name: 'Diver Box',
+    priceInCents: 60_000,
+    colorHex: '#3A5BA0',
+    dropTable: [
+      { watchIdentifier: EWatchIdentifier.Gmt, weight: 65 },
+      { watchIdentifier: EWatchIdentifier.SkyDweller, weight: 35 },
+    ],
+  },
+  {
+    identifier: EBoxIdentifier.Grand,
+    name: 'Grand Box',
+    priceInCents: 250_000,
+    colorHex: '#C0392B',
+    dropTable: [
+      { watchIdentifier: EWatchIdentifier.Gmt, weight: 30 },
+      { watchIdentifier: EWatchIdentifier.SkyDweller, weight: 70 },
+    ],
+  },
 ]

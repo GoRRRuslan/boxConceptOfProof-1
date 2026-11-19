@@ -20,6 +20,9 @@ declare global {
 const PERF_SINK_URL: string | undefined = process.env.EXPO_PUBLIC_PERF_SINK_URL
 const REPORT_WINDOW_NANOSECONDS = 1_000_000_000
 const PAUSE_DETECTION_MILLISECONDS = 2500
+// A callback that arrives this long after the previous one is the renderer waking up from a stop
+// (render on demand), not a frame time: it must not count as a slow frame.
+const RESUME_GAP_MILLISECONDS = 1000
 
 // Measures the real renderer frame rate: it counts the callbacks Filament's choreographer fires
 // (one per rendered frame) and reports a summary roughly once per second.
@@ -63,6 +66,15 @@ export const useRenderFpsMeter = (scenarioLabel = '') => {
       }
 
       const accumulator = globalThis.__renderFpsAccumulator
+
+      if (frameInfo.timeSinceLastFrame * 1000 > RESUME_GAP_MILLISECONDS) {
+        globalThis.__renderFpsAccumulator = {
+          windowStartNanoseconds: frameInfo.timestamp,
+          frameDeltasMilliseconds: [],
+        }
+
+        return
+      }
 
       accumulator.frameDeltasMilliseconds.push(frameInfo.timeSinceLastFrame * 1000)
 

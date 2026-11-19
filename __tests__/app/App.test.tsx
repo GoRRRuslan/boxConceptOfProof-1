@@ -9,10 +9,16 @@ jest.mock('@flows/spikeFlow/screens/FilamentSpikeScreen', () => {
   return { FilamentSpikeScreen: () => <View testID="filamentSpikeScreen" /> }
 })
 
+jest.mock('@flows/catalogueFlow/screens/CatalogueScreen', () => {
+  const { View } = jest.requireActual('react-native')
+
+  return { CatalogueScreen: () => <View testID="catalogueScreen" /> }
+})
+
 describe('App', () => {
   it('renders the root screen inside the providers', async () => {
     await render(<App />)
 
-    expect(screen.getByTestId('filamentSpikeScreen')).toBeTruthy()
+    expect(screen.getByTestId('catalogueScreen')).toBeTruthy()
   })
 })

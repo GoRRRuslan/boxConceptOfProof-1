@@ -18,5 +18,14 @@
     "measuring": "Measuring…",
     "summary": "{{fps}} fps · avg {{average}} ms · p95 {{p95}} ms · slow {{slow}}",
     "paused": "Render paused · idle (0 fps)"
+  },
+  "catalogue": {
+    "title": "Mystery Boxes",
+    "balanceLabel": "Balance",
+    "prizeUpTo": "Win a watch worth up to {{amount}}",
+    "notEnoughBalance": "Not enough balance",
+    "loading": "Loading boxes…",
+    "error": "Could not load the boxes.",
+    "retry": "Try again"
   }
 }

@@ -16,10 +16,10 @@
     "androidRun": "expo run:android",
     "androidRunMediumPhone": "expo run:android --device \"Medium_Phone_API_37.0\"",
     "androidRunRelease": "expo run:android --variant release --no-bundler",
-    "iosRunBenchmark": "EXPO_PUBLIC_AUTO_BENCHMARK=1 EXPO_PUBLIC_PERF_SINK_URL=http://localhost:8787 expo run:ios --configuration Release --no-bundler",
-    "androidRunBenchmark": "EXPO_PUBLIC_AUTO_BENCHMARK=1 expo run:android --variant release --no-bundler",
-    "iosRunSuite": "EXPO_PUBLIC_AUTO_BENCHMARK=suite EXPO_PUBLIC_PERF_SINK_URL=http://localhost:8787 expo run:ios --configuration Release --no-bundler",
-    "androidRunSuite": "EXPO_PUBLIC_AUTO_BENCHMARK=suite expo run:android --variant release --no-bundler",
+    "iosRunBenchmark": "EXPO_PUBLIC_INITIAL_SCREEN=spike EXPO_PUBLIC_AUTO_BENCHMARK=1 EXPO_PUBLIC_PERF_SINK_URL=http://localhost:8787 expo run:ios --configuration Release --no-bundler",
+    "androidRunBenchmark": "EXPO_PUBLIC_INITIAL_SCREEN=spike EXPO_PUBLIC_AUTO_BENCHMARK=1 expo run:android --variant release --no-bundler",
+    "iosRunSuite": "EXPO_PUBLIC_INITIAL_SCREEN=spike EXPO_PUBLIC_AUTO_BENCHMARK=suite EXPO_PUBLIC_PERF_SINK_URL=http://localhost:8787 expo run:ios --configuration Release --no-bundler",
+    "androidRunSuite": "EXPO_PUBLIC_INITIAL_SCREEN=spike EXPO_PUBLIC_AUTO_BENCHMARK=suite expo run:android --variant release --no-bundler",
     "----": "--------------",
     "iosRestart": "bash scripts/app/restartIos.sh",
     "androidEmulatorStart": "bash scripts/app/startAndroidEmulator.sh",
@@ -29,6 +29,10 @@
     "-----": "--------------",
     "perfIosFps": "bash scripts/perf/measureRenderFps.sh ios",
     "perfAndroidPresentFps": "bash scripts/perf/measureAndroidPresentFps.sh",
+    "androidRunCatalogueScroll": "EXPO_PUBLIC_AUTO_SCROLL=1 EXPO_PUBLIC_SHOW_PERFORMANCE=1 expo run:android --variant release --no-bundler",
+    "iosRunCatalogueScroll": "EXPO_PUBLIC_AUTO_SCROLL=1 EXPO_PUBLIC_SHOW_PERFORMANCE=1 EXPO_PUBLIC_PERF_SINK_URL=http://localhost:8787 expo run:ios --configuration Release --no-bundler",
+    "perfAndroidCatalogue": "bash scripts/perf/runCatalogueScroll.sh android",
+    "perfIosCatalogue": "bash scripts/perf/runCatalogueScroll.sh ios",
     "perfCharts": "python3 scripts/perf/renderCharts.py",
     "perfAndroidFps": "bash scripts/perf/measureRenderFps.sh android",
     "perfIosSuite": "bash scripts/perf/runSuite.sh ios",
@@ -148,6 +152,9 @@
     },
     "setupFiles": [
       "<rootDir>/jest.setup.ts"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@shopify/flash-list)"
     ]
   }
 }

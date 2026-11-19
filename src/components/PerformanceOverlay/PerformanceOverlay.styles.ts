@@ -1,12 +1,13 @@
 import { ScaledSheet, ms, mvs } from 'react-native-size-matters'
 
+import { EPerformanceOverlayPlacement } from '@components/PerformanceOverlay/_types'
 import type { IThemePalette } from '@utils/designSystem/Theme'
 
-export const makeStyles = (theme: IThemePalette, topInset: number) =>
+export const makeStyles = (theme: IThemePalette, inset: number, placement: EPerformanceOverlayPlacement) =>
   ScaledSheet.create({
     container: {
       position: 'absolute',
-      top: topInset + mvs(8),
+      ...(placement === EPerformanceOverlayPlacement.Top ? { top: inset + mvs(8) } : { bottom: inset + mvs(8) }),
       left: ms(12),
       paddingHorizontal: ms(8),
       paddingVertical: mvs(4),

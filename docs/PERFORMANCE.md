@@ -35,6 +35,8 @@ A "slow frame" is any frame that took longer than 25 ms (a visibly missed refres
 
 ![Average FPS per scenario](media/chart-fps-by-scenario.svg)
 
+**The real catalogue screen** (8 boxes in a scrolling list, one shared 3D scene) was measured too, with the list scrolling by itself for 60 s: **60.0 FPS on iOS and on Android, 0 slow frames, worst frame 17 ms** (details in [STAGE_3_CATALOGUE.md](STAGE_3_CATALOGUE.md)).
+
 The Android result was reproduced three times, including once on the final code after the code review, and cross-checked with a second, independent counter (see section 3): **600 frames presented in 10 s = 60 FPS**.
 
 ---
@@ -216,6 +218,9 @@ yarn perfCharts                         # redraws docs/media/chart-*.svg from do
 | `EXPO_PUBLIC_AUTO_BENCHMARK=suite` | Walk through all six scenarios by itself |
 | `EXPO_PUBLIC_AUTO_BOXES=1\|4\|16\|64` | Start with this many boxes |
 | `EXPO_PUBLIC_PERF_SINK_URL` | Send FPS reports to a local collector (iOS release builds do not show their log) |
+| `EXPO_PUBLIC_INITIAL_SCREEN=spike` | Start the benchmark lab instead of the catalogue |
+| `EXPO_PUBLIC_AUTO_SCROLL=1` | Catalogue scrolls by itself |
+| `EXPO_PUBLIC_SHOW_PERFORMANCE=1` | Show the live FPS overlay on the catalogue |
 | `ANDROID_ARCHITECTURES` | CPU architectures to build (default `arm64-v8a`) |
 
 ---

@@ -10,6 +10,10 @@ export enum EBoxIdentifier {
   Classic = 'classic',
   Elite = 'elite',
   Legend = 'legend',
+  Chrono = 'chrono',
+  Aviator = 'aviator',
+  Diver = 'diver',
+  Grand = 'grand',
 }
 
 export enum EPurchaseErrorCode {

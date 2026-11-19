@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AppText } from '@components/AppText'
+import { EPerformanceOverlayPlacement } from '@components/PerformanceOverlay/_types'
 import { makeStyles } from '@components/PerformanceOverlay/PerformanceOverlay.styles'
 import type { IRenderFrameStats } from '@services/performance/summarizeFrameDeltas'
 import { theme } from '@utils/designSystem/Theme'
@@ -11,12 +12,18 @@ import { theme } from '@utils/designSystem/Theme'
 interface IPerformanceOverlayProps {
   renderFrameStats: IRenderFrameStats | null
   isRenderPaused: boolean
+  placement?: EPerformanceOverlayPlacement
 }
 
-export const PerformanceOverlay = ({ renderFrameStats, isRenderPaused }: IPerformanceOverlayProps) => {
+export const PerformanceOverlay = ({
+  renderFrameStats,
+  isRenderPaused,
+  placement = EPerformanceOverlayPlacement.Top,
+}: IPerformanceOverlayProps) => {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
-  const styles = useMemo(() => makeStyles(theme, insets.top), [insets.top])
+  const inset = placement === EPerformanceOverlayPlacement.Top ? insets.top : insets.bottom
+  const styles = useMemo(() => makeStyles(theme, inset, placement), [inset, placement])
 
   const overlayText = useMemo(() => {
     if (isRenderPaused) {

@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 import { Image, Pressable, View } from 'react-native'
-import Animated, { FadeInDown } from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
 
 import { AppText } from '@components/AppText'
 import type { ICollectionItem } from '@flows/collectionFlow/_types'
 import { makeStyles } from '@flows/collectionFlow/screens/CollectionScreen/_components/WatchListItem/WatchListItem.styles'
+import { useEntranceAnimation } from '@services/animation/useEntranceAnimation'
 import { theme } from '@utils/designSystem/Theme'
 
 interface IWatchListItemProps {
@@ -14,10 +15,11 @@ interface IWatchListItemProps {
 
 export const WatchListItem = ({ item, onPress }: IWatchListItemProps) => {
   const styles = useMemo(() => makeStyles(theme, item.rarityColorHex), [item.rarityColorHex])
+  const { animatedStyle } = useEntranceAnimation()
 
   return (
     // A newly won watch slides in; every row can be tapped for a big picture.
-    <Animated.View entering={FadeInDown.duration(400)}>
+    <Animated.View style={animatedStyle}>
       <Pressable
         style={styles.row}
         onPress={() => {

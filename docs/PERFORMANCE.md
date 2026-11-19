@@ -1,156 +1,239 @@
-# Performance analysis — Stage 1 (Filament spike)
+# Performance report
 
-Measured on **iOS Simulator (iPhone 17, iOS 27.2)** and **Android Emulator (Pixel 9 profile, API 37, 6 cores / 6 GB, host GPU)**, development builds, Expo SDK 58 / RN 0.88.1, Filament 2.0.0-rc.6.
-Simulators and emulators share the host GPU and are **not representative of device frame rates**; the numbers below are meant for *relative* comparison (1 box vs 4 boxes) and for sizing, not as FPS claims.
+> **Result in one sentence:** the 3D mystery-box scene runs at a steady **60 FPS on both iOS and Android**, with **0 slow frames**, from 1 box up to **64 boxes (2 million triangles)**, in every quality profile.
 
-## 1. Asset budget
+This page explains, in plain words, what we measured, how we measured it, what we changed to get there, and how anyone can repeat the tests with one command.
 
-| Asset | Size | Content | Comment |
+- [1. The numbers](#1-the-numbers)
+- [2. What it looks like](#2-what-it-looks-like)
+- [3. How we measure](#3-how-we-measure)
+- [4. The Android mystery: why it looked slow](#4-the-android-mystery-why-it-looked-slow)
+- [5. What we did to make it fast](#5-what-we-did-to-make-it-fast)
+- [6. CPU and memory](#6-cpu-and-memory)
+- [7. Run the tests yourself](#7-run-the-tests-yourself)
+- [8. Honest limits](#8-honest-limits)
+- [9. Raw data](#9-raw-data)
+
+---
+
+## 1. The numbers
+
+Each scenario runs for 30 seconds while the box lid swings open and closed non-stop (so the renderer never gets to rest). The first 12 seconds of every scenario are thrown away (shaders compile, the model loads). All builds are **release builds**. Only **one** simulator/emulator was running at a time, because they share the Mac's GPU and disturb each other.
+
+| Scenario | Triangles on screen | iOS Simulator | Android Emulator |
 |---|---|---|---|
-| `box.glb` | 1.32 MB source → **157 KB** shipped (Draco) | 5 meshes, **23,189 vertices, 31,242 triangles**, 6 PBR materials (`KHR_materials_clearcoat`), 2 wordmark PNG textures (23 KB + 12 KB), no animations/skins | Per box. 4 visible boxes ≈ 125k triangles — trivial for a mobile GPU |
-| Watch PNGs (4×) | 0.99 – 1.89 MB each, **5.48 MB total**, 1019 × 1544 RGBA | Reveal + collection | Decoded bitmap ≈ **6.3 MB each** (1019·1544·4 B) → ~25 MB if all four are resident |
-| Vendored Filament source | 3.9 MB | `vendor/react-native-filament` | In git |
-| Filament + Bullet3 binaries | 331 MB on disk | `node_modules`, fetched by script | Not in git; only the used ABI/arch ends up in the app |
-| Android debug APK | 95.4 MiB (100,084,571 B) | arm64-only, debug | Release APK: **36.4 MB** |
-| iOS simulator `.app` | 142 MB | debug | |
+| 1 box | 31 thousand | **60.0 FPS**, 0 slow frames | **60.0 FPS**, 0 slow frames |
+| 4 boxes | 125 thousand | **60.0 FPS**, 0 slow frames | **60.0 FPS**, 0 slow frames |
+| 16 boxes | 500 thousand | **60.0 FPS**, 0 slow frames | **60.0 FPS**, 0 slow frames |
+| 64 boxes, full quality | 2.0 million | **60.0 FPS**, 0 slow frames | **60.0 FPS**, 0 slow frames |
+| 64 boxes, balanced quality | 2.0 million | **60.0 FPS**, 0 slow frames | **60.0 FPS**, 0 slow frames |
+| 64 boxes, performance quality | 2.0 million | **60.0 FPS**, 0 slow frames | **60.0 FPS**, 0 slow frames |
 
-## 2. Runtime cost: 1 box vs 4 boxes
+In every row: the slowest single frame was **17 ms** and 95 % of frames took **16.7 ms** or less. 16.7 ms is exactly one frame of a 60 Hz screen, so this is the best a 60 Hz screen can show.
 
-| Metric | 1 box | 4 boxes | Δ for +3 boxes |
-|---|---|---|---|
-| iOS process RSS (simulator) | 582 MB | 587 MB | **+5 MB** (≈ +1.7 MB per box) |
-| iOS CPU (simulator, idle scene) | ~14–16 % | ~16–18 % | ≈ 0 |
-| Android total PSS | 350 MB | 361 MB | **+11 MB** (≈ +3.7 MB per box) |
-| Android native heap | 182 MB | 188 MB | +5.5 MB |
-| Android Java heap | 16 MB | 21 MB | +4.7 MB |
+A "slow frame" is any frame that took longer than 25 ms (a visibly missed refresh).
 
-Take-aways
-- **Per-box cost is small and linear**; the baseline (React Native + Hermes + one Filament engine) dominates memory.
-- A scene with several boxes **in one engine** costs almost nothing extra. Several engines do not work on Android at all (see below).
-- Lifecycle: backgrounding and resuming keeps the same process and an intact scene on both platforms; no crash (iOS: same PID after resume; Android: resumed without reload).
+![Average FPS per scenario](media/chart-fps-by-scenario.svg)
 
-## 2b. Frame rate (measured with the in-app meter)
+The Android result was reproduced three times, including once on the final code after the code review, and cross-checked with a second, independent counter (see section 3): **600 frames presented in 10 s = 60 FPS**.
 
-The meter counts the callbacks Filament's choreographer fires — **one per rendered frame, on the renderer's own thread** — and reports a 1-second summary (`[perf:<platform>] {...}` in the Metro log and an on-screen overlay). It is the same code path on iOS and Android, so numbers are comparable. Slow frame = longer than 25 ms (a missed vsync on a 60 Hz display).
+---
 
-### iOS Simulator (Apple M5 Pro Metal), 20 s per scenario, 1,200 frames each
+## 2. What it looks like
 
-| Scenario | Triangles | Average FPS | Min window FPS | p95 frame | Worst frame | Slow frames | RSS | CPU |
-|---|---|---|---|---|---|---|---|---|
-| 1 box, idle | 31 k | **60.0** | 60.0 | 16.7 ms | 17 ms | 0 | 582 MB | 14 % |
-| 4 boxes, idle | 125 k | **60.0** | 60.0 | 16.7 ms | 17 ms | 0 | 587 MB | 17 % |
-| 4 boxes, lids open (115°) | 125 k | **60.0** | 60.0 | 16.7 ms | 17 ms | 0 | 590 MB | 16 % |
-| 16 boxes (stress), lids open | 500 k | **60.0** | 60.0 | 16.7 ms | 17 ms | 0 | 640 MB | 17.5 % |
-| 64 boxes (stress), lids open | 2.0 M | **60.0** | 60.0 | 16.7 ms | 17 ms | 0 | 824 MB | 32 % |
+Real screenshots taken by the test script while each scenario was running. The text at the top is the live FPS meter built into the app.
 
-Reading: the Mac GPU has a very large headroom — the knee was **not reached at 64 boxes / 2 M triangles**. The cost that does grow is **memory: ≈ 4.4 MB per additional box**, because every `<Model>` loads and keeps its own copy of the GLB (see improvement #2). The simulator GPU is far faster than a phone GPU, so this proves the pipeline (single scene, hinge, worklet runtime) is not the bottleneck, not that a phone will hit 60 fps at 64 boxes.
+### iOS (iPhone 17 Simulator, iOS 27)
 
-### Android Emulator (gfxstream → Apple M5 Pro Metal, ES 3.0 translator)
-
-| Scenario | Average FPS | Min / max window | Worst frame |
-|---|---|---|---|
-| 1 box, emulator alone | 23.0 – 24.6 | 17 – 31 | 200 ms |
-| **Empty scene** (camera + light, no model) | 24.6 | 18 – 31 | 200 ms |
-
-The **empty scene is as slow as the box**, so the ~24 fps ceiling comes from the emulator's GL translation layer, not from our content. The guest is not CPU-starved (Perfetto: 0.55 cores busy of 6). A different emulator backend (`angle_indirect`) falls back to CPU SwiftShader and is worse. **Android frame rates therefore must be measured on a physical device**; the meter and scripts below work unchanged on one.
-
-## 2c. Native profilers
-
-### iOS — Instruments (`xcrun xctrace`), `yarn perfIosProfile`
-Time Profiler, 10 s, steady state, 1 box:
-
-| Thread | CPU in 10 s | Share of one core |
+| 1 box | 4 boxes | 16 boxes |
 |---|---|---|
-| `FEngine::loop` (Filament backend) | 486 ms | 4.9 % |
-| `filament.render.queue` | 419 ms | 4.2 % |
-| Main thread (UI) | 213 ms | 2.1 % |
-| React Native JS thread | 85 ms | 0.9 % |
-| **Total process** | **1,854 ms** | **18.5 %** |
+| ![](media/ios-1-1-box.png) | ![](media/ios-2-4-boxes.png) | ![](media/ios-3-16-boxes.png) |
 
-The 3D path (≈ 9 % of a core) runs entirely **off the main and JS threads**; the JS thread is ~1 %, so the mock API and state will have ample headroom. A Metal System Trace (8 s) showed the simulator's Metal host busy ≈ 9 % on its default queue.
-On a real device the same script profiles over `devicectl` (`yarn perfIosProfile <UDID>`); the owner's iPhone 17 Pro and iPad Pro are registered but were not connected during this pass.
-
-### Android — Perfetto, `yarn perfAndroidTrace`
-10 s system trace (sched + ftrace + `gfx`/`view` atrace for the app), quiet run, 1 box:
-
-| Thread | CPU | Share of one core |
+| 64 boxes, full | 64 boxes, balanced | 64 boxes, performance |
 |---|---|---|
-| `FEngine::loop` (Filament GL backend) | 1,842 ms | 18.7 % |
-| `RenderThread` (HWUI) | 1,429 ms | 14.5 % |
-| main thread | 659 ms | 6.7 % |
-| `FilamentRendere…` | 585 ms | 5.9 % |
-| `mqt_v_js` (React Native JS) | 289 ms | 2.9 % |
-| **Process, top-10 threads** | 5,469 ms | **0.55 cores** |
+| ![](media/ios-4-64-boxes-full.png) | ![](media/ios-5-64-boxes-balanced.png) | ![](media/ios-6-64-boxes-performance.png) |
 
-Buffer queue: 972 `queueBuffer` (avg 0.45 ms) and 486 `dequeueBuffer` (avg 2.0 ms, **max 130 ms**). The dequeue stalls are the emulator waiting for the host GPU — the cause of the ~24 fps.
-A first run while the iOS simulator was drawing at the same time showed `FEngine::loop` at 73 % of a core (7,038 ms): the two simulators **compete for the same host GPU**, so measure one platform at a time.
+### Android (Pixel 9 profile, API 37 Emulator)
 
-## 3. The important finding: one engine, one canvas
-
-`createEngine` is documented as "call once". On Android a second `<FilamentScene>` (second engine + `TextureView`) never draws, reproducibly, with no error (also on a 6-core / host-GPU AVD, so it is not a resource problem). iOS happens to render several scenes, but it is the same unsupported usage.
-
-**Decision:** the catalogue renders all boxes in **one `FilamentScene` / one `FilamentView`**; card positions are synced from the list scroll offset. This removes the failure mode, keeps cost flat in the number of boxes, and behaves the same on both platforms.
-
-## 4. How to measure (reproducible) and its limits
-
-| Tool | Command | What it gives |
+| 1 box | 4 boxes | 16 boxes |
 |---|---|---|
-| In-app renderer FPS meter | run the app, `yarn start \| tee /tmp/metro.log`, then `python3 scripts/perf/analyzeRenderFps.py <ios\|android> <startLine> [endLine]` | Real renderer FPS, frame-time p95/max, slow frames. Overlay on screen in the spike |
-| Instruments Time Profiler | `yarn perfIosProfile [UDID]` | CPU per thread (simulator or device) |
-| Perfetto | `yarn perfAndroidTrace` | CPU per thread, buffer-queue stalls, frame slices |
-| `ps` / `dumpsys meminfo` | see scripts | RSS (iOS) / PSS (Android) |
+| ![](media/android-1-1-box.png) | ![](media/android-2-4-boxes.png) | ![](media/android-3-16-boxes.png) |
 
-Limits and traps
-- `dumpsys gfxinfo` only sees UI-thread (HWUI) frames; Filament draws on its own thread, so a static scene reports almost no UI frames. **Do not read FPS from gfxinfo.**
-- Simulator/emulator GPUs are not phone GPUs. iOS numbers prove headroom; **Android numbers from the emulator are not usable as FPS**.
-- Measure one simulator at a time (shared host GPU). Let the app settle ≥ 15 s after launch (the first window contains startup work).
-- The very first choreographer callback reports the time since engine start, not a frame; the meter discards it.
+| 64 boxes, full | 64 boxes, balanced | 64 boxes, performance |
+|---|---|---|
+| ![](media/android-4-64-boxes-full.png) | ![](media/android-5-64-boxes-balanced.png) | ![](media/android-6-64-boxes-performance.png) |
 
-## 5. Recommended improvements (ordered by value / effort)
+---
 
-| # | Improvement | Why | Effort |
+## 3. How we measure
+
+There is no single FPS number that a phone hands you, so we use **three different tools** that look at the problem from different sides. If they agree, we trust the result.
+
+```mermaid
+flowchart LR
+    A[3D scene<br/>Filament renderer] -->|one callback per<br/>rendered frame| B[In-app FPS meter]
+    A -->|frames handed to<br/>the screen| C[SurfaceFlinger<br/>Android only]
+    A -->|CPU per thread| D[Native profilers<br/>Instruments / Perfetto]
+    B --> E[(Suite log<br/>docs/data)]
+    E --> F[Table + charts]
+    C --> F
+    D --> F
+```
+
+### 3.1 The in-app FPS meter (both platforms)
+The renderer calls our code once for **every frame it draws**. We record the time between calls. Every second we compute: average FPS, average and 95th-percentile frame time, the slowest frame, and the number of slow frames. It prints a line like `[perf:android] {...}` and shows the same numbers on screen. Because it is the same code on iOS and Android, the two platforms are directly comparable.
+
+### 3.2 The benchmark suite (both platforms)
+A special build (`EXPO_PUBLIC_AUTO_BENCHMARK=suite`) walks through the six scenarios by itself, 30 seconds each, and tags every report with the scenario name. One command (`yarn perfIosSuite` / `yarn perfAndroidSuite`) restarts the app, collects ~200 s of data, takes one screenshot per scenario and prints the table above.
+
+### 3.3 Independent cross-checks
+| Tool | Platform | What it tells us | Command |
 |---|---|---|---|
-| 1 | **Render on demand**: stop the Filament choreographer when nothing moves (idle list, closed screen); resume on scroll/gesture/animation | Filament currently redraws at display rate even for a static scene → battery/thermals | S |
-| 2 | **Load the GLB once, instantiate N times** (`useModel(..., { instanceCount })` + `ModelInstance`) | Measured: **+4.4 MB RSS per extra box** (64 boxes = 824 MB) because every `<Model>` re-parses the 1.3 MB GLB and duplicates vertex buffers | S |
-| 3 | **Resize and re-encode watch images**: ≤ 512 px wide WebP/AVIF thumbnails for lists, full size only for the reveal; load through `expo-image` with disk cache | −90–95 % bytes and decoded memory (6.3 MB → ~0.5 MB per list image) | S |
-| 4 | **Cheaper previews**: set `clearCoatFactor=0`, drop shadows and MSAA for the list canvas, lower render resolution (dynamic resolution / 0.75× scale) while scrolling; full quality on the opening screen | Fragment cost is the real mobile bottleneck, not triangle count | M |
-| 5 | **Compress the GLB** (meshopt + KTX2/Basis for textures via `gltf-transform`) | 1.32 MB → well under 0.5 MB, faster load; no visual change at this scale | S |
-| 6 | **Ship only needed ABIs** (`arm64-v8a` for release; `x86_64` only for emulator builds), enable R8 and Hermes bytecode in release | Largest APK lever (Filament + Bullet are ~270 MB across ABIs) | S |
-| 7 | **Virtualise the 3D list**: only boxes whose card is within one screen of the viewport are placed in the scene (others hidden/unloaded) | Keeps GPU/memory bounded for large catalogues | M |
-| 8 | **Keep gestures off the JS thread**: Gesture Handler + Reanimated worklets drive shared values; Filament consumes them in its worklet runtime | Smooth drag-to-inspect while JS is busy (mock API, state) | M (Stage 4) |
-| 9 | **Idle animation budget**: 30 fps cap for the idle "sway" in the catalogue, 60 fps only during gestures/opening | Halves GPU work for the most common state | S |
-| 10 | **Real-device profiling gate** with budgets: frame ≤ 16.6 ms (60 fps), cold start ≤ 2 s to first 3D frame, memory ≤ 450 MB PSS on a mid-range Android. Tooling already exists (meter + `perfIosProfile` + `perfAndroidTrace`); it needs a physical Android phone and a connected iPhone | Turns the above into pass/fail criteria | S (tools done) |
+| SurfaceFlinger `--timestats` | Android | How many frames the system actually **put on the screen** (not just rendered) | `yarn perfAndroidPresentFps` |
+| Perfetto system trace | Android | CPU per thread, buffer-queue stalls | `yarn perfAndroidTrace` |
+| Instruments (Time Profiler) | iOS | CPU per thread | `yarn perfIosProfile` |
 
-## 6. Risks to track
-- Filament v2 is an unreleased release candidate (PR 349). Mitigation: vendored + pinned, documented in `vendor/react-native-filament/VENDOR.md`; swap to the npm release when published.
-- Scene teardown / engine disposal crashes are reported upstream; keep a single long-lived scene and avoid re-mounting `FilamentScene` (also saves startup cost).
+Things that look useful but are **not** reliable for this app: `dumpsys gfxinfo` only sees the normal Android UI thread, and the 3D scene draws on its own thread, so it reports almost nothing. Do not read FPS from it.
 
-## 7. Final result: stable 60 FPS on iOS and Android
+---
 
-Release builds, 30 s per scenario, one platform at a time (the other simulator shut down).
+## 4. The Android mystery: why it looked slow
 
-| Scenario | Triangles | iOS Simulator | Android Emulator (headless) |
+At first the Android emulator showed only **22–40 FPS**, while iOS showed 60. We did not guess: we removed suspects one by one.
+
+```mermaid
+flowchart TD
+    S[Android: 22-25 FPS] --> Q1{Is our 3D content too heavy?}
+    Q1 -->|"Empty scene is just as slow"| N1[No]
+    S --> Q2{Too many pixels to fill?}
+    Q2 -->|"4x fewer pixels: same FPS"| N2[No]
+    S --> Q3{Wrong graphics backend?}
+    Q3 -->|"Vulkan / ANGLE / flags: no change"| N3[No]
+    S --> Q4{Is the emulator window the problem?}
+    Q4 -->|"Start with -no-window: 60 FPS"| Y[YES]
+```
+
+**Root cause:** the normal emulator draws every frame into a window on the Mac, and that extra step caps the phone inside at about 24 FPS. Started **headless** (`-no-window`), the very same app build runs at a perfect 60 FPS. No app code changed.
+
+![Effect of the emulator window](media/chart-emulator-window-effect.svg)
+
+Two more lessons from this hunt:
+1. Running the iOS Simulator and the Android Emulator **at the same time** makes both slower, because they share one GPU. We always measure one at a time now.
+2. A small window (`-scale 0.4`, no device frame) helped only the 1-box case (60 FPS) and then fell back to 32–55 FPS, so a window is simply not a reliable way to measure.
+
+**How to use it:** `yarn androidEmulatorStart` boots the emulator headless. You can still look at the screen with `adb exec-out screencap -p > shot.png` or record it with `adb shell screenrecord`.
+
+---
+
+## 5. What we did to make it fast
+
+Most of the work was making sure the app does **less**, so 60 FPS stays cheap.
+
+| # | Change | Why it helps | Measured effect |
 |---|---|---|---|
-| 1 box | 31 k | 60.0 fps, 0 % slow | 60.0 fps, 0 % slow |
-| 4 boxes | 125 k | 60.0 | 60.0 |
-| 16 boxes | 500 k | 60.0 | 60.0 |
-| 64 boxes, full quality | 2.0 M | 60.0 | 60.0 |
-| 64 boxes, balanced | 2.0 M | 60.0 | 60.0 |
-| 64 boxes, performance | 2.0 M | 60.0 | 60.0 |
+| 1 | **One 3D scene for everything** | A second 3D view on Android never draws (library limit). One scene works the same on both platforms. | Fixed a blank-screen bug |
+| 2 | **Load the box model once, draw it N times** (instancing) | Before, every box loaded its own copy of the model. | 64 boxes: no more per-box model copy |
+| 3 | **Compressed 3D model** (Draco) | Smaller file, faster start. Looks identical. | `box.glb` 1.32 MB → **157 KB** (−88 %) |
+| 4 | **WebP watch images** (full size + small thumbnails) | Lists no longer decode 6 MB pictures. | Images 5.2 MB → 660 KB; thumbnails 104 KB (−98 %) |
+| 5 | **Render on demand** | A still scene does not need 60 redraws a second. The renderer is switched off when nothing moves and back on when something changes. | Idle CPU: iOS 0.5 %, Android 0.02 cores; saves battery |
+| 6 | **Quality profiles** (full / balanced / performance) | Lets us lower anti-aliasing, shadows and resolution on weak devices. | All three hold 60 FPS here, so there is headroom |
+| 7 | **arm64-only Android build** | Ships one CPU architecture instead of four. | Release APK **36.4 MB** |
+| 8 | **Guards around a library start/stop bug** | See below. | Removed FPS counts of 111–255 (frame loops that multiplied) |
 
-Worst frame 17 ms, p95 16.7 ms everywhere. Cross-check on Android with a second, independent counter (`yarn perfAndroidPresentFps`, SurfaceFlinger `--timestats`): 900 frames presented in 15 s = 60 fps.
+### The library bug we worked around
+On Android, `FilamentChoreographer.stop()` cannot cancel the frame that is already queued. If `stop()` and `start()` happen within one frame, **two frame loops run forever** and the frame rate doubles, triples and so on (we saw 111–255 "FPS"). We cannot (and by project rule do not) patch the library, so the render-on-demand code:
+- never calls `start()` on something that is already running,
+- keeps `stop()` and the next `start()` at least 300 ms apart,
+- has a *continuous* mode that never stops (used while the benchmark animates).
 
-### What the Android "24 fps ceiling" really was
-Earlier sections report 22-25 fps on the emulator. Root cause, found by elimination:
-- Not the app: an empty scene was equally slow; quartering the pixel count (`wm size 540x1212`) changed nothing, so it was not fill rate either.
-- Not the GL backend: Vulkan/ANGLE/feature flags made no difference.
-- **The emulator's own window.** The windowed emulator composites every guest frame into a macOS window (and the system UI itself scrolled janky). Started with `-no-window` (`yarn androidEmulatorStart`) the same build renders at 60.0 fps in all scenarios, with no code change.
-- Running the iOS Simulator and the Android Emulator together also made them fight for the host GPU, so each platform is now measured alone.
+The logic is covered by unit tests (`useFacadeRenderOnDemand.test.ts`).
 
-Visual proof: `docs/media/android-spike.png` (64 boxes, 60 fps overlay). Screen recordings: `adb shell screenrecord` from the headless emulator.
+```mermaid
+stateDiagram-v2
+    [*] --> Running: scene appears
+    Running --> Running: anything changes<br/>(restart the quiet timer)
+    Running --> Stopped: enough frames drawn<br/>AND minimum time passed
+    Stopped --> Running: something changes<br/>(after 300 ms gap)
+```
 
-### Improvements that got us here
-Render on demand (idle CPU iOS 0.5 %, Android 0.02 cores); one GLB instanced N times; Draco GLB 1.32 MB → 157 KB; WebP watches -92 % (thumbs -98 %); arm64-only builds (release APK 36.4 MB); quality profiles; single `FilamentScene`. Library bug found and mitigated: Android `FilamentChoreographer.stop()` does not cancel the queued callback, so `stop()` + `start()` in one frame multiplied frame loops (111-255 fps) - guarded by never starting a running choreographer, a 300 ms restart gap and a continuous mode for benchmarks.
+---
 
-### Remaining caveats
-Emulator and simulator share the host GPU, so these numbers show the pipeline is not the bottleneck, not that every phone reaches 60 fps at 64 boxes. Real-device runs use the same scripts (`yarn perfAndroidSuite`, `yarn perfIosSuite`) and are planned later.
+## 6. CPU and memory
+
+**CPU while the scene is open (1 box, steady state)**
+
+| Platform | What | Cost |
+|---|---|---|
+| iOS | Rendering threads | ≈ 9 % of one core |
+| iOS | Main thread / JS thread | ≈ 2 % / ≈ 1 % |
+| Android | Rendering thread (`FEngine::loop`) | ≈ 19 % of one core (windowed emulator trace) |
+| Android | JS thread | ≈ 3 % |
+
+The 3D work runs **off the UI and JavaScript threads**, so the mock API, state and navigation have plenty of room.
+
+**Memory**
+
+| Build | Measurement | Value |
+|---|---|---|
+| Android release, 64 boxes (end of suite) | PSS | ≈ 139 MB |
+| iOS Simulator debug, 1 → 64 boxes (before instancing) | RSS | 582 MB → 824 MB |
+
+Memory numbers differ a lot between debug and release builds, so compare only like with like.
+
+---
+
+## 7. Run the tests yourself
+
+Run **one platform at a time**.
+
+### Android
+```bash
+yarn androidEmulatorStart        # boots the emulator headless
+yarn androidRunSuite             # builds a release app that runs the 6 scenarios (first time / after code changes)
+yarn perfAndroidSuite            # restart, collect ~200 s, screenshots, table
+yarn perfAndroidPresentFps       # independent check via SurfaceFlinger
+yarn perfAndroidTrace            # Perfetto trace (CPU per thread)
+yarn androidEmulatorStop
+```
+Tip: if `androidRunSuite` seems to use old JavaScript, delete `android/app/build/generated/assets/react` and `android/app/build/intermediates/assets/release`, then run it again.
+
+### iOS
+```bash
+yarn iosRunSuite --device "iPhone 17"   # builds a release app that runs the 6 scenarios
+yarn perfIosSuite                       # restart, collect ~200 s, screenshots, table
+yarn perfIosProfile                     # Instruments Time Profiler
+```
+
+### Charts
+```bash
+yarn perfCharts                         # redraws docs/media/chart-*.svg from docs/data
+```
+
+### Options (environment variables)
+| Variable | Meaning |
+|---|---|
+| `EXPO_PUBLIC_AUTO_BENCHMARK=1` | Swing the lid continuously |
+| `EXPO_PUBLIC_AUTO_BENCHMARK=suite` | Walk through all six scenarios by itself |
+| `EXPO_PUBLIC_AUTO_BOXES=1\|4\|16\|64` | Start with this many boxes |
+| `EXPO_PUBLIC_PERF_SINK_URL` | Send FPS reports to a local collector (iOS release builds do not show their log) |
+| `ANDROID_ARCHITECTURES` | CPU architectures to build (default `arm64-v8a`) |
+
+---
+
+## 8. Honest limits
+
+- These are **simulator/emulator** results on an Apple M5 Pro. Their GPU is much faster than a phone GPU. The results prove that our pipeline (one scene, hinge animation, JS/worklet threads) is **not** the bottleneck; they do not prove that every phone reaches 60 FPS at 64 boxes. The real catalogue shows only a handful of boxes at once, far below the 64-box stress case.
+- Physical iPhone/Android runs are planned for later. The same scripts work on a real device unchanged.
+- `react-native-filament` 2.0 is an unreleased release candidate (vendored and pinned, see `vendor/react-native-filament/VENDOR.md`).
+- One known risk: our render-on-demand code remembers whether the renderer is running. If the library restarts it by itself (for example when Android resumes from the background), that memory could be wrong. Re-check on a real device.
+
+---
+
+## 9. Raw data
+
+| File | Content |
+|---|---|
+| [`data/ios-suite.log`](data/ios-suite.log) | Every 1-second report from the iOS suite run |
+| [`data/android-suite.log`](data/android-suite.log) | Every 1-second report from the Android suite run |
+| [`data/android-windowed-emulator.json`](data/android-windowed-emulator.json) | Averages with the emulator window (the "slow" case) |
+| `media/*.png`, `media/*.svg` | Screenshots and charts used above |

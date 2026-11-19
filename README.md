@@ -243,7 +243,7 @@ yarn doctor       # expo-doctor                       → 20/20 checks
 
 ## 7. Performance
 
-Full report with methodology, native profiler results and limits: [docs/PERFORMANCE.md](docs/PERFORMANCE.md). Frame rate is measured by an **in-app renderer FPS meter** (counts Filament's per-frame callbacks; overlay + `[perf:<platform>]` log) and cross-checked with **Instruments** (iOS) and **Perfetto** (Android).
+Plain-English report with charts, screenshots, methodology and limits: [docs/PERFORMANCE.md](docs/PERFORMANCE.md). Frame rate is measured by an **in-app renderer FPS meter** (counts Filament's per-frame callbacks; overlay + `[perf:<platform>]` log) and cross-checked with **Instruments** (iOS) and **Perfetto** (Android).
 
 | Scenario (iOS Simulator, Metal) | Triangles | FPS | Slow frames | RSS |
 |---|---|---|---|---|
@@ -259,6 +259,7 @@ Full report with methodology, native profiler results and limits: [docs/PERFORMA
 | Command | Purpose |
 |---|---|
 | `yarn androidEmulatorStart` / `yarn androidEmulatorStop` | Boot / stop the Android emulator **headless** (needed for correct FPS) |
+| `yarn perfCharts` | Redraw the SVG charts in `docs/media` from `docs/data` |
 | `yarn perfAndroidPresentFps` | Independent FPS from SurfaceFlinger presented frames |
 | `yarn iosRestart` / `yarn androidRestart` / `yarn androidRestartRelease` | Relaunch the installed app without rebuilding |
 | `yarn iosRunSuite` / `yarn androidRunSuite` | Build + install a release app that runs the 6-scenario benchmark |

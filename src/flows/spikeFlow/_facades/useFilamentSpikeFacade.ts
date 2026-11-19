@@ -22,7 +22,13 @@ const INITIAL_BENCHMARK_RUNNING = AUTO_BENCHMARK === '1' || AUTO_BENCHMARK === '
 // 'suite' additionally walks through every scenario of the benchmark suite by itself.
 const IS_BENCHMARK_SUITE = AUTO_BENCHMARK === 'suite'
 const requestedInitialBoxes = Number(process.env.EXPO_PUBLIC_AUTO_BOXES)
-const INITIAL_MODEL_COUNT = MODEL_COUNT_STEPS.includes(requestedInitialBoxes) ? requestedInitialBoxes : MODEL_COUNT_STEPS[0]
+const isRequestedBoxCountValid = MODEL_COUNT_STEPS.includes(requestedInitialBoxes)
+
+if (process.env.EXPO_PUBLIC_AUTO_BOXES && !isRequestedBoxCountValid) {
+  console.warn(`EXPO_PUBLIC_AUTO_BOXES=${process.env.EXPO_PUBLIC_AUTO_BOXES} is not one of ${MODEL_COUNT_STEPS.join(', ')}; starting with ${MODEL_COUNT_STEPS[0]}`)
+}
+
+const INITIAL_MODEL_COUNT = isRequestedBoxCountValid ? requestedInitialBoxes : MODEL_COUNT_STEPS[0]
 const BENCHMARK_PERIOD_MILLISECONDS = 3000
 const BENCHMARK_TICK_MILLISECONDS = 33
 

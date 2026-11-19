@@ -27,6 +27,20 @@ else
   bash "${ROOT_DIRECTORY}/scripts/app/restartAndroid.sh" release
 fi
 
+bash "${ROOT_DIRECTORY}/scripts/perf/captureScenarioScreenshots.sh" "${PLATFORM}" &
+CAPTURE_PID=$!
+cleanUpBackgroundJobs() {
+  for JOB_PID in "${CAPTURE_PID:-}" "${LOGCAT_PID:-}" "${SINK_PID:-}"; do
+    if [ -n "${JOB_PID}" ]; then
+      kill "${JOB_PID}" 2>/dev/null || true
+    fi
+  done
+}
+trap cleanUpBackgroundJobs EXIT
+
 echo "[suite] ${PLATFORM}: collecting for ${TOTAL_SECONDS}s (6 scenarios x 30 s)..."
 sleep "${TOTAL_SECONDS}"
+wait "${CAPTURE_PID}" || true
+mkdir -p "${ROOT_DIRECTORY}/docs/data"
+cp "${OUTPUT_FILE}" "${ROOT_DIRECTORY}/docs/data/${PLATFORM}-suite.log"
 python3 "${ROOT_DIRECTORY}/scripts/perf/summarizeSuite.py" "${OUTPUT_FILE}"

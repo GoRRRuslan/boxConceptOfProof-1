@@ -11,9 +11,9 @@ import {
 } from 'react-native-filament'
 
 import { RenderOnDemand } from '@components/RenderOnDemand'
-
 import type { ILidHingeTransform } from '@flows/spikeFlow/_facadesLogic/computeLidHingeTransform'
-import { computeBoxGridLayout } from '@flows/spikeFlow/_facadesLogic/computeBoxGridLayout'
+
+import { type IBoxGridLayout, computeBoxGridLayout } from '@flows/spikeFlow/_facadesLogic/computeBoxGridLayout'
 import { makeStyles } from '@flows/spikeFlow/screens/FilamentSpikeScreen/_components/SpikeScene/SpikeScene.styles'
 import boxModelSource from '@assets/models/box.glb'
 
@@ -27,6 +27,7 @@ interface ISpikeSceneProps {
 
 interface IInstancedBoxesProps {
   lidHingeTransform: ILidHingeTransform
+  layout: IBoxGridLayout
   modelCount: number
   renderActivityKey: string
   isRenderContinuous: boolean
@@ -34,9 +35,8 @@ interface IInstancedBoxesProps {
 
 // Loads the GLB once and instantiates it `modelCount` times. Lives in its own component so the
 // whole model (and its instances) is re-created, keyed by the count, when the count changes.
-const InstancedBoxes = ({ lidHingeTransform, modelCount, renderActivityKey, isRenderContinuous }: IInstancedBoxesProps) => {
+const InstancedBoxes = ({ lidHingeTransform, layout, modelCount, renderActivityKey, isRenderContinuous }: IInstancedBoxesProps) => {
   const model = useModel(boxModelSource, { instanceCount: modelCount })
-  const layout = useMemo(() => computeBoxGridLayout(modelCount), [modelCount])
 
   return (
     <>
@@ -81,6 +81,7 @@ export const SpikeScene = ({
       <InstancedBoxes
         key={modelCount}
         lidHingeTransform={lidHingeTransform}
+        layout={layout}
         modelCount={modelCount}
         renderActivityKey={renderActivityKey}
         isRenderContinuous={isRenderContinuous}

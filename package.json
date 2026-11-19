@@ -29,6 +29,7 @@
     "-----": "--------------",
     "perfIosFps": "bash scripts/perf/measureRenderFps.sh ios",
     "perfAndroidPresentFps": "bash scripts/perf/measureAndroidPresentFps.sh",
+    "perfCharts": "python3 scripts/perf/renderCharts.py",
     "perfAndroidFps": "bash scripts/perf/measureRenderFps.sh android",
     "perfIosSuite": "bash scripts/perf/runSuite.sh ios",
     "perfAndroidSuite": "bash scripts/perf/runSuite.sh android",

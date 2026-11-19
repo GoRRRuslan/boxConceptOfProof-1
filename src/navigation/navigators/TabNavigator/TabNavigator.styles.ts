@@ -8,6 +8,10 @@ export const makeStyles = (theme: IThemePalette) =>
       backgroundColor: theme.Colors.background,
       borderTopColor: theme.Colors.card,
     },
+    tabBarHidden: {
+      opacity: 0,
+      pointerEvents: 'none',
+    },
     tabLabel: {
       fontSize: ms(14),
       fontWeight: '600',

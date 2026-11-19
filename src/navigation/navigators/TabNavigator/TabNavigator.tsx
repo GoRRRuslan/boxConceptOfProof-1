@@ -21,16 +21,17 @@ export const TabNavigator = () => {
   return (
     <Tab.Navigator
       detachInactiveScreens={false}
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         // Switching tabs fades instead of cutting.
         animation: 'fade',
-        tabBarStyle: styles.tabBar,
+        // While the catalogue shows a prize its tab bar is invisible and cannot be tapped (the layout does not change).
+        tabBarStyle: [styles.tabBar, route.name === ETabRoute.Catalogue && route.params?.isTabBarHidden ? styles.tabBarHidden : null],
         tabBarLabelStyle: styles.tabLabel,
         tabBarIconStyle: styles.tabIcon,
         tabBarActiveTintColor: theme.Colors.accent,
         tabBarInactiveTintColor: theme.Colors.textSecondary,
-      }}
+      })}
     >
       <Tab.Screen
         name={ETabRoute.Catalogue}

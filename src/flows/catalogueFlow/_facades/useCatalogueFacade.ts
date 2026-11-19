@@ -1,3 +1,5 @@
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
+import { useNavigation } from '@react-navigation/native'
 import type { FlashListRef } from '@shopify/flash-list'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -12,6 +14,7 @@ import { EOpeningPhase } from '@flows/openingFlow/_types'
 import type { ICatalogueCard, ICatalogueFacade, ICatalogueSceneSync, ICatalogueViewport } from '@flows/catalogueFlow/_types'
 import useStore from '@models/mainStorage/_storeConfigured'
 import type { EBoxIdentifier } from '@networking/api/MysteryBoxApi/_types'
+import { ETabRoute, type TTabParamList } from '@navigation/_types'
 import { useGetBoxesQuery } from '@networking/requests/queries/BoxQueries/useGetBoxesQuery'
 import { useRenderFpsMeter } from '@services/performance/useRenderFpsMeter'
 
@@ -31,6 +34,9 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
 
   // ------------------------ Services ----------------------- //
   const { renderCallback, renderFrameStats, isRenderPaused } = useRenderFpsMeter(PERFORMANCE_SCENARIO_LABEL)
+
+  // ------------------------ Navigation ----------------------- //
+  const navigation = useNavigation<BottomTabNavigationProp<TTabParamList, ETabRoute.Catalogue>>()
 
   // --------------------------- State ------------------------- //
   const [viewport, setViewport] = useState<ICatalogueViewport | null>(null)
@@ -121,6 +127,13 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   }
 
   // ------------------- Side effects ----------------------- //
+  // While a prize is shown the tab bar is not needed: Done leads back to the list.
+  const isTabBarHidden = opening.phase === EOpeningPhase.Revealed
+
+  useEffect(() => {
+    navigation.setParams({ isTabBarHidden })
+  }, [navigation, isTabBarHidden])
+
   useEffect(() => {
     if (!IS_AUTO_SCROLL || !viewport || cards.length === 0) {
       return

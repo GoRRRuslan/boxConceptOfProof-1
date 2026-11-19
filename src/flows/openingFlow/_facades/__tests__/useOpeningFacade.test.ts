@@ -196,6 +196,15 @@ describe('useOpeningFacade', () => {
 
     expect(result.current.reveal?.nameText).toBe(useStore.getState().ownedWatches[0].watch.name)
 
+    // The prize has the stage alone: Done appears only once the opened box has been put away.
+    expect(result.current.primaryButton).toBeNull()
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(TUCK_DELAY_MILLISECONDS + TUCK_DURATION_MILLISECONDS + 10)
+    })
+
+    expect(result.current.primaryButton?.labelText).toBe('Done')
+
     await act(() => {
       result.current.primaryButton?.onPress()
     })
@@ -455,9 +464,9 @@ describe('useOpeningFacade', () => {
 
         await openAndReveal(result)
 
-        // Done before the box is put away.
+        // Leaving before the box is put away (Done is not offered yet, but Back must be safe at any moment).
         await act(() => {
-          result.current.primaryButton?.onPress()
+          result.current.handleBackPress()
         })
 
         await act(async () => {
@@ -479,7 +488,7 @@ describe('useOpeningFacade', () => {
         await openAndReveal(result)
 
         await act(() => {
-          result.current.primaryButton?.onPress()
+          result.current.handleBackPress()
         })
 
         await act(async () => {

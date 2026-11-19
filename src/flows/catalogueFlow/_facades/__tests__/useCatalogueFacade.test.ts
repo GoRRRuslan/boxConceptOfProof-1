@@ -10,6 +10,9 @@ import { mockApiSettings, resetMockApiSettings } from '@networking/api/MysteryBo
 import { BOX_CATALOGUE } from '@networking/api/MysteryBoxApi/_mockData/boxCatalogue'
 
 const mockSetBlocking = jest.fn()
+const mockSetParams = jest.fn()
+
+jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ setParams: mockSetParams }) }))
 
 jest.mock('react-native-gesture-handler', () => ({
   usePanGesture: () => ({}),
@@ -87,6 +90,14 @@ describe('useCatalogueFacade', () => {
     })
 
     expect(result.current.isLoadingBoxes).toBe(false)
+  })
+
+  it('keeps the tab bar while the list is shown', async () => {
+    await renderHook(() => useCatalogueFacade(), { wrapper: createWrapper() })
+
+    expect(mockSetParams).toHaveBeenCalledWith({ isTabBarHidden: false })
+
+    expect(mockSetParams).not.toHaveBeenCalledWith({ isTabBarHidden: true })
   })
 
   it('exposes the wallet balance in cents and follows it', async () => {

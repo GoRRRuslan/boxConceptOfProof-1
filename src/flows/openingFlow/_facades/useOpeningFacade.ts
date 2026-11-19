@@ -106,7 +106,8 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     [boxesData, selectedBoxIdentifier],
   )
   const isAffordable = selectedBox ? balanceInCents >= selectedBox.priceInCents : false
-  const primaryActionState = getPrimaryActionForPhase(phase, isAffordable)
+  // After the reveal the prize has the stage alone: Done appears once the opened box has been put away.
+  const primaryActionState = phase === EOpeningPhase.Revealed && !isBoxPutAway ? null : getPrimaryActionForPhase(phase, isAffordable)
 
   // ------------------- Handlers -------------------------- //
   // The timers of an opening (sounds, reveal, putting the box away) must never outlive it: after Done or a new

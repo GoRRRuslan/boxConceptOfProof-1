@@ -20,14 +20,18 @@ export const makeStyles = (theme: IThemePalette, rarityColorHex: string) =>
       left: 0,
     },
     header: {
-      flexDirection: 'row',
-      alignItems: 'center',
       paddingHorizontal: ms(16),
       paddingTop: mvs(8),
     },
+    // Back sits in the top left corner; the box name is centred on the screen below it, in line with the button at the bottom.
+    backSlot: {
+      position: 'absolute',
+      top: mvs(8),
+      left: ms(16),
+    },
     titles: {
-      flex: 1,
       alignItems: 'center',
+      marginTop: mvs(56),
     },
     boxName: {
       fontSize: ms(18),
@@ -63,7 +67,7 @@ export const makeStyles = (theme: IThemePalette, rarityColorHex: string) =>
     // Below the glow, the price is the hero: big and in the rarity colour; name and brand are quiet.
     revealTexts: {
       alignItems: 'center',
-      marginTop: ms(34),
+      marginTop: ms(46),
     },
     watchValue: {
       fontSize: ms(30),

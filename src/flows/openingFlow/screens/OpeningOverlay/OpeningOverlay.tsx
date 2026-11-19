@@ -48,7 +48,9 @@ export const OpeningOverlay = ({ opening }: IOpeningOverlayProps) => {
       </GestureDetector>
       <View style={styles.header} pointerEvents="box-none">
         {opening.isBackVisible ? (
-          <AppButton label={opening.backLabelText} onPress={opening.handleBackPress} testID="backButton" />
+          <View style={styles.backSlot}>
+            <AppButton label={opening.backLabelText} onPress={opening.handleBackPress} testID="backButton" />
+          </View>
         ) : null}
         {/* Once the prize is revealed the box name steps aside: the prize gets a clean stage, no text on top of the glow. */}
         {reveal ? null : (

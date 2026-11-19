@@ -37,6 +37,8 @@ A "slow frame" is any frame that took longer than 25 ms (a visibly missed refres
 
 **The real catalogue screen** (8 boxes in a scrolling list, one shared 3D scene) was measured too, with the list scrolling by itself for 60 s: **60.0 FPS on iOS and on Android, 0 slow frames, worst frame 17 ms** (details in [STAGE_3_CATALOGUE.md](STAGE_3_CATALOGUE.md)).
 
+**Re-run on the finished app (Stage 6):** catalogue scrolling for 60 s gives **60.0 FPS on both platforms, 0 slow frames** (iOS and Android, 51 one-second windows each; Android also confirmed by SurfaceFlinger: 600 frames in 10 s). Background → foreground keeps 60 FPS (no duplicated frame loops). Opening flow on Android: 59.6 FPS average, min 58 (the screenshots taken during the flow cost a few frames).
+
 The Android result was reproduced three times, including once on the final code after the code review, and cross-checked with a second, independent counter (see section 3): **600 frames presented in 10 s = 60 FPS**.
 
 ---
@@ -230,7 +232,8 @@ yarn perfCharts                         # redraws docs/media/chart-*.svg from do
 - These are **simulator/emulator** results on an Apple M5 Pro. Their GPU is much faster than a phone GPU. The results prove that our pipeline (one scene, hinge animation, JS/worklet threads) is **not** the bottleneck; they do not prove that every phone reaches 60 FPS at 64 boxes. The real catalogue shows only a handful of boxes at once, far below the 64-box stress case.
 - Physical iPhone/Android runs are planned for later. The same scripts work on a real device unchanged.
 - `react-native-filament` 2.0 is an unreleased release candidate (vendored and pinned, see `vendor/react-native-filament/VENDOR.md`).
-- One known risk: our render-on-demand code remembers whether the renderer is running. If the library restarts it by itself (for example when Android resumes from the background), that memory could be wrong. Re-check on a real device.
+- Our render-on-demand code remembers whether the renderer is running. A background → foreground test on both platforms showed no problem (frame rate stays ≤ 60 FPS, the scene is intact), but it is still an assumption about the library; re-check on a real device.
+- One iOS Simulator screenshot (taken with `simctl` while the list was scrolling) showed a box torn in two horizontal halves. Six more screenshots of the same scene were clean and the meter reported no slow frame, so it looks like a capture artifact (the screenshot grabbed the Metal layer mid-update); it has not been seen on screen and is untested on a real device.
 
 ---
 

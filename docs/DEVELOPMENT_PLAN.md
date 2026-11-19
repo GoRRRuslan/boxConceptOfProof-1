@@ -1,5 +1,7 @@
 # Mystery Watch PoC — development plan (stage-by-stage review)
 
+> **Status: all stages (0–6) are done.** See the README for the result and [TEST_CHECKLIST.md](TEST_CHECKLIST.md) for what was verified. The plan below is kept as it was written; the table of risks notes how each was resolved.
+
 Each stage ends with a **review gate**: stop, show the result, wait for approval.
 Budget from the estimate: 17–24 h total.
 
@@ -15,7 +17,7 @@ Budget from the estimate: 17–24 h total.
 | R1 | `react-native-filament` 1.11 depends on `react-native-worklets-core`; Reanimated 4 depends on `react-native-worklets`. Open Filament issues mention `TurboModuleRegistry 'Worklets'` errors and Expo 54 + New Arch crashes | Stage 1 spike with go/no-go. Options: pinned versions + `patch-package`; Filament v2 branch (run on `react-native-worklets`); gestures via Gesture Handler shared values; last resort `three` + `expo-gl` |
 | R2 | Several live 3D views in a scrolling list | **Resolved in Stage 1:** several `FilamentScene`s do not work on Android (only the first draws). Use ONE shared scene/canvas; box models positioned from the list scroll offset |
 | R3 | Lid + wordmark must rotate about pivot `[0, 0.914876, 0.359181]` around +X, nodes have identity transforms | Pure function `T(p)·Rx(θ)·T(−p)` applied to both parts, unit-tested |
-| R4 | Scene lifecycle (background/foreground, teardown, source change) | One scene owner per screen, explicit dispose, manual checklist |
+| R4 | Scene lifecycle (background/foreground, teardown, source change) | One scene owner per screen, explicit dispose, manual checklist. **Resolved in Stage 6:** one long-lived scene for the whole app; background → foreground keeps the scene and the frame rate (no duplicated frame loops) on both platforms |
 
 ## Stages
 **Stage 0 — Scaffold & environment (done in this commit)**: Expo SDK 58 project, reference structure and aliases, lint/ts/jest, assets, runs on iOS simulator and Android emulator.

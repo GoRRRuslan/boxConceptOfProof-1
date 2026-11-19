@@ -20,6 +20,9 @@ export const DRAG_PITCH_MAXIMUM_RADIANS = 0.55
 // Inertia: velocity is multiplied by this much every 1/60 s after the finger lifts.
 export const DRAG_INERTIA_DECAY_PER_FRAME = 0.94
 export const DRAG_INERTIA_STOP_VELOCITY = 0.02
+// The renderer keeps running this long after a release so the inertia can play out (a flick at the
+// fastest speed stops well before this).
+export const DRAG_INERTIA_MAXIMUM_MILLISECONDS = 2500
 
 // A very slow sway keeps the centred box alive while the user does nothing.
 export const IDLE_SWAY_AMPLITUDE_RADIANS = 0.06

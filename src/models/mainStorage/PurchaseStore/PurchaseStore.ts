@@ -35,8 +35,6 @@ const purchaseSlice: StateCreator<
       }
 
       if (state.balanceInCents < priceInCents) {
-        set({ lastErrorCode: EPurchaseErrorCode.InsufficientBalance })
-
         return { outcome: EBeginPurchaseOutcome.InsufficientBalance }
       }
 
@@ -52,7 +50,6 @@ const purchaseSlice: StateCreator<
         purchaseStatus: EPurchaseStatus.InProgress,
         activeAttempt: attempt,
         attemptCounter: attemptNumber,
-        lastErrorCode: null,
       })
 
       return { outcome: EBeginPurchaseOutcome.Started, attempt }
@@ -82,8 +79,6 @@ const purchaseSlice: StateCreator<
         state.activeAttempt = null
 
         state.retryableAttempt = null
-
-        state.lastErrorCode = null
       })
     },
 
@@ -96,8 +91,6 @@ const purchaseSlice: StateCreator<
         state.purchaseStatus = EPurchaseStatus.Idle
 
         state.activeAttempt = null
-
-        state.lastErrorCode = errorCode
       })
     },
 

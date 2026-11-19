@@ -82,7 +82,6 @@ describe('PurchaseStore', () => {
 
     expect(state.purchaseStatus).toBe(EPurchaseStatus.Idle)
 
-    expect(state.lastErrorCode).toBe(EPurchaseErrorCode.InsufficientBalance)
   })
 
   it('a failed purchase changes neither balance nor collection and unlocks the next purchase', () => {
@@ -97,8 +96,6 @@ describe('PurchaseStore', () => {
     expect(state.ownedWatches).toEqual([])
 
     expect(state.purchaseStatus).toBe(EPurchaseStatus.Idle)
-
-    expect(state.lastErrorCode).toBe(EPurchaseErrorCode.ServerError)
 
     expect(useStore.getState().beginPurchase(beginParams).outcome).toBe(EBeginPurchaseOutcome.Started)
   })

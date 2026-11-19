@@ -78,6 +78,6 @@ export const makeStyles = (theme: IThemePalette) =>
     error: {
       fontSize: ms(14),
       textAlign: 'center',
-      color: '#E4572E',
+      color: theme.Colors.danger,
     },
   })

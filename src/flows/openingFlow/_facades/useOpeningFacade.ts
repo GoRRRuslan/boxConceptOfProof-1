@@ -6,6 +6,7 @@ import { createSynchronizable } from 'react-native-worklets'
 
 import type { ICatalogueCard } from '@flows/catalogueFlow/_types'
 import {
+  DRAG_INERTIA_MAXIMUM_MILLISECONDS,
   DRAG_RADIANS_PER_PIXEL,
   FOCUS_DURATION_MILLISECONDS,
   LID_OPEN_DURATION_MILLISECONDS,
@@ -54,6 +55,9 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
   const [revealedWatch, setRevealedWatch] = useState<IWatch | null>(null)
   const [errorCode, setErrorCode] = useState<EPurchaseErrorCode | null>(null)
   const [isDragging, setIsDragging] = useState<boolean>(false)
+  // After the finger lifts the box keeps turning (inertia): the renderer must keep drawing meanwhile.
+  const [isInertiaRunning, setIsInertiaRunning] = useState<boolean>(false)
+  const inertiaTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const lidTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   // After leaving, the box needs a moment to fly back before another one may be selected.
   const selectionLockedUntilMilliseconds = useRef<number>(0)
@@ -170,6 +174,10 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     runOnJS: true,
     enabled: INTERACTIVE_PHASES.includes(phase),
     onActivate: () => {
+      clearTimeout(inertiaTimer.current)
+
+      setIsInertiaRunning(false)
+
       setIsDragging(true)
     },
     onUpdate: event => {
@@ -187,6 +195,12 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
       dragState.setBlocking({ ...dragState.getBlocking(), isDragging: false })
 
       setIsDragging(false)
+
+      setIsInertiaRunning(true)
+
+      inertiaTimer.current = setTimeout(() => {
+        setIsInertiaRunning(false)
+      }, DRAG_INERTIA_MAXIMUM_MILLISECONDS)
     },
   })
 
@@ -194,6 +208,8 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
   useEffect(
     () => () => {
       clearTimeout(lidTimer.current)
+
+      clearTimeout(inertiaTimer.current)
     },
     [],
   )
@@ -225,7 +241,7 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     phase,
     isOverlayVisible: phase !== EOpeningPhase.Browsing,
     isListHidden: phase !== EOpeningPhase.Browsing,
-    isDragging,
+    isDragging: isDragging || isInertiaRunning,
     boxNameText: selectedBox?.name ?? '',
     priceText: selectedBox ? formatCurrency(selectedBox.priceInCents) : '',
     hintText: getHintText(t, phase, isAffordable),

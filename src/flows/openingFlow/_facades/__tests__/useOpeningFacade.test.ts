@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react-native'
 import { createElement, type ReactNode } from 'react'
 
 import '@i18next/i18init'
-import { LID_OPEN_DURATION_MILLISECONDS } from '@flows/openingFlow/_config/openingConfig'
+import { DRAG_INERTIA_MAXIMUM_MILLISECONDS, LID_OPEN_DURATION_MILLISECONDS } from '@flows/openingFlow/_config/openingConfig'
 import { useOpeningFacade } from '@flows/openingFlow/_facades/useOpeningFacade'
 import { EOpeningPhase } from '@flows/openingFlow/_types'
 import useStore from '@models/mainStorage/_storeConfigured'
@@ -276,5 +276,32 @@ describe('useOpeningFacade', () => {
     })
 
     expect(result.current.sceneState.getBlocking()).toMatchObject({ lidTarget: 1 })
+  })
+
+  it('keeps the renderer busy after the finger lifts, until the inertia has played out', async () => {
+    jest.useFakeTimers()
+
+    const { result } = await renderFacade()
+    const gesture = result.current.panGesture as unknown as Record<string, (event?: unknown) => void>
+
+    await act(() => {
+      gesture.onActivate()
+    })
+
+    expect(result.current.isDragging).toBe(true)
+
+    await act(() => {
+      gesture.onFinalize()
+    })
+
+    expect(result.current.isDragging).toBe(true)
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(DRAG_INERTIA_MAXIMUM_MILLISECONDS + 10)
+    })
+
+    expect(result.current.isDragging).toBe(false)
+
+    jest.useRealTimers()
   })
 })

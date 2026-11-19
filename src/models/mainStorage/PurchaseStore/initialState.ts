@@ -6,5 +6,4 @@ export const initialPurchaseState: IPurchaseState = {
   retryableAttempt: null,
   attemptCounter: 0,
   appliedIdempotencyKeys: [],
-  lastErrorCode: null,
 }

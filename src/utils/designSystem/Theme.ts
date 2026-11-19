@@ -7,6 +7,7 @@ export interface IThemePalette {
     textPrimary: string
     textSecondary: string
     textOnAccent: string
+    danger: string
   }
 }
 
@@ -19,5 +20,6 @@ export const theme: IThemePalette = {
     textPrimary: '#F5F1E8',
     textSecondary: '#9A9484',
     textOnAccent: '#0B0D12',
+    danger: '#E4572E',
   },
 }

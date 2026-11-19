@@ -14,7 +14,7 @@ export const SENSOR_HEIGHT_MILLIMETERS = 24
 export const BOX_WIDTH_UNITS = 1.12
 export const BOX_CENTER_HEIGHT_UNITS = 0.56
 // How much of the slot height the closed box fills.
-export const BOX_SLOT_FILL = 0.72
+export const BOX_SLOT_FILL = 0.64
 
 // The model's front faces -Z, the camera sits at +Z, so the box is turned half a circle and then
 // a little to show a three-quarter view from above.

@@ -38,7 +38,6 @@ export interface IPurchaseState {
   attemptCounter: number
   // Keys already applied to balance and collection: a purchase can never be applied twice.
   appliedIdempotencyKeys: string[]
-  lastErrorCode: EPurchaseErrorCode | null
 }
 
 export interface IPurchaseActions {

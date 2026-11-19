@@ -1,5 +1,5 @@
 import type { FlashListRef } from '@shopify/flash-list'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import { createSynchronizable } from 'react-native-worklets'
@@ -56,11 +56,11 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   const balanceText = useMemo(() => formatCurrency(balanceInCents), [balanceInCents])
 
   // ------------------- Handlers -------------------------- //
-  const handleListLayout = useCallback((event: LayoutChangeEvent) => {
+  const handleListLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout
 
     setViewport(previous => (previous?.width === width && previous.height === height ? previous : { width, height }))
-  }, [])
+  }
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     scrollOffset.setBlocking(event.nativeEvent.contentOffset.y)

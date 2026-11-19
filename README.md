@@ -281,7 +281,7 @@ boxConceptOfProof-1/
 ├── app.config.ts                     # Expo config (dynamic)
 ├── babel.config.js · metro.config.js # aliases, worklets plugin, .glb assets
 ├── eslint.config.mjs · .prettierrc.json
-├── docs/                             # ASSIGNMENT, DEVELOPMENT_PLAN, PERFORMANCE, STAGE_1_FINDINGS, MODEL, reference.png
+├── docs/                             # ASSIGNMENT, DEVELOPMENT_PLAN, PERFORMANCE, STAGE_1_FINDINGS, STAGE_2_DOMAIN, MODEL, reference.png
 ├── scripts/
 │   ├── installFilamentBinaries.sh
 │   └── perf/                         # FPS analysis, Perfetto + Instruments capture
@@ -291,6 +291,8 @@ boxConceptOfProof-1/
     ├── app/                          # App.tsx, useAppFacade.ts, App.styles.ts
     ├── assets/                       # models/box.glb · images/watches/*.png · images/app/*
     ├── components/                   # _layout/ScreenContainer · AppText · PerformanceOverlay · buttons/AppButton
+    ├── models/mainStorage/           # WalletStore · CollectionStore · PurchaseStore · _storeConfigured (session-scoped Zustand)
+    ├── networking/                   # api/MysteryBoxApi (mock) · requests/{queries,mutations} · errorHandling
     ├── flows/
     │   └── spikeFlow/                # current flow (becomes catalogue/opening/collection)
     │       ├── _facades/             # useFilamentSpikeFacade (+ __tests__)
@@ -314,7 +316,7 @@ boxConceptOfProof-1/
 |---|---|---|
 | 0 | Scaffold on Expo SDK 58, reference structure, lint/ts/jest, both platforms running | ✅ done |
 | 1 | Filament spike: GLB, lighting, hinge, multi-box strategy, vendoring, performance analysis | ✅ done |
-| 2 | Domain + asynchronous mock API + Zustand stores + purchase mutation (one deduction, one watch, no duplicates) with unit tests | ⏳ next |
+| 2 | Domain + asynchronous mock API + Zustand stores + purchase mutation (one deduction, one watch, no duplicates) with unit tests — see [docs/STAGE_2_DOMAIN.md](docs/STAGE_2_DOMAIN.md) | ✅ done |
 | 3 | Catalogue: FlashList over one shared 3D scene, per-box material colours, prices, prize pools | planned |
 | 4 | Opening experience: drag-to-inspect, animated lid, camera + light, watch reveal, haptics | planned |
 | 5 | Collection tab, navigation, visual consistency | planned |

@@ -278,7 +278,7 @@ The published `react-native-filament@1.11.0` does not work on React Native 0.88:
 
 ```bash
 yarn ciPipeline   # eslint . && tsc --noEmit      → must be clean
-yarn test         # jest                            → 251 tests, 41 suites
+yarn test         # jest                            → 259 tests, 43 suites
 yarn doctor       # expo-doctor
 ```
 
@@ -286,7 +286,7 @@ yarn doctor       # expo-doctor
 |---|---|
 | ESLint (strict-type-checked, stylistic, react-native, react-hooks) | ✅ clean |
 | TypeScript 6 strict | ✅ clean |
-| Jest + RNTL | ✅ 251 / 251 |
+| Jest + RNTL | ✅ 259 / 259 |
 | Clean clone: install → lint → types → tests | ✅ (see [checklist](docs/TEST_CHECKLIST.md)) |
 | Full flow on iOS 27 and Android 37 | ✅ (see [checklist](docs/TEST_CHECKLIST.md)) |
 

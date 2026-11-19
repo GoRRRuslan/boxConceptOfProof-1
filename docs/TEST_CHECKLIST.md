@@ -7,7 +7,7 @@ What was checked, how, and the result. Release builds on the **iOS Simulator (iP
 | Check | Command | Result |
 |---|---|---|
 | Lint + types | `yarn ciPipeline` | ✅ clean |
-| Unit + component tests | `yarn test` | ✅ 251 tests, 41 suites |
+| Unit + component tests | `yarn test` | ✅ 259 tests, 43 suites |
 | Clean clone: install → lint → types → tests | see section 4 | ✅ |
 
 ## 2. Manual — functional
@@ -60,7 +60,9 @@ Details of every animation: [ANIMATIONS.md](ANIMATIONS.md). "—" means not run 
 | A7 | Reveal Common | Grey pill, grey circles, price, name, brand; nothing over the watch | ✅ | ✅ |
 | A8 | Reveal Rare / Epic | Blue / purple pill and circles, particles; Epic with a flash | — | ✅ Rare, ✅ Epic (earlier layout) |
 | A9 | Reveal Legendary (5th purchase, Classic box) | Gold pill and circles, flash, 28 particles, price in gold | — | ✅ |
-| A10 | After the reveal | Box waits 1.8 s, shrinks away; Done stays centred at the bottom; Done mid-way brings the box back and flies it home | ✅ (put away) | ✅ |
+| A10 | After the reveal | Box waits 1.8 s, shrinks away; Done stays centred at the bottom | ✅ | ✅ |
+| A10a | Done after the box is put away | The box is back in its card, closed, normal size, texts in place | ✅ | ✅ |
+| A10b | Done in the middle of putting the box away, then select another box at once | The new box opens in inspect mode at normal size (no late timer shrinks it) | ✅ | ✅ |
 | A11 | Collection and detail sheet | Rows slide in; detail sheet with a rarity-coloured border; total value counts up | — | ✅ |
 | A12 | Light and shine | Glossy / metallic finish rises with the box price; the light from inside the box is visible. Shadows, ambient occlusion and bloom are switched on, but their effect was not isolated by an on/off comparison | ✅ | ✅ |
 | A13 | Opening several boxes quickly one after another | Sounds are not cut off (two alternating players per effect) | unit tests | unit tests |
@@ -77,6 +79,7 @@ Bugs found by this round and fixed (each has a test or a documented reason):
 | B5 | iOS | Opened box cut off at the edge and over the texts | Dolly was kept while the lid opened; now taken back, box smaller and lower |
 | B6 | Both | A swipe-opened box looked different from a tapped one | The box now glides to the base pose when opening starts |
 | B7 | Android | A benchmark build showed no FPS overlay and no scrolling | Gradle reused an old JavaScript bundle (it does not track environment variables). Documented in the README troubleshooting table |
+| B8 | Code review | A late timer from an opening shrank the box that was flying home, or the next selected box | The opening timers are cleared on Done / Back / a new selection (three tests); A10a and A10b run on both platforms |
 
 ## 4. Clean clone
 
@@ -86,7 +89,7 @@ yarn install --frozen-lockfile     # postinstall fetches the Filament binaries
 yarn ciPipeline && yarn test
 yarn androidPrebuild && yarn iosPrebuild
 ```
-Result: ✅ a fresh `git clone` of the committed branch: `yarn install --frozen-lockfile` (7 s, the Filament binaries were downloaded by the postinstall script, ~90 MB), `yarn ciPipeline` clean, `yarn test` 251 / 251, `yarn androidPrebuild` and `yarn iosPrebuild` (with CocoaPods) both finished and produced the native projects. No manual step beyond the README was needed. The full native builds (Xcode / Gradle) were not repeated on the clone; they were run on the working copy for every check above.
+Result: ✅ a fresh `git clone` of the committed branch: `yarn install --frozen-lockfile` (7 s, the Filament binaries were downloaded by the postinstall script, ~90 MB), `yarn ciPipeline` clean, `yarn test` 251 / 251 (at the time of the clone check; the suite has 259 since the review fixes), `yarn androidPrebuild` and `yarn iosPrebuild` (with CocoaPods) both finished and produced the native projects. No manual step beyond the README was needed. The full native builds (Xcode / Gradle) were not repeated on the clone; they were run on the working copy for every check above.
 
 ## 5. Performance (final code, after the Stage 7 polish)
 

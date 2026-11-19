@@ -39,6 +39,8 @@ A "slow frame" is any frame that took longer than 25 ms (a visibly missed refres
 
 **Re-run on the finished app (Stage 6):** catalogue scrolling for 60 s gives **60.0 FPS on both platforms, 0 slow frames** (iOS and Android, 51 one-second windows each; Android also confirmed by SurfaceFlinger: 600 frames in 10 s). Background → foreground keeps 60 FPS (no duplicated frame loops). Opening flow on Android: 59.6 FPS average, min 58 (the screenshots taken during the flow cost a few frames).
 
+**Re-run after the visual polish (Stage 7: lights, shadows, ambient occlusion, bloom, new reveal):** the catalogue scrolls for 60 s at **60.0 FPS with 0 slow frames, worst frame 17 ms, on iOS and on Android** (51 one-second windows each). The Android emulator **window** was measured as well, scrolling the list non-stop with the release build: **60 FPS for 30 s, twice (1800 presented frames each, counted by SurfaceFlinger)**, at the default size and at `-scale 0.6 / 0.7 / 0.85 / 1.0`. The one slower reading (43 FPS) came right after a cold emulator boot and did not come back.
+
 The Android result was reproduced three times, including once on the final code after the code review, and cross-checked with a second, independent counter (see section 3): **600 frames presented in 10 s = 60 FPS**.
 
 ---
@@ -118,6 +120,8 @@ flowchart TD
 ```
 
 **Root cause:** the normal emulator draws every frame into a window on the Mac, and that extra step caps the phone inside at about 24 FPS. Started **headless** (`-no-window`), the very same app build runs at a perfect 60 FPS. No app code changed.
+
+> **Update (Stage 7):** with emulator 37.2.13 and the finished app the window no longer caps the frame rate: the same measurement in the window gave 60 FPS (see section 1). The story above is kept because it explains why headless is still the reference for exact numbers.
 
 ![Effect of the emulator window](media/chart-emulator-window-effect.svg)
 

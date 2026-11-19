@@ -114,7 +114,7 @@ yarn iosRunRelease
 
 What to expect: scroll the list, tap a box, drag / pinch / double-tap it, buy it, swipe up (or tap *Open the box*), watch the reveal, then look at *Collection*. Each successful purchase costs exactly once and adds exactly one watch.
 
-About smoothness: the app itself renders at a steady 60 FPS (see [Performance](#8-performance)). The **window** of the Android emulator, however, caps every app at roughly 24 FPS because it copies each frame into a macOS window. That is a limit of the emulator window, not of the app: on a real device, on the iOS Simulator, or on a headless emulator (`yarn androidEmulatorStart`, used for all measurements) it is smooth. Use an AVD with at least 4 cores, 4 GB RAM and the host GPU.
+About smoothness: the app renders at a steady 60 FPS on both platforms (see [Performance](#8-performance)). The Android emulator **window** was measured too, with the finished app, while the list was scrolled non-stop: **60 FPS for 30 s, twice (1800 frames each)**, at the default size and at `-scale 0.6 / 0.7 / 0.85 / 1.0`. Two things matter: use an AVD with at least 4 cores, 4 GB RAM and `hw.gpu.mode=host`, and give a freshly booted emulator a minute to finish its post-boot work (right after boot we once saw 43 FPS, which went away on its own). If the window ever feels slow, restart it with `emulator -avd <name> -gpu host -scale 0.7`; for exact measurements use the headless start (`yarn androidEmulatorStart`).
 
 ### Run the quality gates
 
@@ -409,8 +409,8 @@ boxConceptOfProof-1/
 | `expo run:ios` ends with an osascript error about the *Simulator* window | Xcode 27 ships **DeviceHub.app** instead of Simulator.app. The app is already installed: run `yarn start` and open it (`xcrun simctl launch booted com.gorrr.mysterywatch`) |
 | Blank screen on Android after adding navigation | The root container must be `flex: 1` without `alignItems: center` (see `App.styles.ts`) |
 | Only the first 3D view renders on Android | Use one `FilamentScene` per app (see [Real-time 3D](#5-real-time-3d)) |
-| Android emulator shows ~24 FPS | Start it headless: `yarn androidEmulatorStart` (the window caps it) |
-| Android emulator window hangs at start from a script | Use the headless start; the windowed one needs a GUI session |
+| Android emulator feels slow (below 60 FPS) | Let a freshly booted emulator settle for a minute, use an AVD with ≥ 4 cores / ≥ 4 GB / `hw.gpu.mode=host`, start it with `-gpu host` (optionally `-scale 0.7` for a smaller window), and install a **release** build (`yarn androidRunRelease`), not the development client. The window itself was measured at 60 FPS |
+| Android emulator window does not open from a script or sandboxed shell | The windowed emulator needs a GUI session; start it from Android Studio or a normal terminal, or use the headless start (`yarn androidEmulatorStart`) |
 | Android emulator crawls / UI shows *Updating…* | Use an AVD with ≥ 4 cores / ≥ 4 GB / host GPU; let the post-boot update finish |
 | The list scrolls up and down by itself / an FPS overlay is on screen | You installed a **benchmark build** (`*RunCatalogueScroll`, `*RunOpening`, `*RunSuite`, `*RunBenchmark`). Install a normal one: `yarn iosRunRelease` / `yarn androidRunRelease` (or the development client: `yarn iosRun` / `yarn androidRun` + `yarn start`) |
 | 3D boxes frozen while the list moves ("Render paused") | Fixed in Stage 6: the renderer assumed it was running; iOS can leave its display link paused after the app returns from the background. `RenderOnDemand` now has a watchdog and restarts the renderer when it comes back to the foreground |

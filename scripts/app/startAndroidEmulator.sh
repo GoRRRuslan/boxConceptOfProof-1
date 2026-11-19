@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Starts the Android emulator HEADLESS (no window) and waits until it has booted.
-# Headless matters for measurement: the windowed emulator composites every frame into a macOS window
-# and caps the guest at ~22-25 fps; headless renders at the full 60 fps. Stop other simulators first.
+# Headless keeps measurements free of window effects (the windowed emulator also reaches 60 fps with the
+# finished app, but a freshly booted one can be slower for a minute). Stop other simulators first.
 # Usage: startAndroidEmulator.sh [avdName=MW_Pixel9_API_37]
 set -euo pipefail
 

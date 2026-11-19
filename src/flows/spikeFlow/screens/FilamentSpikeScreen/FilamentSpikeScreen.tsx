@@ -16,8 +16,16 @@ const FilamentSpikeScreen = () => {
 
   // -------------------- Service hooks -------------------- //
   const {
+    isBenchmarkRunning,
+    benchmarkLabelText,
+    handleToggleBenchmarkPress,
+    renderQualityProps,
+    qualityLabelText,
+    handleCycleQualityPress,
     renderCallback,
     renderFrameStats,
+    isRenderPaused,
+    renderActivityKey,
     lidHingeTransform,
     modelCount,
     angleLabelText,
@@ -36,8 +44,14 @@ const FilamentSpikeScreen = () => {
   // --------------------- Render methods ------------------//
   const renderScene = () => (
     <View style={styles.sceneContainer}>
-      <FilamentScene>
-        <SpikeScene lidHingeTransform={lidHingeTransform} modelCount={modelCount} renderCallback={renderCallback} />
+      <FilamentScene {...renderQualityProps}>
+        <SpikeScene
+          lidHingeTransform={lidHingeTransform}
+          modelCount={modelCount}
+          renderActivityKey={renderActivityKey}
+          isRenderContinuous={isBenchmarkRunning}
+          renderCallback={renderCallback}
+        />
       </FilamentScene>
     </View>
   )
@@ -45,6 +59,8 @@ const FilamentSpikeScreen = () => {
   const renderModelCountControl = () => (
     <View style={styles.controls}>
       <AppButton label={modelCountLabelText} onPress={handleToggleModelCountPress} testID="toggleModelCountButton" />
+      <AppButton label={benchmarkLabelText} onPress={handleToggleBenchmarkPress} testID="toggleBenchmarkButton" />
+      <AppButton label={qualityLabelText} onPress={handleCycleQualityPress} testID="cycleQualityButton" />
     </View>
   )
 
@@ -63,7 +79,7 @@ const FilamentSpikeScreen = () => {
   return (
     <ScreenContainer testID="filamentSpikeScreen">
       {renderScene()}
-      <PerformanceOverlay renderFrameStats={renderFrameStats} />
+      <PerformanceOverlay renderFrameStats={renderFrameStats} isRenderPaused={isRenderPaused} />
       {renderModelCountControl()}
       {renderLidControls()}
     </ScreenContainer>

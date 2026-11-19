@@ -7,11 +7,11 @@ Simulators and emulators share the host GPU and are **not representative of devi
 
 | Asset | Size | Content | Comment |
 |---|---|---|---|
-| `box.glb` | 1.32 MB | 5 meshes, **23,189 vertices, 31,242 triangles**, 6 PBR materials (`KHR_materials_clearcoat`), 2 wordmark PNG textures (23 KB + 12 KB), no animations/skins | Per box. 4 visible boxes ≈ 125k triangles — trivial for a mobile GPU |
+| `box.glb` | 1.32 MB source → **157 KB** shipped (Draco) | 5 meshes, **23,189 vertices, 31,242 triangles**, 6 PBR materials (`KHR_materials_clearcoat`), 2 wordmark PNG textures (23 KB + 12 KB), no animations/skins | Per box. 4 visible boxes ≈ 125k triangles — trivial for a mobile GPU |
 | Watch PNGs (4×) | 0.99 – 1.89 MB each, **5.48 MB total**, 1019 × 1544 RGBA | Reveal + collection | Decoded bitmap ≈ **6.3 MB each** (1019·1544·4 B) → ~25 MB if all four are resident |
 | Vendored Filament source | 3.9 MB | `vendor/react-native-filament` | In git |
 | Filament + Bullet3 binaries | 331 MB on disk | `node_modules`, fetched by script | Not in git; only the used ABI/arch ends up in the app |
-| Android debug APK | **95.4 MiB** (100,084,571 B) | all ABIs, debug | Release + arm64-only will be far smaller |
+| Android debug APK | 95.4 MiB (100,084,571 B) | arm64-only, debug | Release APK: **36.4 MB** |
 | iOS simulator `.app` | 142 MB | debug | |
 
 ## 2. Runtime cost: 1 box vs 4 boxes
@@ -124,3 +124,15 @@ Limits and traps
 ## 6. Risks to track
 - Filament v2 is an unreleased release candidate (PR 349). Mitigation: vendored + pinned, documented in `vendor/react-native-filament/VENDOR.md`; swap to the npm release when published.
 - Scene teardown / engine disposal crashes are reported upstream; keep a single long-lived scene and avoid re-mounting `FilamentScene` (also saves startup cost).
+
+## 7. Status after the improvement pass (interim — final report withheld)
+
+Implemented: render on demand (iOS idle CPU 0.5 %, Android 0.02 cores), GLB instancing, Draco GLB (-88 %), WebP watches (-92 %, thumbs -98 %), arm64-only builds, quality profiles, one-command benchmark suite (`yarn perfIosSuite`, `yarn perfAndroidSuite`).
+Library bug found and mitigated: Android `FilamentChoreographer.stop()` does not cancel the queued callback, so `stop()`+`start()` in one frame multiplies frame loops (fps 111-255). Guards: never start a running choreographer, 300 ms restart gap, continuous mode for benchmarks.
+
+| Scenario (release, 30 s each) | iOS Simulator | Android Emulator |
+|---|---|---|
+| 1 / 4 / 16 boxes | 60.0 / 60.0 / 60.0 fps, 0 % slow | 22.0 / 23.5 / 24.9 fps |
+| 64 boxes full / balanced / performance | 60.0 / 60.0 / 60.0 fps | 40.2 / 31.3 / 31.7 fps |
+
+Android emulator is the limit, not the app: an empty scene is as slow; Vulkan, ANGLE and GL feature flags did not help; and cutting the pixel count by 4x (`wm size 540x1212`) left fps unchanged (22.2 / 23.1 / 24.8), so it is not fill rate but per-frame sync in the emulator's GL translation. Stable 60 fps on Android must be confirmed on a physical phone with the same scripts; the full performance report is written after that.

@@ -9,10 +9,14 @@
     "close": "Close",
     "decrease": "−5°",
     "increase": "+5°",
-    "modelCount": "Boxes: {{count}}"
+    "modelCount": "Boxes: {{count}}",
+    "quality": "Quality: {{profile}}",
+    "benchmarkOn": "Benchmark: ON",
+    "benchmarkOff": "Benchmark: off"
   },
   "performance": {
     "measuring": "Measuring…",
-    "summary": "{{fps}} fps · avg {{average}} ms · p95 {{p95}} ms · slow {{slow}}"
+    "summary": "{{fps}} fps · avg {{average}} ms · p95 {{p95}} ms · slow {{slow}}",
+    "paused": "Render paused · idle (0 fps)"
   }
 }

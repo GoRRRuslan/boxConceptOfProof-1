@@ -10,14 +10,19 @@ import { theme } from '@utils/designSystem/Theme'
 
 interface IPerformanceOverlayProps {
   renderFrameStats: IRenderFrameStats | null
+  isRenderPaused: boolean
 }
 
-export const PerformanceOverlay = ({ renderFrameStats }: IPerformanceOverlayProps) => {
+export const PerformanceOverlay = ({ renderFrameStats, isRenderPaused }: IPerformanceOverlayProps) => {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const styles = useMemo(() => makeStyles(theme, insets.top), [insets.top])
 
   const overlayText = useMemo(() => {
+    if (isRenderPaused) {
+      return t('performance.paused')
+    }
+
     if (!renderFrameStats) {
       return t('performance.measuring')
     }
@@ -28,7 +33,7 @@ export const PerformanceOverlay = ({ renderFrameStats }: IPerformanceOverlayProp
       p95: renderFrameStats.p95FrameMilliseconds.toFixed(1),
       slow: renderFrameStats.slowFrames,
     })
-  }, [t, renderFrameStats])
+  }, [t, renderFrameStats, isRenderPaused])
 
   return (
     <View style={styles.container} pointerEvents="none" testID="performanceOverlay">

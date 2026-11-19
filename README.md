@@ -253,17 +253,20 @@ Full report with methodology, native profiler results and limits: [docs/PERFORMA
 | 64 boxes (stress) | 2.0 M | **60.0** | 0 | 824 MB |
 
 - 3D path ≈ **9 % of one CPU core** on iOS, entirely off the main/JS threads (JS thread ≈ 1 %)
-- Memory grows ≈ **4.4 MB per extra box** (each `<Model>` re-loads the GLB) → instancing is the first optimisation
-- Android Emulator caps at ~24 fps even for an **empty scene** (GL translation layer), so Android FPS must be taken on a physical device; tooling is ready
-- `box.glb` 1.32 MB · 5 meshes · 6 PBR materials · clearcoat · watch PNGs 5.48 MB (≈ 6.3 MB decoded each)
-
-**Top improvements queued:** render-on-demand, single GLB with instancing, WebP thumbnails, cheaper list shading, GLB compression, arm64-only release builds, real-device profiling gate.
+- Implemented: render on demand, GLB instancing, Draco GLB (1.32 MB → 157 KB), WebP watches (-92 %), arm64-only builds, quality profiles
+- Android Emulator caps at ~22–25 fps even for an **empty scene** and even at ¼ of the pixels (GL translation layer, not fill rate), so Android 60 fps must be confirmed on a physical phone; tooling is ready
 
 | Command | Purpose |
 |---|---|
+| `yarn iosRestart` / `yarn androidRestart` / `yarn androidRestartRelease` | Relaunch the installed app without rebuilding |
+| `yarn iosRunSuite` / `yarn androidRunSuite` | Build + install a release app that runs the 6-scenario benchmark |
+| `yarn perfIosSuite` / `yarn perfAndroidSuite` | Restart, collect ~200 s, print the FPS table |
+| `yarn perfIosFps` / `yarn perfAndroidFps` | Quick FPS sample of the running app |
 | `yarn perfIosProfile [UDID]` | Instruments Time Profiler → CPU per thread |
 | `yarn perfAndroidTrace` | Perfetto 10 s trace → CPU per thread, buffer-queue stalls |
-| `python3 scripts/perf/analyzeRenderFps.py ios 0` | Aggregate the in-app FPS meter from the Metro log |
+| `yarn assetsOptimize` | Re-encode GLB (Draco) and watch images (WebP) from `assets-source/` |
+
+Env vars: `EXPO_PUBLIC_AUTO_BENCHMARK`, `EXPO_PUBLIC_AUTO_BOXES`, `EXPO_PUBLIC_PERF_SINK_URL`, `ANDROID_ARCHITECTURES`. Tip: if `androidRunSuite` seems stale, delete `android/app/build/generated/assets/react` and `intermediates/assets/release`.
 
 ---
 

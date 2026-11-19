@@ -1,59 +1,90 @@
 import { useMemo } from 'react'
-import { Camera, DefaultLight, EntitySelector, type FrameInfo, FilamentView, Model } from 'react-native-filament'
+import {
+  Camera,
+  DefaultLight,
+  EntitySelector,
+  FilamentView,
+  type FrameInfo,
+  ModelInstance,
+  ModelRenderer,
+  useModel,
+} from 'react-native-filament'
+
+import { RenderOnDemand } from '@components/RenderOnDemand'
 
 import type { ILidHingeTransform } from '@flows/spikeFlow/_facadesLogic/computeLidHingeTransform'
+import { computeBoxGridLayout } from '@flows/spikeFlow/_facadesLogic/computeBoxGridLayout'
 import { makeStyles } from '@flows/spikeFlow/screens/FilamentSpikeScreen/_components/SpikeScene/SpikeScene.styles'
-import {
-  GRID_MODEL_CAMERA_POSITION,
-  GRID_MODEL_CAMERA_TARGET,
-  GRID_MODEL_POSITIONS,
-  GRID_MODEL_SCALE,
-  SINGLE_MODEL_CAMERA_POSITION,
-  SINGLE_MODEL_CAMERA_TARGET,
-  SINGLE_MODEL_POSITIONS,
-  SINGLE_MODEL_SCALE,
-} from '@flows/spikeFlow/screens/FilamentSpikeScreen/_config/spikeSceneConfig'
 import boxModelSource from '@assets/models/box.glb'
 
 interface ISpikeSceneProps {
   lidHingeTransform: ILidHingeTransform
   modelCount: number
+  renderActivityKey: string
+  isRenderContinuous: boolean
   renderCallback: (frameInfo: FrameInfo) => void
 }
 
-export const SpikeScene = ({ lidHingeTransform, modelCount, renderCallback }: ISpikeSceneProps) => {
+interface IInstancedBoxesProps {
+  lidHingeTransform: ILidHingeTransform
+  modelCount: number
+  renderActivityKey: string
+  isRenderContinuous: boolean
+}
+
+// Loads the GLB once and instantiates it `modelCount` times. Lives in its own component so the
+// whole model (and its instances) is re-created, keyed by the count, when the count changes.
+const InstancedBoxes = ({ lidHingeTransform, modelCount, renderActivityKey, isRenderContinuous }: IInstancedBoxesProps) => {
+  const model = useModel(boxModelSource, { instanceCount: modelCount })
+  const layout = useMemo(() => computeBoxGridLayout(modelCount), [modelCount])
+
+  return (
+    <>
+      <ModelRenderer model={model}>
+        {layout.positions.map((position, instanceIndex) => (
+          <ModelInstance key={instanceIndex} index={instanceIndex} translate={position} scale={layout.scale}>
+            <EntitySelector
+              byName="Shell_Lid"
+              rotate={lidHingeTransform.rotate}
+              translate={lidHingeTransform.translate}
+              multiplyWithCurrentTransform={false}
+            />
+            <EntitySelector
+              byName="Shell_Wordmark"
+              rotate={lidHingeTransform.rotate}
+              translate={lidHingeTransform.translate}
+              multiplyWithCurrentTransform={false}
+            />
+          </ModelInstance>
+        ))}
+      </ModelRenderer>
+      {/* Wakes the renderer on every change and when the model finishes loading. */}
+      <RenderOnDemand activityKey={`${renderActivityKey}|${model.state}`} warmupKey={model.state} isContinuous={isRenderContinuous} />
+    </>
+  )
+}
+
+export const SpikeScene = ({
+  lidHingeTransform,
+  modelCount,
+  renderActivityKey,
+  isRenderContinuous,
+  renderCallback,
+}: ISpikeSceneProps) => {
   const styles = useMemo(() => makeStyles(), [])
-  const isSingleModel = modelCount === 1
-  const modelPositions = isSingleModel ? SINGLE_MODEL_POSITIONS : GRID_MODEL_POSITIONS
+  const layout = useMemo(() => computeBoxGridLayout(modelCount), [modelCount])
 
   return (
     <FilamentView style={styles.filamentView} renderCallback={renderCallback} testID="filamentView">
-      <Camera
-        cameraPosition={isSingleModel ? SINGLE_MODEL_CAMERA_POSITION : GRID_MODEL_CAMERA_POSITION}
-        cameraTarget={isSingleModel ? SINGLE_MODEL_CAMERA_TARGET : GRID_MODEL_CAMERA_TARGET}
-      />
+      <Camera cameraPosition={layout.cameraPosition} cameraTarget={layout.cameraTarget} />
       <DefaultLight />
-      {modelPositions.map((modelPosition, modelIndex) => (
-        <Model
-          key={modelIndex}
-          source={boxModelSource}
-          translate={modelPosition}
-          scale={isSingleModel ? SINGLE_MODEL_SCALE : GRID_MODEL_SCALE}
-        >
-          <EntitySelector
-            byName="Shell_Lid"
-            rotate={lidHingeTransform.rotate}
-            translate={lidHingeTransform.translate}
-            multiplyWithCurrentTransform={false}
-          />
-          <EntitySelector
-            byName="Shell_Wordmark"
-            rotate={lidHingeTransform.rotate}
-            translate={lidHingeTransform.translate}
-            multiplyWithCurrentTransform={false}
-          />
-        </Model>
-      ))}
+      <InstancedBoxes
+        key={modelCount}
+        lidHingeTransform={lidHingeTransform}
+        modelCount={modelCount}
+        renderActivityKey={renderActivityKey}
+        isRenderContinuous={isRenderContinuous}
+      />
     </FilamentView>
   )
 }

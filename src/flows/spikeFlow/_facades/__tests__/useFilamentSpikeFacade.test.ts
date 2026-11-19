@@ -5,7 +5,7 @@ import { useFilamentSpikeFacade } from '@flows/spikeFlow/_facades/useFilamentSpi
 import { LID_FULLY_OPEN_ANGLE_DEGREES } from '@flows/spikeFlow/_facadesLogic/computeLidHingeTransform'
 
 jest.mock('@services/performance/useRenderFpsMeter', () => ({
-  useRenderFpsMeter: () => ({ renderCallback: jest.fn(), renderFrameStats: null }),
+  useRenderFpsMeter: () => ({ renderCallback: jest.fn(), renderFrameStats: null, isRenderPaused: false }),
 }))
 
 describe('useFilamentSpikeFacade', () => {
@@ -55,19 +55,64 @@ describe('useFilamentSpikeFacade', () => {
     expect(result.current.angleLabelText).toBe(`${LID_FULLY_OPEN_ANGLE_DEGREES}°`)
   })
 
-  it('toggles between one and four boxes', async () => {
+  it('cycles through the benchmark box counts and wraps around', async () => {
+    const { result } = await renderHook(() => useFilamentSpikeFacade())
+    const observedCounts: number[] = [result.current.modelCount]
+
+    for (let pressIndex = 0; pressIndex < 4; pressIndex += 1) {
+      await act(() => {
+        result.current.handleToggleModelCountPress()
+      })
+
+      observedCounts.push(result.current.modelCount)
+    }
+
+    expect(observedCounts).toEqual([1, 4, 16, 64, 1])
+  })
+
+  it('cycles through the render quality profiles', async () => {
+    const { result } = await renderHook(() => useFilamentSpikeFacade())
+
+    expect(result.current.qualityLabelText).toBe('Quality: full')
+
+    await act(() => {
+      result.current.handleCycleQualityPress()
+    })
+
+    expect(result.current.qualityLabelText).toBe('Quality: balanced')
+  })
+
+  it('runs a continuous lid animation while the benchmark is on and stops when it is off', async () => {
+    jest.useFakeTimers()
+
     const { result } = await renderHook(() => useFilamentSpikeFacade())
 
     await act(() => {
-      result.current.handleToggleModelCountPress()
+      result.current.handleToggleBenchmarkPress()
     })
 
-    expect(result.current.modelCount).toBe(4)
+    expect(result.current.benchmarkLabelText).toBe('Benchmark: ON')
 
     await act(() => {
-      result.current.handleToggleModelCountPress()
+      jest.advanceTimersByTime(1500)
     })
 
-    expect(result.current.modelCount).toBe(1)
+    const midAngleLabel = result.current.angleLabelText
+
+    expect(midAngleLabel).not.toBe('0°')
+
+    await act(() => {
+      result.current.handleToggleBenchmarkPress()
+    })
+
+    const stoppedAngleLabel = result.current.angleLabelText
+
+    await act(() => {
+      jest.advanceTimersByTime(1000)
+    })
+
+    expect(result.current.angleLabelText).toBe(stoppedAngleLabel)
+
+    jest.useRealTimers()
   })
 })

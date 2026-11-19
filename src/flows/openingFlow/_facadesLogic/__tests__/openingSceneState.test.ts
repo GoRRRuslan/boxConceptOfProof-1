@@ -4,6 +4,7 @@ import {
   FOCUS_DURATION_MILLISECONDS,
   GLOW_MAXIMUM,
   LID_OPEN_DURATION_MILLISECONDS,
+  TUCK_DURATION_MILLISECONDS,
 } from '@flows/openingFlow/_config/openingConfig'
 import {
   INITIAL_OPENING_SCENE_STATE,
@@ -12,10 +13,12 @@ import {
   getAnticipationProgress,
   getFocusProgress,
   getLidProgress,
+  getTuckProgress,
   startClose,
   startFocus,
   setGlowColor,
   startLidOpen,
+  startTuck,
 } from '@flows/openingFlow/_facadesLogic/openingSceneState'
 
 describe('openingSceneState', () => {
@@ -120,6 +123,34 @@ describe('openingSceneState', () => {
 
     it('remembers the colour of the prize', () => {
       expect(setGlowColor(INITIAL_OPENING_SCENE_STATE, [1, 0.5, 0]).glowColorLinear).toEqual([1, 0.5, 0])
+    })
+  })
+
+  describe('putting the opened box away', () => {
+    it('is in place at first and gets put away smoothly after startTuck', () => {
+      const opened = startFocus(INITIAL_OPENING_SCENE_STATE, 0, 0)
+
+      expect(getTuckProgress(opened, 5000)).toBe(0)
+
+      const tucked = startTuck(opened, 5000)
+
+      expect(getTuckProgress(tucked, 5000)).toBe(0)
+
+      expect(getTuckProgress(tucked, 5000 + TUCK_DURATION_MILLISECONDS / 2)).toBeCloseTo(0.5)
+
+      expect(getTuckProgress(tucked, 5000 + TUCK_DURATION_MILLISECONDS)).toBe(1)
+    })
+
+    it('comes back when the user leaves and when another box is selected', () => {
+      const tucked = startTuck(startFocus(INITIAL_OPENING_SCENE_STATE, 0, 0), 0)
+      const leaving = startClose(tucked, 5000)
+      const reselected = startFocus(tucked, 2, 5000)
+
+      expect(getTuckProgress(leaving, 5000)).toBe(1)
+
+      expect(getTuckProgress(leaving, 5000 + TUCK_DURATION_MILLISECONDS)).toBe(0)
+
+      expect(getTuckProgress(reselected, 5000)).toBe(0)
     })
   })
 })

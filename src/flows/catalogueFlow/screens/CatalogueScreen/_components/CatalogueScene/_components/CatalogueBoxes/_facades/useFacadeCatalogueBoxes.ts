@@ -22,6 +22,7 @@ import {
   getAnticipationProgress,
   getFocusProgress,
   getLidProgress,
+  getTuckProgress,
 } from '@flows/openingFlow/_facadesLogic/openingSceneState'
 import { isDragStateAnimating, stepDragInertia } from '@flows/openingFlow/_facadesLogic/stepDragInertia'
 import { LID_FULLY_OPEN_ANGLE_DEGREES, LID_HINGE_PIVOT } from '@services/filament/computeLidHingeTransform'
@@ -145,6 +146,7 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
       const focusProgress = easeInOutCubic(focusLinearProgress)
       const dollyProgress = easeOutBack(focusLinearProgress)
       const lidProgress = getLidProgress(scene, nowMilliseconds)
+      const tuckProgress = easeInOutCubic(getTuckProgress(scene, nowMilliseconds))
       const anticipation = computeAnticipationEffect(getAnticipationProgress(scene, nowMilliseconds), nowMilliseconds)
       const lidAngleRadians =
         (LID_FULLY_OPEN_ANGLE_DEGREES * (scene.lidTarget === 1 ? easeOutBack(lidProgress) : easeInOutCubic(lidProgress)) * Math.PI) / 180
@@ -183,6 +185,7 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
           tiltYawRadians: tiltX * TILT_YAW_RADIANS,
           tiltPitchRadians: tiltY * TILT_PITCH_RADIANS,
           anticipation,
+          tuckProgress,
         })
         const matrix = transformManager
           .createIdentityMatrix()

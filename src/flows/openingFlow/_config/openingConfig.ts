@@ -57,3 +57,8 @@ export const OPEN_SWIPE_DISTANCE = 90
 // Light from inside the opened box.
 export const GLOW_MAXIMUM = 0.9
 export const GLOW_PULSE_PERIOD_MILLISECONDS = 1600
+
+// After the reveal the opened box waits a moment, then shrinks and sinks away; the prize and the Done button stay.
+export const TUCK_DELAY_MILLISECONDS = 1800
+export const TUCK_DURATION_MILLISECONDS = 700
+export const TUCK_SINK_OFFSET_FRACTION = 0.06

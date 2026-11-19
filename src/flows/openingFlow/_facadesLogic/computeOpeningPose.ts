@@ -8,6 +8,7 @@ import {
   FOCUSED_CLOSED_WIDTH_FRACTION,
   FOCUSED_OPEN_CENTER_OFFSET_FRACTION,
   FOCUSED_OPEN_WIDTH_FRACTION,
+  TUCK_SINK_OFFSET_FRACTION,
 } from '@flows/openingFlow/_config/openingConfig'
 import { interpolate } from '@flows/openingFlow/_facadesLogic/openingEasing'
 import type { IAnticipationEffect } from '@flows/openingFlow/_facadesLogic/openingSceneState'
@@ -32,6 +33,8 @@ interface IOpeningPoseParams {
   tiltYawRadians: number
   tiltPitchRadians: number
   anticipation: IAnticipationEffect
+  // 0 = in place, 1 = the opened box is put away after the reveal (shrunk to nothing and sunk a little); already eased.
+  tuckProgress: number
 }
 
 // Blends a card's list pose with the centred "inspect" pose. The focused card flies to the middle
@@ -52,6 +55,7 @@ export const computeOpeningPose = ({
   tiltYawRadians,
   tiltPitchRadians,
   anticipation,
+  tuckProgress,
 }: IOpeningPoseParams): IOpeningPose => {
   'worklet'
 
@@ -73,15 +77,18 @@ export const computeOpeningPose = ({
   const widthFraction = interpolate(FOCUSED_CLOSED_WIDTH_FRACTION, FOCUSED_OPEN_WIDTH_FRACTION, lidProgress)
   const offsetFraction = interpolate(FOCUSED_CLOSED_CENTER_OFFSET_FRACTION, FOCUSED_OPEN_CENTER_OFFSET_FRACTION, lidProgress)
   const focusedScale = (widthFraction * viewportWidth * worldUnitsPerPixel) / BOX_WIDTH_UNITS
-  const focusedTranslateY = -offsetFraction * viewportHeight * worldUnitsPerPixel
+  const focusedTranslateY = -(offsetFraction + TUCK_SINK_OFFSET_FRACTION * tuckProgress) * viewportHeight * worldUnitsPerPixel
   const focusedYaw =
     FOCUSED_BASE_YAW_RADIANS + dragYawRadians + autoYawRadians + tiltYawRadians + anticipation.jitterYawRadians
   const focusedPitch = FOCUSED_BASE_PITCH_RADIANS + dragPitchRadians + tiltPitchRadians + anticipation.jitterPitchRadians
 
+  const scale =
+    interpolate(listPose.scale, focusedScale, focusProgress) * (1 + (zoom * anticipation.swell - 1) * focusProgress) * (1 - tuckProgress)
+
   return {
-    isVisible: true,
     // Zoom and swell only count once the box has arrived in the centre.
-    scale: interpolate(listPose.scale, focusedScale, focusProgress) * (1 + (zoom * anticipation.swell - 1) * focusProgress),
+    isVisible: scale > 0.001,
+    scale,
     yawRadians: interpolate(listPose.yawRadians, focusedYaw, focusProgress),
     pitchRadians: interpolate(listPose.pitchRadians, focusedPitch, focusProgress),
     translateY: interpolate(listPose.translateY, focusedTranslateY, focusProgress),

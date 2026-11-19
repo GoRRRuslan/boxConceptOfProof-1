@@ -22,6 +22,7 @@ const base = {
   anticipation: calm,
   lidProgress: 0,
   dollyProgress: 0,
+  tuckProgress: 0,
 }
 
 describe('computeOpeningPose', () => {
@@ -131,5 +132,19 @@ describe('computeOpeningPose', () => {
     const wide = computeOpeningPose({ ...base, isFocusedCard: true, focusProgress: 1, viewportWidth: 640 })
 
     expect(wide.scale / narrow.scale).toBeCloseTo(2)
+  })
+
+  it('puts the opened box away after the reveal: it shrinks to nothing, sinks a little and then disappears', () => {
+    const inPlace = computeOpeningPose({ ...base, isFocusedCard: true, focusProgress: 1, lidProgress: 1, tuckProgress: 0 })
+    const half = computeOpeningPose({ ...base, isFocusedCard: true, focusProgress: 1, lidProgress: 1, tuckProgress: 0.5 })
+    const away = computeOpeningPose({ ...base, isFocusedCard: true, focusProgress: 1, lidProgress: 1, tuckProgress: 1 })
+
+    expect(half.scale).toBeCloseTo(inPlace.scale / 2)
+
+    expect(half.translateY).toBeLessThan(inPlace.translateY)
+
+    expect(away.scale).toBe(0)
+
+    expect(away.isVisible).toBe(false)
   })
 })

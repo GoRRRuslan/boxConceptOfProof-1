@@ -12,6 +12,7 @@ import {
   FOCUS_DURATION_MILLISECONDS,
   LID_OPEN_DURATION_MILLISECONDS,
   OPEN_SWIPE_DISTANCE,
+  TUCK_DELAY_MILLISECONDS,
 } from '@flows/openingFlow/_config/openingConfig'
 import { RARITY_STYLES } from '@flows/openingFlow/_config/rarityConfig'
 import { useFacadeDeviceTilt } from '@flows/openingFlow/_facades/useFacadeDeviceTilt'
@@ -23,6 +24,7 @@ import {
   startClose,
   startFocus,
   startLidOpen,
+  startTuck,
 } from '@flows/openingFlow/_facadesLogic/openingSceneState'
 import { transitionOpeningPhase } from '@flows/openingFlow/_facadesLogic/openingPhaseMachine'
 import {
@@ -195,6 +197,9 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
           hapticFeedback.rarityReveal(RARITY_STYLES[rarity].hapticImpactCount)
         }
       }, ANTICIPATION_DURATION_MILLISECONDS + LID_OPEN_DURATION_MILLISECONDS),
+      setTimeout(() => {
+        sceneState.setBlocking(startTuck(sceneState.getBlocking(), Date.now()))
+      }, ANTICIPATION_DURATION_MILLISECONDS + LID_OPEN_DURATION_MILLISECONDS + TUCK_DELAY_MILLISECONDS),
     )
   }
 

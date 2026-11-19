@@ -44,6 +44,10 @@ export interface IOpeningSceneState {
   // The lid starts moving after the anticipation; 0 while the box is not being opened.
   lidStartedAtMilliseconds: number
   openStartedAtMilliseconds: number
+  // After the reveal the box is put away (shrinks and sinks) so that nothing competes with the prize; 0 = in place, 1 = put away.
+  tuckTarget: 0 | 1
+  tuckFromProgress: number
+  tuckStartedAtMilliseconds: number
   // Colour (linear RGB) of the light inside the box once it is open; depends on the rarity of the prize.
   glowColorLinear: [number, number, number]
 }

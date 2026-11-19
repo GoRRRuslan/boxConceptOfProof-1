@@ -85,6 +85,7 @@ export const computeOpeningPose = ({
     yawRadians: interpolate(listPose.yawRadians, focusedYaw, focusProgress),
     pitchRadians: interpolate(listPose.pitchRadians, focusedPitch, focusProgress),
     translateY: interpolate(listPose.translateY, focusedTranslateY, focusProgress),
-    translateZ: DOLLY_DEPTH_UNITS * dollyProgress,
+    // The push towards the camera is taken back while the lid opens, so the open box leaves room for the watch and texts.
+    translateZ: DOLLY_DEPTH_UNITS * dollyProgress * (1 - lidProgress),
   }
 }

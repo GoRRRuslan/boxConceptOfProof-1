@@ -8,8 +8,6 @@ void i18next.use(initReactI18next).init({
   fallbackLng: 'en',
   resources: { en: { translation: en } },
   interpolation: { escapeValue: false },
-  compatibilityJSON: 'v4',
-  showSupportNotice: false,
 })
 
 export default i18next

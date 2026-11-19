@@ -4,7 +4,7 @@ Each stage ends with a **review gate**: stop, show the result, wait for approval
 Budget from the estimate: 17–24 h total.
 
 ## Stack decisions
-- Expo **SDK 55** (RN 0.83, React 19.2, new architecture), TypeScript strict, development build (`expo-dev-client`) — Expo Go cannot run Filament.
+- Expo **SDK 58** (RN 0.88, React 19.3, new architecture), TypeScript strict, development build (`expo-dev-client`) — Expo Go cannot run Filament.
 - Node 26 (works with this toolchain), yarn classic 1.22.22.
 - Architecture copied from the reference project `fitpilotai-frontend`: flow-based folders, logic-less UI, `useXxxFacade` + `_facadesLogic` + `_adapters`, Zustand (no persist: session-scoped), React Query for the mock API, i18next, path aliases (`@flows`, `@components`, …), ESLint 9 flat + Prettier, `yarn ciPipeline = lint + ts`.
 - Not taken from the reference: Firebase, Sentry, HealthKit, EAS, multi-environment config, MMKV.
@@ -18,7 +18,7 @@ Budget from the estimate: 17–24 h total.
 | R4 | Scene lifecycle (background/foreground, teardown, source change) | One scene owner per screen, explicit dispose, manual checklist |
 
 ## Stages
-**Stage 0 — Scaffold & environment (done in this commit)**: Expo SDK 55 project, reference structure and aliases, lint/ts/jest, assets, runs on iOS simulator and Android emulator.
+**Stage 0 — Scaffold & environment (done in this commit)**: Expo SDK 58 project, reference structure and aliases, lint/ts/jest, assets, runs on iOS simulator and Android emulator.
 Gate A: structure + both devices running.
 
 **Stage 1 — Filament spike (≈3 h)**: install Filament, resolve R1, load `box.glb`, camera + lighting, hinge slider 0…115°, FPS with 1 vs 3–4 views on both platforms. Gate B: go/no-go.

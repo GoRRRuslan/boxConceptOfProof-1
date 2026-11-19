@@ -1,6 +1,6 @@
 # Project rules (adapted from the fitpilotai-frontend reference)
 
-Stack: Expo SDK 55 · TypeScript strict · Zustand 5 · React Query 5 · React Navigation 7 · Reanimated 4 · react-native-filament.
+Stack: Expo SDK 58 · TypeScript strict · Zustand 5 · React Query 5 · React Navigation 7 · Reanimated 4 · react-native-filament.
 
 ## Architecture
 - Flow-based: `src/flows/<name>Flow/{screens,_facades,_facadesLogic,_adapters,_components,_navigation,_types}`.

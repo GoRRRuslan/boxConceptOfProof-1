@@ -9,11 +9,6 @@ const config: ExpoConfig = {
   icon: './src/assets/images/app/icon.png',
   userInterfaceStyle: 'dark',
   backgroundColor: '#0B0D12',
-  splash: {
-    image: './src/assets/images/app/splash-icon.png',
-    resizeMode: 'contain',
-    backgroundColor: '#0B0D12',
-  },
   ios: {
     supportsTablet: false,
     bundleIdentifier: 'com.gorrr.mysterywatch',
@@ -28,7 +23,21 @@ const config: ExpoConfig = {
       monochromeImage: './src/assets/images/app/android-icon-monochrome.png',
     },
   },
-  plugins: ['expo-asset', 'expo-font', 'expo-localization', 'expo-dev-client'],
+  plugins: [
+    'expo-asset',
+    'expo-font',
+    'expo-localization',
+    'expo-status-bar',
+    'expo-dev-client',
+    [
+      'expo-splash-screen',
+      {
+        image: './src/assets/images/app/splash-icon.png',
+        resizeMode: 'contain',
+        backgroundColor: '#0B0D12',
+      },
+    ],
+  ],
 }
 
 export default config

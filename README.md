@@ -1,6 +1,6 @@
 # Mystery Watch — Proof of Concept
 
-React Native (Expo SDK 55) + TypeScript app for browsing, buying and opening 3D mystery boxes with watches.
+React Native (Expo SDK 58) + TypeScript app for browsing, buying and opening 3D mystery boxes with watches.
 Assignment: [docs/ASSIGNMENT.md](docs/ASSIGNMENT.md) · Model notes: [docs/MODEL.md](docs/MODEL.md) · Plan: [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md)
 
 ## Requirements
@@ -16,6 +16,10 @@ yarn iosRun        # builds the development client and installs it on a simulato
 yarn androidRun    # same for the Android emulator (start the AVD first)
 yarn start         # Metro for the development client
 ```
+
+Notes:
+- Xcode 27 / iOS 27 requires Expo SDK 58 (earlier SDKs crash on launch: UIScene lifecycle). Xcode 27 ships `DeviceHub.app` instead of `Simulator.app`; at the very end `expo run:ios` may print an osascript error about activating the Simulator window. The app is already installed at that point — start Metro (`yarn start`) and open the app from DeviceHub / `xcrun simctl launch booted com.gorrr.mysterywatch`.
+- First native build downloads ~300 MB of prebuilt React Native binaries (cached afterwards).
 
 ## Checks
 ```bash

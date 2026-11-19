@@ -1,8 +1,0 @@
-{
-  "plugins": [
-    "expo-asset",
-    "expo-font",
-    "expo-localization",
-    "expo-build-properties"
-  ]
-}

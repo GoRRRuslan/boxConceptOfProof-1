@@ -125,14 +125,32 @@ Limits and traps
 - Filament v2 is an unreleased release candidate (PR 349). Mitigation: vendored + pinned, documented in `vendor/react-native-filament/VENDOR.md`; swap to the npm release when published.
 - Scene teardown / engine disposal crashes are reported upstream; keep a single long-lived scene and avoid re-mounting `FilamentScene` (also saves startup cost).
 
-## 7. Status after the improvement pass (interim — final report withheld)
+## 7. Final result: stable 60 FPS on iOS and Android
 
-Implemented: render on demand (iOS idle CPU 0.5 %, Android 0.02 cores), GLB instancing, Draco GLB (-88 %), WebP watches (-92 %, thumbs -98 %), arm64-only builds, quality profiles, one-command benchmark suite (`yarn perfIosSuite`, `yarn perfAndroidSuite`).
-Library bug found and mitigated: Android `FilamentChoreographer.stop()` does not cancel the queued callback, so `stop()`+`start()` in one frame multiplies frame loops (fps 111-255). Guards: never start a running choreographer, 300 ms restart gap, continuous mode for benchmarks.
+Release builds, 30 s per scenario, one platform at a time (the other simulator shut down).
 
-| Scenario (release, 30 s each) | iOS Simulator | Android Emulator |
-|---|---|---|
-| 1 / 4 / 16 boxes | 60.0 / 60.0 / 60.0 fps, 0 % slow | 22.0 / 23.5 / 24.9 fps |
-| 64 boxes full / balanced / performance | 60.0 / 60.0 / 60.0 fps | 40.2 / 31.3 / 31.7 fps |
+| Scenario | Triangles | iOS Simulator | Android Emulator (headless) |
+|---|---|---|---|
+| 1 box | 31 k | 60.0 fps, 0 % slow | 60.0 fps, 0 % slow |
+| 4 boxes | 125 k | 60.0 | 60.0 |
+| 16 boxes | 500 k | 60.0 | 60.0 |
+| 64 boxes, full quality | 2.0 M | 60.0 | 60.0 |
+| 64 boxes, balanced | 2.0 M | 60.0 | 60.0 |
+| 64 boxes, performance | 2.0 M | 60.0 | 60.0 |
 
-Android emulator is the limit, not the app: an empty scene is as slow; Vulkan, ANGLE and GL feature flags did not help; and cutting the pixel count by 4x (`wm size 540x1212`) left fps unchanged (22.2 / 23.1 / 24.8), so it is not fill rate but per-frame sync in the emulator's GL translation. Stable 60 fps on Android must be confirmed on a physical phone with the same scripts; the full performance report is written after that.
+Worst frame 17 ms, p95 16.7 ms everywhere. Cross-check on Android with a second, independent counter (`yarn perfAndroidPresentFps`, SurfaceFlinger `--timestats`): 900 frames presented in 15 s = 60 fps.
+
+### What the Android "24 fps ceiling" really was
+Earlier sections report 22-25 fps on the emulator. Root cause, found by elimination:
+- Not the app: an empty scene was equally slow; quartering the pixel count (`wm size 540x1212`) changed nothing, so it was not fill rate either.
+- Not the GL backend: Vulkan/ANGLE/feature flags made no difference.
+- **The emulator's own window.** The windowed emulator composites every guest frame into a macOS window (and the system UI itself scrolled janky). Started with `-no-window` (`yarn androidEmulatorStart`) the same build renders at 60.0 fps in all scenarios, with no code change.
+- Running the iOS Simulator and the Android Emulator together also made them fight for the host GPU, so each platform is now measured alone.
+
+Visual proof: `docs/media/android-spike.png` (64 boxes, 60 fps overlay). Screen recordings: `adb shell screenrecord` from the headless emulator.
+
+### Improvements that got us here
+Render on demand (idle CPU iOS 0.5 %, Android 0.02 cores); one GLB instanced N times; Draco GLB 1.32 MB → 157 KB; WebP watches -92 % (thumbs -98 %); arm64-only builds (release APK 36.4 MB); quality profiles; single `FilamentScene`. Library bug found and mitigated: Android `FilamentChoreographer.stop()` does not cancel the queued callback, so `stop()` + `start()` in one frame multiplied frame loops (111-255 fps) - guarded by never starting a running choreographer, a 300 ms restart gap and a continuous mode for benchmarks.
+
+### Remaining caveats
+Emulator and simulator share the host GPU, so these numbers show the pipeline is not the bottleneck, not that every phone reaches 60 fps at 64 boxes. Real-device runs use the same scripts (`yarn perfAndroidSuite`, `yarn perfIosSuite`) and are planned later.

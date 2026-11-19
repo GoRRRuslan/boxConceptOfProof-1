@@ -254,10 +254,12 @@ Full report with methodology, native profiler results and limits: [docs/PERFORMA
 
 - 3D path ≈ **9 % of one CPU core** on iOS, entirely off the main/JS threads (JS thread ≈ 1 %)
 - Implemented: render on demand, GLB instancing, Draco GLB (1.32 MB → 157 KB), WebP watches (-92 %), arm64-only builds, quality profiles
-- Android Emulator caps at ~22–25 fps even for an **empty scene** and even at ¼ of the pixels (GL translation layer, not fill rate), so Android 60 fps must be confirmed on a physical phone; tooling is ready
+- **Android Emulator (headless): 60.0 fps in all six scenarios**, 0 slow frames, confirmed by SurfaceFlinger (900 frames / 15 s). The windowed emulator capped at ~24 fps because of its own window compositing, not the app. Measure one platform at a time (shared host GPU)
 
 | Command | Purpose |
 |---|---|
+| `yarn androidEmulatorStart` / `yarn androidEmulatorStop` | Boot / stop the Android emulator **headless** (needed for correct FPS) |
+| `yarn perfAndroidPresentFps` | Independent FPS from SurfaceFlinger presented frames |
 | `yarn iosRestart` / `yarn androidRestart` / `yarn androidRestartRelease` | Relaunch the installed app without rebuilding |
 | `yarn iosRunSuite` / `yarn androidRunSuite` | Build + install a release app that runs the 6-scenario benchmark |
 | `yarn perfIosSuite` / `yarn perfAndroidSuite` | Restart, collect ~200 s, print the FPS table |

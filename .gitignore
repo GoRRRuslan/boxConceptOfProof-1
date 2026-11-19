@@ -42,3 +42,4 @@ yarn-error.*
 
 # fetched native binaries cache
 .cache/
+docs/media/*.mp4

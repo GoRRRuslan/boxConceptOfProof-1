@@ -1,7 +1,7 @@
 --------- beginning of main
 Running "main"
 'Setting up camera lens with aspect ratio:', 0.5853658536585366
-[perf:android] {"frames":60,"averageFps":59.016395803278826,"averageFrameMilliseconds":16.944443766666655,"p95FrameMilliseconds":16.666666,"maxFrameMilliseconds":33.333332,"slowFrames":1,"scenario":"catalogue-scroll","windowInScenario":1}
+[perf:android] {"frames":33,"averageFps":31.42857268571434,"averageFrameMilliseconds":31.818180545454542,"p95FrameMilliseconds":183.333326,"maxFrameMilliseconds":349.999986,"slowFrames":2,"scenario":"catalogue-scroll","windowInScenario":1}
 [perf:android] {"frames":61,"averageFps":60.00000240000015,"averageFrameMilliseconds":16.666665999999985,"p95FrameMilliseconds":16.666666,"maxFrameMilliseconds":16.666666,"slowFrames":0,"scenario":"catalogue-scroll","windowInScenario":2}
 [perf:android] {"frames":61,"averageFps":60.00000240000015,"averageFrameMilliseconds":16.666665999999985,"p95FrameMilliseconds":16.666666,"maxFrameMilliseconds":16.666666,"slowFrames":0,"scenario":"catalogue-scroll","windowInScenario":3}
 [perf:android] {"frames":61,"averageFps":60.00000240000015,"averageFrameMilliseconds":16.666665999999985,"p95FrameMilliseconds":16.666666,"maxFrameMilliseconds":16.666666,"slowFrames":0,"scenario":"catalogue-scroll","windowInScenario":4}

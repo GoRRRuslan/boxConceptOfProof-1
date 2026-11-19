@@ -23,7 +23,7 @@ fi
 mkdir -p "${CACHE_DIRECTORY}"
 
 if [ ! -f "${TARBALL_PATH}" ]; then
-  echo "[filament] downloading react-native-filament@${FILAMENT_BINARIES_VERSION} (~300 MB, one time)..."
+  echo "[filament] downloading react-native-filament@${FILAMENT_BINARIES_VERSION} (~90 MB download, ~340 MB unpacked, one time)..."
   (cd "${CACHE_DIRECTORY}" && npm pack "react-native-filament@${FILAMENT_BINARIES_VERSION}" --silent >/dev/null)
 fi
 

@@ -18,22 +18,32 @@ describe('soundEffects', () => {
     jest.clearAllMocks()
   })
 
-  it('plays an effect from its start', () => {
+  const flushPromises = async () => {
+    await Promise.resolve()
+
+    await Promise.resolve()
+  }
+
+  it('plays an effect from its start', async () => {
     soundEffects.play(ESoundEffect.Purchase)
+
+    await flushPromises()
 
     expect(mockSeekTo).toHaveBeenCalledWith(0)
 
     expect(mockPlay).toHaveBeenCalledTimes(1)
   })
 
-  it('creates one player per effect and re-uses it', () => {
+  it('uses two players per effect in turn, so a quick repeat does not cut the first sound off', async () => {
     soundEffects.play(ESoundEffect.LidOpen)
 
     soundEffects.play(ESoundEffect.LidOpen)
 
     soundEffects.play(ESoundEffect.LidOpen)
 
-    expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1)
+    await flushPromises()
+
+    expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(2)
 
     expect(mockPlay).toHaveBeenCalledTimes(3)
   })

@@ -31,7 +31,11 @@ const SOURCES: Record<ESoundEffect, number> = {
   [ESoundEffect.Error]: errorSound,
 }
 
-const players = new Map<ESoundEffect, AudioPlayer>()
+// Two players per effect, used in turn: when the same effect fires again while it is still sounding (boxes opened
+// quickly one after another), the second trigger gets a free player and does not cut the first one off.
+const POOL_SIZE = 2
+const players = new Map<ESoundEffect, AudioPlayer[]>()
+const nextPlayerIndex = new Map<ESoundEffect, number>()
 let isAudioModeConfigured = false
 
 const getPlayer = (effect: ESoundEffect): AudioPlayer => {
@@ -42,17 +46,18 @@ const getPlayer = (effect: ESoundEffect): AudioPlayer => {
     setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => undefined)
   }
 
-  const existingPlayer = players.get(effect)
+  const pool = players.get(effect) ?? []
+  const index = (nextPlayerIndex.get(effect) ?? 0) % POOL_SIZE
 
-  if (existingPlayer) {
-    return existingPlayer
+  players.set(effect, pool)
+
+  nextPlayerIndex.set(effect, index + 1)
+
+  if (!pool[index]) {
+    pool[index] = createAudioPlayer(SOURCES[effect])
   }
 
-  const player = createAudioPlayer(SOURCES[effect])
-
-  players.set(effect, player)
-
-  return player
+  return pool[index]
 }
 
 // Short sound effects. A device or simulator without audio must never break the app: failures are swallowed.
@@ -61,9 +66,13 @@ export const soundEffects = {
     try {
       const player = getPlayer(effect)
 
-      void player.seekTo(0)
-
-      player.play()
+      // Rewind first and only then start, otherwise a clip that has just ended may not restart.
+      player
+        .seekTo(0)
+        .then(() => {
+          player.play()
+        })
+        .catch(() => undefined)
     } catch {
       // No audio output available: the app works the same without sound.
     }

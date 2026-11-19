@@ -3,7 +3,8 @@ import { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reani
 
 const FLY_DISTANCE = 150
 
-// The watch rises out of the box, turning half a circle, and settles with a small bounce.
+// The watch rises out of the box, flips like a coin and settles with a small bounce. The flip is flat (scaleX), not a 3D
+// rotation: a 3D-turned layer would slide behind the glow circles and they would be drawn over half of the watch.
 export const useFacadeWatchReveal = () => {
   const progress = useSharedValue<number>(0)
 
@@ -15,10 +16,9 @@ export const useFacadeWatchReveal = () => {
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: Math.min(1, progress.value * 3),
     transform: [
-      { perspective: 800 },
       { translateY: (1 - progress.value) * FLY_DISTANCE },
       { scale: 0.35 + 0.65 * progress.value },
-      { rotateY: `${(1 - progress.value) * 180}deg` },
+      { scaleX: Math.cos((1 - progress.value) * Math.PI) },
     ],
   }))
 

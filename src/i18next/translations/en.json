@@ -10,5 +10,9 @@
     "decrease": "−5°",
     "increase": "+5°",
     "modelCount": "Boxes: {{count}}"
+  },
+  "performance": {
+    "measuring": "Measuring…",
+    "summary": "{{fps}} fps · avg {{average}} ms · p95 {{p95}} ms · slow {{slow}}"
   }
 }

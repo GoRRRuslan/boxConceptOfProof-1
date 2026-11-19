@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Camera, DefaultLight, EntitySelector, FilamentView, Model } from 'react-native-filament'
+import { Camera, DefaultLight, EntitySelector, type FrameInfo, FilamentView, Model } from 'react-native-filament'
 
 import type { ILidHingeTransform } from '@flows/spikeFlow/_facadesLogic/computeLidHingeTransform'
 import { makeStyles } from '@flows/spikeFlow/screens/FilamentSpikeScreen/_components/SpikeScene/SpikeScene.styles'
@@ -18,15 +18,16 @@ import boxModelSource from '@assets/models/box.glb'
 interface ISpikeSceneProps {
   lidHingeTransform: ILidHingeTransform
   modelCount: number
+  renderCallback: (frameInfo: FrameInfo) => void
 }
 
-export const SpikeScene = ({ lidHingeTransform, modelCount }: ISpikeSceneProps) => {
+export const SpikeScene = ({ lidHingeTransform, modelCount, renderCallback }: ISpikeSceneProps) => {
   const styles = useMemo(() => makeStyles(), [])
   const isSingleModel = modelCount === 1
   const modelPositions = isSingleModel ? SINGLE_MODEL_POSITIONS : GRID_MODEL_POSITIONS
 
   return (
-    <FilamentView style={styles.filamentView} testID="filamentView">
+    <FilamentView style={styles.filamentView} renderCallback={renderCallback} testID="filamentView">
       <Camera
         cameraPosition={isSingleModel ? SINGLE_MODEL_CAMERA_POSITION : GRID_MODEL_CAMERA_POSITION}
         cameraTarget={isSingleModel ? SINGLE_MODEL_CAMERA_TARGET : GRID_MODEL_CAMERA_TARGET}

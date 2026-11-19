@@ -28,7 +28,9 @@
     "cleanIosData": "rm -rf ~/Library/Developer/Xcode/DerivedData",
     "watchman": "watchman watch-del-all",
     "doctor": "npx expo-doctor",
-    "postinstall": "bash scripts/installFilamentBinaries.sh"
+    "postinstall": "bash scripts/installFilamentBinaries.sh",
+    "perfIosProfile": "bash scripts/perf/captureIosProfile.sh",
+    "perfAndroidTrace": "bash scripts/perf/captureAndroidTrace.sh"
   },
   "engines": {
     "node": ">=24"

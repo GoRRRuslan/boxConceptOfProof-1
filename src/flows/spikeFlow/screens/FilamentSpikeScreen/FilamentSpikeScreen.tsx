@@ -5,6 +5,7 @@ import { FilamentScene } from 'react-native-filament'
 import { ScreenContainer } from '@components/_layout/ScreenContainer'
 import { AppButton } from '@components/buttons/AppButton'
 import { AppText } from '@components/AppText'
+import { PerformanceOverlay } from '@components/PerformanceOverlay'
 import { useFilamentSpikeFacade } from '@flows/spikeFlow/_facades/useFilamentSpikeFacade'
 import { SpikeScene } from '@flows/spikeFlow/screens/FilamentSpikeScreen/_components/SpikeScene'
 import { makeStyles } from '@flows/spikeFlow/screens/FilamentSpikeScreen/FilamentSpikeScreen.styles'
@@ -15,6 +16,8 @@ const FilamentSpikeScreen = () => {
 
   // -------------------- Service hooks -------------------- //
   const {
+    renderCallback,
+    renderFrameStats,
     lidHingeTransform,
     modelCount,
     angleLabelText,
@@ -34,7 +37,7 @@ const FilamentSpikeScreen = () => {
   const renderScene = () => (
     <View style={styles.sceneContainer}>
       <FilamentScene>
-        <SpikeScene lidHingeTransform={lidHingeTransform} modelCount={modelCount} />
+        <SpikeScene lidHingeTransform={lidHingeTransform} modelCount={modelCount} renderCallback={renderCallback} />
       </FilamentScene>
     </View>
   )
@@ -60,6 +63,7 @@ const FilamentSpikeScreen = () => {
   return (
     <ScreenContainer testID="filamentSpikeScreen">
       {renderScene()}
+      <PerformanceOverlay renderFrameStats={renderFrameStats} />
       {renderModelCountControl()}
       {renderLidControls()}
     </ScreenContainer>

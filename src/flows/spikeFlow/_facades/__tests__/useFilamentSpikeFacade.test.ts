@@ -4,6 +4,10 @@ import '@i18next/i18init'
 import { useFilamentSpikeFacade } from '@flows/spikeFlow/_facades/useFilamentSpikeFacade'
 import { LID_FULLY_OPEN_ANGLE_DEGREES } from '@flows/spikeFlow/_facadesLogic/computeLidHingeTransform'
 
+jest.mock('@services/performance/useRenderFpsMeter', () => ({
+  useRenderFpsMeter: () => ({ renderCallback: jest.fn(), renderFrameStats: null }),
+}))
+
 describe('useFilamentSpikeFacade', () => {
   it('starts with a closed lid and a single box', async () => {
     const { result } = await renderHook(() => useFilamentSpikeFacade())

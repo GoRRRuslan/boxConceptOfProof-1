@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { IFilamentSpikeFacade } from '@flows/spikeFlow/_types'
+import { useRenderFpsMeter } from '@services/performance/useRenderFpsMeter'
 import {
   LID_FULLY_OPEN_ANGLE_DEGREES,
   computeLidHingeTransform,
@@ -9,6 +10,9 @@ import {
 
 export const useFilamentSpikeFacade = (): IFilamentSpikeFacade => {
   const { t } = useTranslation()
+
+  // ------------------------ Services ----------------------- //
+  const { renderCallback, renderFrameStats } = useRenderFpsMeter()
 
   // --------------------------- State ------------------------- //
   const [lidAngleDegrees, setLidAngleDegrees] = useState<number>(0)
@@ -44,6 +48,8 @@ export const useFilamentSpikeFacade = (): IFilamentSpikeFacade => {
   }
 
   return {
+    renderCallback,
+    renderFrameStats,
     lidHingeTransform,
     modelCount,
     angleLabelText,

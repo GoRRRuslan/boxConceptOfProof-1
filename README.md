@@ -225,7 +225,7 @@ The published `react-native-filament@1.11.0` does not work on React Native 0.88:
 
 ```bash
 yarn ciPipeline   # eslint . && tsc --noEmit        → must be clean
-yarn test         # jest                              → 8 tests, 3 suites
+yarn test         # jest                              → 11 tests, 4 suites
 yarn doctor       # expo-doctor                       → 20/20 checks
 ```
 
@@ -233,7 +233,7 @@ yarn doctor       # expo-doctor                       → 20/20 checks
 |---|---|
 | ESLint (strict-type-checked, stylistic, react-native, react-hooks) | ✅ clean |
 | TypeScript 6 strict | ✅ clean |
-| Jest (hinge math, facade, app shell) | ✅ 8 / 8 |
+| Jest (hinge math, facade, FPS summary, app shell) | ✅ 11 / 11 |
 | `expo-doctor` | ✅ 20 / 20 |
 | Clean install from an empty `node_modules` (vendor + binary script) | ✅ |
 | Clean `prebuild` + build on iOS 27 and Android 37 | ✅ |
@@ -243,17 +243,27 @@ yarn doctor       # expo-doctor                       → 20/20 checks
 
 ## 7. Performance
 
-Full report with methodology and limits: [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+Full report with methodology, native profiler results and limits: [docs/PERFORMANCE.md](docs/PERFORMANCE.md). Frame rate is measured by an **in-app renderer FPS meter** (counts Filament's per-frame callbacks; overlay + `[perf:<platform>]` log) and cross-checked with **Instruments** (iOS) and **Perfetto** (Android).
 
-| Metric | 1 box | 4 boxes | Δ |
-|---|---|---|---|
-| iOS RSS (simulator) | 582 MB | 587 MB | **+5 MB** |
-| Android PSS (emulator) | 350 MB | 361 MB | **+11 MB** |
-| Triangles per box | 31,242 | 124,968 | trivial for a mobile GPU |
-| `box.glb` | 1.32 MB | | 5 meshes · 6 PBR materials · clearcoat |
-| Watch PNGs | 5.48 MB total | | ~6.3 MB decoded each → resize/WebP planned |
+| Scenario (iOS Simulator, Metal) | Triangles | FPS | Slow frames | RSS |
+|---|---|---|---|---|
+| 1 box | 31 k | **60.0** | 0 | 582 MB |
+| 4 boxes, lids open | 125 k | **60.0** | 0 | 590 MB |
+| 16 boxes (stress) | 500 k | **60.0** | 0 | 640 MB |
+| 64 boxes (stress) | 2.0 M | **60.0** | 0 | 824 MB |
 
-**Top improvements queued:** render-on-demand, single GLB with instancing, WebP thumbnails, cheaper list shading, GLB compression, arm64-only release builds, a real-device profiling gate.
+- 3D path ≈ **9 % of one CPU core** on iOS, entirely off the main/JS threads (JS thread ≈ 1 %)
+- Memory grows ≈ **4.4 MB per extra box** (each `<Model>` re-loads the GLB) → instancing is the first optimisation
+- Android Emulator caps at ~24 fps even for an **empty scene** (GL translation layer), so Android FPS must be taken on a physical device; tooling is ready
+- `box.glb` 1.32 MB · 5 meshes · 6 PBR materials · clearcoat · watch PNGs 5.48 MB (≈ 6.3 MB decoded each)
+
+**Top improvements queued:** render-on-demand, single GLB with instancing, WebP thumbnails, cheaper list shading, GLB compression, arm64-only release builds, real-device profiling gate.
+
+| Command | Purpose |
+|---|---|
+| `yarn perfIosProfile [UDID]` | Instruments Time Profiler → CPU per thread |
+| `yarn perfAndroidTrace` | Perfetto 10 s trace → CPU per thread, buffer-queue stalls |
+| `python3 scripts/perf/analyzeRenderFps.py ios 0` | Aggregate the in-app FPS meter from the Metro log |
 
 ---
 
@@ -266,13 +276,15 @@ boxConceptOfProof-1/
 ├── babel.config.js · metro.config.js # aliases, worklets plugin, .glb assets
 ├── eslint.config.mjs · .prettierrc.json
 ├── docs/                             # ASSIGNMENT, DEVELOPMENT_PLAN, PERFORMANCE, STAGE_1_FINDINGS, MODEL, reference.png
-├── scripts/installFilamentBinaries.sh
+├── scripts/
+│   ├── installFilamentBinaries.sh
+│   └── perf/                         # FPS analysis, Perfetto + Instruments capture
 ├── vendor/react-native-filament/     # vendored 3D engine binding (+ VENDOR.md)
 ├── __tests__/                        # app-level tests
 └── src/
     ├── app/                          # App.tsx, useAppFacade.ts, App.styles.ts
     ├── assets/                       # models/box.glb · images/watches/*.png · images/app/*
-    ├── components/                   # _layout/ScreenContainer · AppText · buttons/AppButton
+    ├── components/                   # _layout/ScreenContainer · AppText · PerformanceOverlay · buttons/AppButton
     ├── flows/
     │   └── spikeFlow/                # current flow (becomes catalogue/opening/collection)
     │       ├── _facades/             # useFilamentSpikeFacade (+ __tests__)
@@ -282,7 +294,9 @@ boxConceptOfProof-1/
     │           ├── _components/SpikeScene/
     │           └── _config/spikeSceneConfig.ts
     ├── i18next/                      # i18init.ts · translations/en.json
-    ├── services/reactQuery/          # queryClient
+    ├── services/
+    │   ├── performance/              # renderer FPS meter (+ tests)
+    │   └── reactQuery/               # queryClient
     └── utils/designSystem/           # Theme
 ```
 

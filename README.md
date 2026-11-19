@@ -313,6 +313,7 @@ Not unit-tested (verified on devices instead): the worklet scene code that talks
 | `yarn perfIosProfile [UDID]` | Instruments Time Profiler → CPU per thread |
 | `yarn perfAndroidTrace` | Perfetto 10 s trace → CPU per thread, buffer-queue stalls |
 | `yarn perfCharts` | Redraw the SVG charts in `docs/media` from `docs/data` |
+| `yarn assetsSounds` | Re-synthesise the sound effects in `src/assets/sounds` (see [docs/ANIMATIONS.md](docs/ANIMATIONS.md#8-sound-and-haptics)) |
 | `yarn assetsOptimize` | Re-encode GLB (Draco) and watch images (WebP) from `assets-source/` |
 
 Environment variables (build time): `EXPO_PUBLIC_SHOW_PERFORMANCE=1` (FPS overlay), `EXPO_PUBLIC_AUTO_SCROLL=1`, `EXPO_PUBLIC_INITIAL_SCREEN=spike` (benchmark lab instead of the app), `EXPO_PUBLIC_AUTO_BENCHMARK`, `EXPO_PUBLIC_AUTO_BOXES`, `EXPO_PUBLIC_PERF_SINK_URL`, `EXPO_PUBLIC_MOCK_PURCHASE_FAILURE`, `ANDROID_ARCHITECTURES`. Tip: if a release build seems to use old JavaScript, delete `android/app/build/generated/assets/react` and `intermediates/assets/release`.

@@ -2,8 +2,11 @@ import { ESoundEffect, soundEffects } from '@services/sounds/soundEffects'
 
 const mockSeekTo = jest.fn(() => Promise.resolve())
 const mockPlay = jest.fn()
-const mockCreateAudioPlayer = jest.fn((_source: unknown) => ({ seekTo: mockSeekTo, play: mockPlay }))
-const mockSetAudioModeAsync = jest.fn((_mode: unknown) => Promise.resolve())
+const mockCreateAudioPlayer = jest.fn<{ seekTo: typeof mockSeekTo; play: typeof mockPlay }, [unknown]>(() => ({
+  seekTo: mockSeekTo,
+  play: mockPlay,
+}))
+const mockSetAudioModeAsync = jest.fn<Promise<void>, [unknown]>(() => Promise.resolve())
 
 jest.mock('expo-audio', () => ({
   createAudioPlayer: (source: unknown) => mockCreateAudioPlayer(source),

@@ -377,6 +377,7 @@ boxConceptOfProof-1/
 - **Prize roll is deterministic per purchase key** in the mock (so a retry can never turn into a different watch); the odds come from each box's drop table.
 - **Camera and light are fixed;** the opening "dolly" is done by moving and scaling the box.
 - Leaving after buying without opening is allowed — the watch is already in the collection.
+- **Self-healing renderer:** `RenderOnDemand` does not trust its own idea of "the renderer is running": a watchdog restarts it when no frame is drawn for 2 s although it should run, and returning to the foreground forces a clean stop/start.
 - Known, accepted review notes: `t` appears in some hook dependency arrays (stable, but against the stated rule); the drag state is written by both the gesture and the render loop without a lock (one lost finger delta at the moment of release at worst).
 
 ---
@@ -393,6 +394,8 @@ boxConceptOfProof-1/
 | Android emulator shows ~24 FPS | Start it headless: `yarn androidEmulatorStart` (the window caps it) |
 | Android emulator window hangs at start from a script | Use the headless start; the windowed one needs a GUI session |
 | Android emulator crawls / UI shows *Updating…* | Use an AVD with ≥ 4 cores / ≥ 4 GB / host GPU; let the post-boot update finish |
+| The list scrolls up and down by itself / an FPS overlay is on screen | You installed a **benchmark build** (`*RunCatalogueScroll`, `*RunOpening`, `*RunSuite`, `*RunBenchmark`). Install a normal one: `yarn iosRunRelease` / `yarn androidRunRelease` (or the development client: `yarn iosRun` / `yarn androidRun` + `yarn start`) |
+| 3D boxes frozen while the list moves ("Render paused") | Fixed in Stage 6: the renderer assumed it was running; iOS can leave its display link paused after the app returns from the background. `RenderOnDemand` now has a watchdog and restarts the renderer when it comes back to the foreground |
 | Release build shows old JavaScript | Delete `android/app/build/generated/assets/react` and `android/app/build/intermediates/assets/release`, build again |
 | Filament native libraries missing after install | `bash scripts/installFilamentBinaries.sh` (needs network once) |
 | Metro cache issues | `yarn cleanCache` |

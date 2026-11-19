@@ -40,6 +40,7 @@ Test ids refer to the `testID`s used by the scripts (`scripts/app/tapAndroidTest
 | E6 | App to background and back while inspecting | Same screen, scene intact | ✅ | ✅ |
 | E7 | Frame rate after resume | ≤ 60 FPS (no duplicated frame loops) | ✅ max 60.0 | ✅ |
 | E8 | Select a box while another is flying back | Ignored until the box is home | unit tests | unit tests |
+| E10 | Renderer frozen (list moves, 3D boxes do not; "Render paused") | Watchdog restarts the renderer, foreground return resyncs it | unit tests (watchdog, foreground resync, no polling while stopped on purpose); scroll → idle → scroll checked on device | same |
 | E9 | Restart the app | New session: $1,000, empty collection | ✅ | ✅ |
 
 Evidence: `docs/media/android-edge-two-purchases.png`, `android-edge-no-balance.png`, `android-opening-failure.png`, `android-lifecycle-resumed.png`, `docs/data/android-lifecycle.log`.

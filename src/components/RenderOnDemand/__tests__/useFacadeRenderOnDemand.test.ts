@@ -1,4 +1,5 @@
-import { renderHook } from '@testing-library/react-native'
+import { act, renderHook } from '@testing-library/react-native'
+import { AppState, type AppStateStatus } from 'react-native'
 
 import { useFacadeRenderOnDemand } from '@components/RenderOnDemand/_facades/useFacadeRenderOnDemand'
 
@@ -6,6 +7,7 @@ const mockChoreographer = { start: jest.fn(), stop: jest.fn() }
 const mockWorkletRuntime = {}
 let mockFramesPerRead = 0
 let mockFrameCount = 0
+let appStateHandler: ((state: AppStateStatus) => void) | undefined
 
 // The vendored package ships sources only (no built `main`), so jest cannot resolve it: mock it virtually.
 jest.mock(
@@ -51,6 +53,14 @@ describe('useFacadeRenderOnDemand', () => {
     mockFrameCount = 0
 
     mockFramesPerRead = 4
+
+    appStateHandler = undefined
+
+    jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, handler) => {
+      appStateHandler = handler
+
+      return { remove: jest.fn() }
+    })
   })
 
   afterEach(() => {
@@ -132,20 +142,98 @@ describe('useFacadeRenderOnDemand', () => {
     expect(mockChoreographer.stop).toHaveBeenCalledTimes(1)
   })
 
-  it('stops at the maximum time even if no frame is ever rendered', async () => {
+  it('gives up at the maximum time even if no frame is ever rendered', async () => {
     mockFramesPerRead = 0
 
     await renderHook(() => {
       useFacadeRenderOnDemand(renderParams('a'))
     })
 
-    await jest.advanceTimersByTimeAsync(9900)
+    await jest.advanceTimersByTimeAsync(10_500)
 
-    expect(mockChoreographer.stop).not.toHaveBeenCalled()
+    // The watchdog restarts a renderer that draws nothing; in the end it is left stopped:
+    // every restart is a stop followed by a start, plus the final stop.
+    expect(mockChoreographer.stop.mock.calls.length).toBe(mockChoreographer.start.mock.calls.length + 1)
+  })
 
-    await jest.advanceTimersByTimeAsync(400)
+  describe('self-healing', () => {
+    it('restarts a renderer that is believed to run but draws no frames', async () => {
+      mockFramesPerRead = 0
 
-    expect(mockChoreographer.stop).toHaveBeenCalledTimes(1)
+      await renderHook(() => {
+        useFacadeRenderOnDemand({ ...renderParams('a'), isContinuous: true })
+      })
+
+      await jest.advanceTimersByTimeAsync(2000)
+
+      expect(mockChoreographer.stop).not.toHaveBeenCalled()
+
+      await jest.advanceTimersByTimeAsync(700)
+
+      expect(mockChoreographer.stop).toHaveBeenCalledTimes(1)
+
+      // The restart waits out the gap after the stop.
+      expect(mockChoreographer.start).not.toHaveBeenCalled()
+
+      await jest.advanceTimersByTimeAsync(500)
+
+      expect(mockChoreographer.start).toHaveBeenCalledTimes(1)
+    })
+
+    it('leaves a renderer alone while frames keep coming', async () => {
+      await renderHook(() => {
+        useFacadeRenderOnDemand({ ...renderParams('a'), isContinuous: true })
+      })
+
+      await jest.advanceTimersByTimeAsync(20_000)
+
+      expect(mockChoreographer.stop).not.toHaveBeenCalled()
+
+      expect(mockChoreographer.start).not.toHaveBeenCalled()
+    })
+
+    it('does not poll at all after the renderer was stopped on purpose', async () => {
+      await renderHook(() => {
+        useFacadeRenderOnDemand(renderParams('a'))
+      })
+
+      await jest.advanceTimersByTimeAsync(4000)
+
+      expect(mockChoreographer.stop).toHaveBeenCalledTimes(1)
+
+      mockFramesPerRead = 0
+
+      await jest.advanceTimersByTimeAsync(10_000)
+
+      // Stopped scene: no watchdog restart although the frame counter stands still.
+      expect(mockChoreographer.start).not.toHaveBeenCalled()
+
+      expect(mockChoreographer.stop).toHaveBeenCalledTimes(1)
+    })
+
+    it('restarts the renderer cleanly when the app comes back to the foreground', async () => {
+      await renderHook(() => {
+        useFacadeRenderOnDemand({ ...renderParams('a'), isContinuous: true })
+      })
+
+      await jest.advanceTimersByTimeAsync(1000)
+
+      await act(() => {
+        appStateHandler?.('background')
+      })
+
+      expect(mockChoreographer.stop).not.toHaveBeenCalled()
+
+      await act(() => {
+        appStateHandler?.('active')
+      })
+
+      expect(mockChoreographer.stop).toHaveBeenCalledTimes(1)
+
+      await jest.advanceTimersByTimeAsync(350)
+
+      expect(mockChoreographer.start).toHaveBeenCalledTimes(1)
+    })
   })
 
   it('does not stop while activity keeps arriving', async () => {

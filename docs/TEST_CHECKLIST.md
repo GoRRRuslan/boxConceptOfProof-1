@@ -51,7 +51,7 @@ git clone <repo> /tmp/clean && cd /tmp/clean
 yarn install --frozen-lockfile     # postinstall fetches the Filament binaries
 yarn ciPipeline && yarn test
 ```
-Result: {CLEAN_CLONE}
+Result: ✅ a fresh `git clone` of the committed branch: `yarn install --frozen-lockfile` (the Filament binaries were installed by the postinstall script; on this machine from the local download cache, so the one-time download was not repeated), `yarn ciPipeline` clean, `yarn test` 163 / 163. The native builds (`prebuild` + Xcode/Gradle) were not repeated on the clone; they were run on the working copy for every check above.
 
 ## 5. Performance (final code)
 

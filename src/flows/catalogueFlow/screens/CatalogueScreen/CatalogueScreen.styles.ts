@@ -10,6 +10,9 @@ export const makeStyles = () =>
     listContent: {
       paddingTop: LIST_TOP_PADDING,
     },
+    listLayer: {
+      flex: 1,
+    },
     sceneLayer: {
       position: 'absolute',
       top: 0,

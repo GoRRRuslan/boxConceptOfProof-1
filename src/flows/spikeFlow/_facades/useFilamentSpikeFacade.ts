@@ -13,7 +13,7 @@ import { useRenderFpsMeter } from '@services/performance/useRenderFpsMeter'
 import {
   LID_FULLY_OPEN_ANGLE_DEGREES,
   computeLidHingeTransform,
-} from '@flows/spikeFlow/_facadesLogic/computeLidHingeTransform'
+} from '@services/filament/computeLidHingeTransform'
 
 // Measurement builds can start in a benchmark state (inlined at bundle time):
 //   EXPO_PUBLIC_AUTO_BENCHMARK=1  EXPO_PUBLIC_AUTO_BOXES=64

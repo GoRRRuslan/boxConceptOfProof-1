@@ -2,7 +2,7 @@ import {
   LID_FULLY_OPEN_ANGLE_DEGREES,
   LID_HINGE_PIVOT,
   computeLidHingeTransform,
-} from '@flows/spikeFlow/_facadesLogic/computeLidHingeTransform'
+} from '@services/filament/computeLidHingeTransform'
 
 const applyTransform = (point: number[], angleDegrees: number) => {
   const { rotate, translate } = computeLidHingeTransform(angleDegrees)

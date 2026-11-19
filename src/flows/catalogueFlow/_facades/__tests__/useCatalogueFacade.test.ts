@@ -11,6 +11,12 @@ import { BOX_CATALOGUE } from '@networking/api/MysteryBoxApi/_mockData/boxCatalo
 
 const mockSetBlocking = jest.fn()
 
+jest.mock('react-native-gesture-handler', () => ({ usePanGesture: () => ({}) }))
+
+jest.mock('@services/haptics/hapticFeedback', () => ({
+  hapticFeedback: { success: jest.fn(), error: jest.fn(), lidOpening: jest.fn(), selection: jest.fn() },
+}))
+
 jest.mock('react-native-worklets', () => ({
   createSynchronizable: () => ({ setBlocking: mockSetBlocking, getBlocking: () => 0 }),
   scheduleOnRN: jest.fn(),
@@ -74,13 +80,13 @@ describe('useCatalogueFacade', () => {
 
     expect(mockSetBlocking).toHaveBeenCalledWith(240)
 
-    expect(result.current.isScrolling).toBe(true)
+    expect(result.current.isRenderContinuous).toBe(true)
 
     await act(async () => {
       await jest.advanceTimersByTimeAsync(300)
     })
 
-    expect(result.current.isScrolling).toBe(false)
+    expect(result.current.isRenderContinuous).toBe(false)
 
     jest.useRealTimers()
   })
@@ -98,7 +104,7 @@ describe('useCatalogueFacade', () => {
       })
     }
 
-    expect(result.current.isScrolling).toBe(true)
+    expect(result.current.isRenderContinuous).toBe(true)
 
     jest.useRealTimers()
   })

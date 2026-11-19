@@ -3,3 +3,9 @@ declare module '*.glb' {
 
   export default assetModule
 }
+
+declare module '*.webp' {
+  const imageModule: number
+
+  export default imageModule
+}

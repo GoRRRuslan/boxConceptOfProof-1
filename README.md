@@ -261,6 +261,8 @@ Plain-English report with charts, screenshots, methodology and limits: [docs/PER
 | `yarn androidEmulatorStart` / `yarn androidEmulatorStop` | Boot / stop the Android emulator **headless** (needed for correct FPS) |
 | `yarn androidRunCatalogueScroll` / `yarn iosRunCatalogueScroll` | Build a release app whose catalogue scrolls by itself |
 | `yarn perfAndroidCatalogue` / `yarn perfIosCatalogue` | Measure FPS while the catalogue scrolls (60 s) |
+| `yarn androidRunOpening` + `yarn perfAndroidOpening` | Play the whole opening flow on the emulator, screenshots + FPS |
+| `yarn iosRunOpening` | Build a release iOS app with the FPS overlay |
 | `yarn perfCharts` | Redraw the SVG charts in `docs/media` from `docs/data` |
 | `yarn perfAndroidPresentFps` | Independent FPS from SurfaceFlinger presented frames |
 | `yarn iosRestart` / `yarn androidRestart` / `yarn androidRestartRelease` | Relaunch the installed app without rebuilding |
@@ -283,7 +285,7 @@ boxConceptOfProof-1/
 ├── app.config.ts                     # Expo config (dynamic)
 ├── babel.config.js · metro.config.js # aliases, worklets plugin, .glb assets
 ├── eslint.config.mjs · .prettierrc.json
-├── docs/                             # ASSIGNMENT, DEVELOPMENT_PLAN, PERFORMANCE, STAGE_1_FINDINGS, STAGE_2_DOMAIN, STAGE_3_CATALOGUE, MODEL, reference.png
+├── docs/                             # ASSIGNMENT, DEVELOPMENT_PLAN, PERFORMANCE, STAGE_1_FINDINGS, STAGE_2_DOMAIN, STAGE_3_CATALOGUE, STAGE_4_OPENING, MODEL, reference.png
 ├── scripts/
 │   ├── installFilamentBinaries.sh
 │   └── perf/                         # FPS analysis, Perfetto + Instruments capture
@@ -297,6 +299,7 @@ boxConceptOfProof-1/
     ├── networking/                   # api/MysteryBoxApi (mock) · requests/{queries,mutations} · errorHandling
     ├── flows/
     │   ├── catalogueFlow/            # Stage 3: 3D catalogue (facade, adapter, pose maths, screen)
+    │   ├── openingFlow/              # Stage 4: phases, drag, lid, reveal, purchase (facade, logic, overlay)
     │   └── spikeFlow/                # current flow (becomes catalogue/opening/collection)
     │       ├── _facades/             # useFilamentSpikeFacade (+ __tests__)
     │       ├── _facadesLogic/        # computeLidHingeTransform (+ __tests__)
@@ -321,7 +324,7 @@ boxConceptOfProof-1/
 | 1 | Filament spike: GLB, lighting, hinge, multi-box strategy, vendoring, performance analysis | ✅ done |
 | 2 | Domain + asynchronous mock API + Zustand stores + purchase mutation (one deduction, one watch, no duplicates) with unit tests — see [docs/STAGE_2_DOMAIN.md](docs/STAGE_2_DOMAIN.md) | ✅ done |
 | 3 | Live 3D catalogue: FlashList over one shared Filament canvas, per-box colours, balance header, 60 FPS while scrolling — see [docs/STAGE_3_CATALOGUE.md](docs/STAGE_3_CATALOGUE.md) | ✅ done |
-| 4 | Opening experience: drag-to-inspect, animated lid, camera + light, watch reveal, haptics | planned |
+| 4 | Opening experience: select, drag to inspect, buy, animated lid, watch reveal, haptics, error handling — see [docs/STAGE_4_OPENING.md](docs/STAGE_4_OPENING.md) | ✅ done |
 | 5 | Collection tab, navigation, visual consistency | planned |
 | 6 | Test matrix, device profiling gate, polish, handoff | planned |
 

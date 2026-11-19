@@ -5,7 +5,7 @@ import type {
   RENDER_QUALITY_PROFILES,
 } from '@flows/spikeFlow/screens/FilamentSpikeScreen/_config/renderQualityConfig'
 import type { IRenderFrameStats } from '@services/performance/summarizeFrameDeltas'
-import type { ILidHingeTransform } from '@flows/spikeFlow/_facadesLogic/computeLidHingeTransform'
+import type { ILidHingeTransform } from '@services/filament/computeLidHingeTransform'
 
 export interface IFilamentSpikeFacade {
   isBenchmarkRunning: boolean

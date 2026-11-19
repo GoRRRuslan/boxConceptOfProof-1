@@ -6,6 +6,8 @@ import { createSynchronizable } from 'react-native-worklets'
 
 import { CARD_HEIGHT, LIST_TOP_PADDING } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
 import { useAdapterCatalogueCards } from '@flows/catalogueFlow/_adapters/useAdapterCatalogueCards'
+import { useOpeningFacade } from '@flows/openingFlow/_facades/useOpeningFacade'
+import { EOpeningPhase } from '@flows/openingFlow/_types'
 import type { ICatalogueCard, ICatalogueFacade, ICatalogueViewport } from '@flows/catalogueFlow/_types'
 import useStore from '@models/mainStorage/_storeConfigured'
 import { useGetBoxesQuery } from '@networking/requests/queries/BoxQueries/useGetBoxesQuery'
@@ -43,9 +45,14 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   // -------------------------- Adapter ------------------------- //
   const cards = useAdapterCatalogueCards({ boxesData, balanceInCents })
 
+  // ------------------------- Opening -------------------------- //
+  const opening = useOpeningFacade({ boxesData, cards })
+
   // -------------------------- Values ------------------------- //
   // Shared with the 3D scene: written on every scroll event, read on every rendered frame.
   const scrollOffset = useMemo(() => createSynchronizable(0), [])
+  const isRenderContinuous =
+    isScrolling || opening.isDragging || [EOpeningPhase.Inspecting, EOpeningPhase.Purchasing, EOpeningPhase.Ready, EOpeningPhase.Opening].includes(opening.phase)
   const balanceText = useMemo(() => formatCurrency(balanceInCents), [balanceInCents])
 
   // ------------------- Handlers -------------------------- //
@@ -112,7 +119,9 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     viewport,
     listRef,
     scrollOffset,
-    isScrolling,
+    opening,
+    phaseKey: opening.phase,
+    isRenderContinuous,
     isPerformanceOverlayVisible: IS_PERFORMANCE_OVERLAY_VISIBLE,
     renderCallback,
     renderFrameStats,

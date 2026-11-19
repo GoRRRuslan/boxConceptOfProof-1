@@ -9,13 +9,19 @@ interface IAppButtonProps {
   label: string
   onPress: () => void
   testID: string
+  isDisabled?: boolean
 }
 
-export const AppButton = ({ label, onPress, testID }: IAppButtonProps) => {
+export const AppButton = ({ label, onPress, testID, isDisabled = false }: IAppButtonProps) => {
   const styles = useMemo(() => makeStyles(theme), [])
 
   return (
-    <Pressable style={styles.button} onPress={onPress} testID={testID}>
+    <Pressable
+      style={[styles.button, isDisabled && styles.buttonDisabled]}
+      onPress={onPress}
+      disabled={isDisabled}
+      testID={testID}
+    >
       <AppText style={styles.label}>{label}</AppText>
     </Pressable>
   )

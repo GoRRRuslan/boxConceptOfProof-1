@@ -11,7 +11,7 @@ import {
 } from 'react-native-filament'
 
 import { RenderOnDemand } from '@components/RenderOnDemand'
-import type { ILidHingeTransform } from '@flows/spikeFlow/_facadesLogic/computeLidHingeTransform'
+import type { ILidHingeTransform } from '@services/filament/computeLidHingeTransform'
 
 import { type IBoxGridLayout, computeBoxGridLayout } from '@flows/spikeFlow/_facadesLogic/computeBoxGridLayout'
 import { makeStyles } from '@flows/spikeFlow/screens/FilamentSpikeScreen/_components/SpikeScene/SpikeScene.styles'

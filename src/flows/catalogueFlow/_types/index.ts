@@ -4,6 +4,7 @@ import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 
 import type { FrameInfo } from 'react-native-filament'
 import type { Synchronizable } from 'react-native-worklets'
 
+import type { IOpeningFacade, IOpeningPhaseKey } from '@flows/openingFlow/_types'
 import type { EBoxIdentifier } from '@networking/api/MysteryBoxApi/_types'
 import type { IRenderFrameStats } from '@services/performance/summarizeFrameDeltas'
 
@@ -40,7 +41,10 @@ export interface ICatalogueFacade {
   listRef: RefObject<FlashListRef<ICatalogueCard> | null>
   // Written by the list on every scroll event, read by the 3D scene on every frame.
   scrollOffset: Synchronizable<number>
-  isScrolling: boolean
+  opening: IOpeningFacade
+  phaseKey: IOpeningPhaseKey
+  // True while anything moves (scroll, drag, opening): the renderer must keep drawing.
+  isRenderContinuous: boolean
   isPerformanceOverlayVisible: boolean
   renderCallback: (frameInfo: FrameInfo) => void
   renderFrameStats: IRenderFrameStats | null

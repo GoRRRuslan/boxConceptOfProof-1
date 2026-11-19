@@ -2,24 +2,34 @@ import { useMemo } from 'react'
 import { Camera, DefaultLight, FilamentView, type FrameInfo } from 'react-native-filament'
 import type { Synchronizable } from 'react-native-worklets'
 
-import {
-  CAMERA_DISTANCE,
-  CAMERA_FOCAL_LENGTH_MILLIMETERS,
-} from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
+import { CAMERA_DISTANCE, CAMERA_FOCAL_LENGTH_MILLIMETERS } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
 import type { ICatalogueCard, ICatalogueViewport } from '@flows/catalogueFlow/_types'
 import { CatalogueBoxes } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene/_components/CatalogueBoxes/CatalogueBoxes'
 import { makeStyles } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene/CatalogueScene.styles'
+import type { IDragState, IOpeningPhaseKey, IOpeningSceneState } from '@flows/openingFlow/_types'
 
 interface ICatalogueSceneProps {
   cards: ICatalogueCard[]
   viewport: ICatalogueViewport | null
   scrollOffset: Synchronizable<number>
-  isScrolling: boolean
+  openingScene: Synchronizable<IOpeningSceneState>
+  dragState: Synchronizable<IDragState>
+  phaseKey: IOpeningPhaseKey
+  isRenderContinuous: boolean
   renderCallback: (frameInfo: FrameInfo) => void
 }
 
-// The ONE 3D canvas of the catalogue; it fills the list area and sits behind the transparent cards.
-export const CatalogueScene = ({ cards, viewport, scrollOffset, isScrolling, renderCallback }: ICatalogueSceneProps) => {
+// The ONE 3D canvas of the app; it fills the list area and sits behind the transparent cards.
+export const CatalogueScene = ({
+  cards,
+  viewport,
+  scrollOffset,
+  openingScene,
+  dragState,
+  phaseKey,
+  isRenderContinuous,
+  renderCallback,
+}: ICatalogueSceneProps) => {
   const styles = useMemo(() => makeStyles(), [])
 
   return (
@@ -34,9 +44,12 @@ export const CatalogueScene = ({ cards, viewport, scrollOffset, isScrolling, ren
         <CatalogueBoxes
           key={cards.length}
           cards={cards}
-          viewportHeight={viewport.height}
+          viewport={viewport}
           scrollOffset={scrollOffset}
-          isScrolling={isScrolling}
+          openingScene={openingScene}
+          dragState={dragState}
+          phaseKey={phaseKey}
+          isRenderContinuous={isRenderContinuous}
         />
       ) : null}
     </FilamentView>

@@ -1,21 +1,29 @@
 import { useMemo } from 'react'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { AppText } from '@components/AppText'
 import type { ICatalogueCard } from '@flows/catalogueFlow/_types'
+import type { EBoxIdentifier } from '@networking/api/MysteryBoxApi/_types'
 import { makeStyles } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/BoxCard/BoxCard.styles'
 import { theme } from '@utils/designSystem/Theme'
 
 interface IBoxCardProps {
   card: ICatalogueCard
+  onPress: (boxIdentifier: EBoxIdentifier) => void
 }
 
 // A card is transparent on top (the 3D box shows through the slot) with the box facts below it.
-export const BoxCard = ({ card }: IBoxCardProps) => {
+export const BoxCard = ({ card, onPress }: IBoxCardProps) => {
   const styles = useMemo(() => makeStyles(theme), [])
 
   return (
-    <View style={styles.card} testID={`boxCard-${card.identifier}`}>
+    <Pressable
+      style={styles.card}
+      onPress={() => {
+        onPress(card.identifier)
+      }}
+      testID={`boxCard-${card.identifier}`}
+    >
       <View style={styles.boxSlot} />
       <View style={styles.info}>
         <AppText style={styles.name}>{card.name}</AppText>
@@ -29,6 +37,6 @@ export const BoxCard = ({ card }: IBoxCardProps) => {
           </AppText>
         ) : null}
       </View>
-    </View>
+    </Pressable>
   )
 }

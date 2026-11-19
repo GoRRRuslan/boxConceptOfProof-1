@@ -12,6 +12,9 @@ export const makeStyles = (theme: IThemePalette) =>
       backgroundColor: theme.Colors.surface,
       alignItems: 'center',
     },
+    buttonDisabled: {
+      opacity: 0.45,
+    },
     label: {
       color: theme.Colors.textOnAccent,
       fontSize: ms(15),

@@ -27,5 +27,24 @@
     "loading": "Loading boxes…",
     "error": "Could not load the boxes.",
     "retry": "Try again"
+  },
+  "opening": {
+    "buy": "Buy for {{price}}",
+    "buying": "Purchasing…",
+    "open": "Open the box",
+    "opening": "Opening…",
+    "done": "Done",
+    "back": "Back",
+    "hintInspect": "Drag to turn the box",
+    "hintReady": "Your box is ready",
+    "hintOpening": "Here it comes…",
+    "revealTitle": "You got",
+    "watchValue": "Worth {{amount}}",
+    "errors": {
+      "insufficientBalance": "Your balance is too low for this box.",
+      "networkError": "Network problem. Nothing was charged — try again.",
+      "serverError": "Something went wrong. Nothing was charged — try again.",
+      "boxNotFound": "This box is no longer available."
+    }
   }
 }

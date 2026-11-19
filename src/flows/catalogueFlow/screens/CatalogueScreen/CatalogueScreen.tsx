@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { FilamentScene } from 'react-native-filament'
 
 import { AppText } from '@components/AppText'
+import { FadingView } from '@components/FadingView'
 import { PerformanceOverlay } from '@components/PerformanceOverlay'
 import { EPerformanceOverlayPlacement } from '@components/PerformanceOverlay/_types'
 import { AppButton } from '@components/buttons/AppButton'
@@ -14,6 +15,7 @@ import { BalanceHeader } from '@flows/catalogueFlow/screens/CatalogueScreen/_com
 import { BoxCard } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/BoxCard'
 import { CatalogueScene } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene'
 import { makeStyles } from '@flows/catalogueFlow/screens/CatalogueScreen/CatalogueScreen.styles'
+import { OpeningOverlay } from '@flows/openingFlow/screens/OpeningOverlay'
 
 const CatalogueScreen = () => {
   const styles = useMemo(() => makeStyles(), [])
@@ -32,7 +34,9 @@ const CatalogueScreen = () => {
     viewport,
     listRef,
     scrollOffset,
-    isScrolling,
+    opening,
+    phaseKey,
+    isRenderContinuous,
     isPerformanceOverlayVisible,
     renderCallback,
     renderFrameStats,
@@ -43,7 +47,7 @@ const CatalogueScreen = () => {
   } = useCatalogueFacade()
 
   // --------------------- Render methods ------------------//
-  const renderCard = ({ item }: { item: ICatalogueCard }) => <BoxCard card={item} />
+  const renderCard = ({ item }: { item: ICatalogueCard }) => <BoxCard card={item} onPress={opening.handleCardPress} />
 
   const renderScene = () => (
     <View style={styles.sceneLayer} pointerEvents="none">
@@ -52,7 +56,10 @@ const CatalogueScreen = () => {
           cards={cards}
           viewport={viewport}
           scrollOffset={scrollOffset}
-          isScrolling={isScrolling}
+          openingScene={opening.sceneState}
+          dragState={opening.dragState}
+          phaseKey={phaseKey}
+          isRenderContinuous={isRenderContinuous}
           renderCallback={renderCallback}
         />
       </FilamentScene>
@@ -99,10 +106,13 @@ const CatalogueScreen = () => {
       <BalanceHeader titleText={titleText} balanceLabelText={balanceLabelText} balanceText={balanceText} />
       <View style={styles.listRegion} onLayout={handleListLayout}>
         {renderScene()}
-        {renderList()}
+        <FadingView isVisible={!opening.isListHidden} style={styles.listLayer}>
+          {renderList()}
+        </FadingView>
+        {opening.isOverlayVisible ? <OpeningOverlay opening={opening} /> : null}
         {renderStatus()}
       </View>
-      {isPerformanceOverlayVisible ? (
+      {isPerformanceOverlayVisible && !opening.isOverlayVisible ? (
         <PerformanceOverlay
           renderFrameStats={renderFrameStats}
           isRenderPaused={isRenderPaused}

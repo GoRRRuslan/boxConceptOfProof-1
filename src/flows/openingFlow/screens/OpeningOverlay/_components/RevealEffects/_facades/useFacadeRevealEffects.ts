@@ -21,8 +21,8 @@ export const useFacadeRevealEffects = (flashOpacity: number) => {
   }, [flash, glowPulse, flashOpacity])
 
   const flashStyle = useAnimatedStyle(() => ({ opacity: flash.value }))
-  const innerGlowStyle = useAnimatedStyle(() => ({ opacity: 0.22 + 0.2 * glowPulse.value, transform: [{ scale: 0.95 + 0.1 * glowPulse.value }] }))
-  const outerGlowStyle = useAnimatedStyle(() => ({ opacity: 0.1 + 0.1 * glowPulse.value, transform: [{ scale: 1 + 0.12 * glowPulse.value }] }))
+  const innerGlowStyle = useAnimatedStyle(() => ({ opacity: 0.12 + 0.12 * glowPulse.value, transform: [{ scale: 0.95 + 0.1 * glowPulse.value }] }))
+  const outerGlowStyle = useAnimatedStyle(() => ({ opacity: 0.35 + 0.3 * glowPulse.value, transform: [{ scale: 1 + 0.12 * glowPulse.value }] }))
 
   return { flashStyle, innerGlowStyle, outerGlowStyle }
 }

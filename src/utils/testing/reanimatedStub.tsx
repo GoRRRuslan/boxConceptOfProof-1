@@ -18,6 +18,8 @@ export const FadeInDown = entering
 
 export const FadeInUp = entering
 
+export const FadeOut = entering
+
 export const ZoomIn = entering
 
 export const Easing = { out: () => undefined, inOut: () => undefined, cubic: undefined, quad: undefined, sin: undefined }

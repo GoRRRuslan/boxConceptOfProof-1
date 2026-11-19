@@ -4,25 +4,29 @@ export const makeStyles = (colorHex: string) =>
   ScaledSheet.create({
     glowContainer: {
       position: 'absolute',
-      top: ms(-30),
+      // Centred on the watch image and smaller than it is tall: the glow touches neither "You got" above nor the texts below.
+      top: ms(28),
       alignSelf: 'center',
-      width: ms(300),
-      height: ms(300),
+      width: ms(184),
+      height: ms(184),
       alignItems: 'center',
       justifyContent: 'center',
     },
     outerGlow: {
       position: 'absolute',
-      width: ms(300),
-      height: ms(300),
-      borderRadius: ms(150),
-      backgroundColor: colorHex,
+      width: ms(184),
+      height: ms(184),
+      borderRadius: ms(92),
+      backgroundColor: `${colorHex}22`,
+      // A crisp ring in the rarity colour outlines the glow, so the (often silver) watch never melts into it.
+      borderWidth: ms(2),
+      borderColor: colorHex,
     },
     innerGlow: {
       position: 'absolute',
-      width: ms(210),
-      height: ms(210),
-      borderRadius: ms(105),
+      width: ms(130),
+      height: ms(130),
+      borderRadius: ms(65),
       backgroundColor: colorHex,
     },
     flash: {

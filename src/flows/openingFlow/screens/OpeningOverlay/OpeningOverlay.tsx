@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { View } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
-import Animated, { FadeInUp } from 'react-native-reanimated'
+import Animated, { FadeInUp, FadeOut } from 'react-native-reanimated'
 
 import { AppText } from '@components/AppText'
 import { AppButton } from '@components/buttons/AppButton'
@@ -49,13 +49,20 @@ export const OpeningOverlay = ({ opening }: IOpeningOverlayProps) => {
         {opening.isBackVisible ? (
           <AppButton label={opening.backLabelText} onPress={opening.handleBackPress} testID="backButton" />
         ) : null}
-        <View style={styles.titles} pointerEvents="none">
-          <AppText style={styles.boxName} numberOfLines={1} testID="openingBoxName">
-            {opening.boxNameText}
-          </AppText>
-          <AppText style={styles.price}>{opening.priceText}</AppText>
-        </View>
+        {/* Once the prize is revealed the box name steps aside: the prize gets a clean stage, no text on top of the glow. */}
+        {reveal ? null : (
+          <Animated.View style={styles.titles} pointerEvents="none" exiting={FadeOut.duration(250)}>
+            <AppText style={styles.boxName} numberOfLines={1} testID="openingBoxName">
+              {opening.boxNameText}
+            </AppText>
+            <AppText style={styles.price}>{opening.priceText}</AppText>
+          </Animated.View>
+        )}
       </View>
+      {/* The flash and the particles are drawn under the watch and its texts, so nothing ever covers the watch. */}
+      {reveal ? (
+        <RevealBurst colorHex={reveal.rarityColorHex} flashOpacity={reveal.flashOpacity} particleCount={reveal.particleCount} />
+      ) : null}
       {renderReveal()}
       <View style={styles.footer} pointerEvents="box-none">
         {opening.errorText ? (
@@ -77,9 +84,6 @@ export const OpeningOverlay = ({ opening }: IOpeningOverlayProps) => {
           />
         ) : null}
       </View>
-      {reveal ? (
-        <RevealBurst colorHex={reveal.rarityColorHex} flashOpacity={reveal.flashOpacity} particleCount={reveal.particleCount} />
-      ) : null}
     </View>
   )
 }

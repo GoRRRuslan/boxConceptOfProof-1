@@ -7,9 +7,9 @@ export const LID_CLOSE_DURATION_MILLISECONDS = 500
 // Closed, the box is big and near the middle; open, it shrinks and moves down to leave room above it
 // for the revealed watch (the open lid is much taller than the closed box).
 export const FOCUSED_CLOSED_WIDTH_FRACTION = 0.55
-export const FOCUSED_OPEN_WIDTH_FRACTION = 0.3
+export const FOCUSED_OPEN_WIDTH_FRACTION = 0.26
 export const FOCUSED_CLOSED_CENTER_OFFSET_FRACTION = 0.06
-export const FOCUSED_OPEN_CENTER_OFFSET_FRACTION = 0.3
+export const FOCUSED_OPEN_CENTER_OFFSET_FRACTION = 0.32
 export const FOCUSED_BASE_YAW_RADIANS = Math.PI - 0.4
 export const FOCUSED_BASE_PITCH_RADIANS = 0.5
 

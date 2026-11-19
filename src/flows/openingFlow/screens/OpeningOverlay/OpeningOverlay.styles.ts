@@ -48,8 +48,18 @@ export const makeStyles = (theme: IThemePalette, rarityColorHex: string) =>
       fontSize: ms(14),
       color: theme.Colors.textSecondary,
     },
+    // The prize texts sit on their own dark plaque with a hairline in the rarity colour: they never mix with the glow or the box.
     revealTexts: {
       alignItems: 'center',
+      gap: mvs(2),
+      marginTop: mvs(14),
+      paddingVertical: mvs(10),
+      paddingHorizontal: ms(28),
+      borderRadius: ms(16),
+      borderWidth: 1,
+      borderColor: `${rarityColorHex}66`,
+      // Fully opaque (the app background colour), so the lid of the box behind it never shows through.
+      backgroundColor: theme.Colors.background,
     },
     rarity: {
       fontSize: ms(15),

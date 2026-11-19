@@ -84,6 +84,9 @@ export const makeStyles = (theme: IThemePalette, rarityColorHex: string) =>
       paddingHorizontal: ms(24),
       paddingBottom: mvs(20),
     },
+    doneCorner: {
+      alignSelf: 'flex-end',
+    },
     hint: {
       fontSize: ms(14),
       color: theme.Colors.textSecondary,

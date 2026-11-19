@@ -77,12 +77,15 @@ export const OpeningOverlay = ({ opening }: IOpeningOverlayProps) => {
           </AppText>
         ) : null}
         {primaryButton ? (
-          <AppButton
-            label={primaryButton.labelText}
-            onPress={primaryButton.onPress}
-            isDisabled={primaryButton.isDisabled}
-            testID={primaryButton.testID}
-          />
+          // After the reveal "Done" moves to the bottom right corner, so the opened box in the middle is fully visible.
+          <View style={reveal ? styles.doneCorner : undefined}>
+            <AppButton
+              label={primaryButton.labelText}
+              onPress={primaryButton.onPress}
+              isDisabled={primaryButton.isDisabled}
+              testID={primaryButton.testID}
+            />
+          </View>
         ) : null}
       </View>
     </View>

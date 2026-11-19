@@ -27,11 +27,6 @@ import {
 import { isDragStateAnimating, stepDragInertia } from '@flows/openingFlow/_facadesLogic/stepDragInertia'
 import { LID_FULLY_OPEN_ANGLE_DEGREES, LID_HINGE_PIVOT } from '@services/filament/computeLidHingeTransform'
 
-declare global {
-  // Last glow strength written to the focused box (so the material is only touched when it changes).
-  var __catalogueLastGlowStrength: number | undefined
-}
-
 interface IUseFacadeCatalogueBoxesParams {
   cards: ICatalogueCard[]
   viewport: ICatalogueViewport
@@ -67,6 +62,8 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
 
   // -------------------------- Values ------------------------- //
   const entranceStartedAt = useMemo(() => createSynchronizable<number>(ENTRANCE_NOT_STARTED), [])
+  // Last glow strength written to a box (so a material is only touched when the strength really changes).
+  const lastGlowStrength = useMemo(() => createSynchronizable<number>(0), [])
   const instances = useMemo(() => (model.state === 'loaded' ? model.asset.getAssetInstances() : []), [model])
   const rootEntities = useMemo(() => instances.map(instance => instance.getRoot()), [instances])
   const lidEntitiesByCard = useMemo(
@@ -218,7 +215,7 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
       const glowTargets = glowTargetsByCard[scene.focusedCardIndex]
       const glowStrength = computeGlowStrength(lidProgress, nowMilliseconds)
 
-      if (glowTargets && Math.abs(glowStrength - (globalThis.__catalogueLastGlowStrength ?? 0)) > 0.002) {
+      if (glowTargets && Math.abs(glowStrength - lastGlowStrength.getBlocking()) > 0.002) {
         const [red, green, blue] = scene.glowColorLinear
 
         glowTargets.forEach(({ entity, primitiveIndex }) => {
@@ -227,7 +224,7 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
             .setFloat4Parameter('emissiveFactor', [red * glowStrength, green * glowStrength, blue * glowStrength, 1])
         })
 
-        globalThis.__catalogueLastGlowStrength = glowStrength
+        lastGlowStrength.setBlocking(glowStrength)
       }
     },
     [
@@ -242,6 +239,7 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
       tilt,
       pressState,
       entranceStartedAt,
+      lastGlowStrength,
       viewportWidth,
       viewportHeight,
     ],

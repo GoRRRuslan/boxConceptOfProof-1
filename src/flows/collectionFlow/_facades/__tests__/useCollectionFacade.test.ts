@@ -63,7 +63,7 @@ describe('useCollectionFacade', () => {
 
     expect(result.current.items).toEqual([])
 
-    expect(result.current.totalValueText).toBe('$0')
+    expect(result.current.totalValueInCents).toBe(0)
 
     expect(result.current.countText).toBe('0 watches')
   })
@@ -87,7 +87,7 @@ describe('useCollectionFacade', () => {
       await jest.advanceTimersByTimeAsync(900)
     })
 
-    expect(result.current.totalValueText).toBe('$1,280')
+    expect(result.current.totalValueInCents).toBe(128_000)
 
     jest.useRealTimers()
   })

@@ -64,7 +64,8 @@ export const getTuckProgress = (state: IOpeningSceneState, nowMilliseconds: numb
     target: state.tuckTarget,
     startedAtMilliseconds: state.tuckStartedAtMilliseconds,
     nowMilliseconds,
-    durationMilliseconds: TUCK_DURATION_MILLISECONDS,
+    // Putting the box away takes its time; bringing it back goes with the box flying home.
+    durationMilliseconds: state.tuckTarget === 1 ? TUCK_DURATION_MILLISECONDS : LID_CLOSE_DURATION_MILLISECONDS,
   })
 }
 

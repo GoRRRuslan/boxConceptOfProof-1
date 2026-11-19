@@ -4,7 +4,7 @@ import { ScreenHeader } from '@components/ScreenHeader'
 
 describe('ScreenHeader', () => {
   it('shows the title and the labelled figure', async () => {
-    await render(<ScreenHeader titleText="My Collection" trailingLabelText="Total value" trailingValueText="$160" testID="header" />)
+    await render(<ScreenHeader titleText="My Collection" trailingLabelText="Total value" trailingValueInCents={16_000} testID="header" />)
 
     expect(screen.getByText('My Collection')).toBeTruthy()
 

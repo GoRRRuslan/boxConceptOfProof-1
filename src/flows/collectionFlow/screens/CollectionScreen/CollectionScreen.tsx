@@ -19,7 +19,7 @@ const CollectionScreen = () => {
   const {
     titleText,
     totalValueLabelText,
-    totalValueText,
+    totalValueInCents,
     countText,
     items,
     isEmpty,
@@ -56,7 +56,7 @@ const CollectionScreen = () => {
       <ScreenHeader
         titleText={titleText}
         trailingLabelText={totalValueLabelText}
-        trailingValueText={totalValueText}
+        trailingValueInCents={totalValueInCents}
         testID="collectionHeader"
       />
       {isEmpty ? (

@@ -89,35 +89,16 @@ describe('useCatalogueFacade', () => {
     expect(result.current.isLoadingBoxes).toBe(false)
   })
 
-  it('shows the wallet balance and counts to a new balance instead of jumping', async () => {
-    jest.useFakeTimers()
-
+  it('exposes the wallet balance in cents and follows it', async () => {
     const { result } = await renderHook(() => useCatalogueFacade(), { wrapper: createWrapper() })
 
-    expect(result.current.balanceText).toBe('$1,000')
+    expect(result.current.balanceInCents).toBe(100_000)
 
     await act(() => {
       useStore.setState({ balanceInCents: 55_000 })
     })
 
-    // Not there yet: the number is counting down.
-    expect(result.current.balanceText).toBe('$1,000')
-
-    await act(async () => {
-      await jest.advanceTimersByTimeAsync(300)
-    })
-
-    expect(result.current.balanceText).not.toBe('$1,000')
-
-    expect(result.current.balanceText).not.toBe('$550')
-
-    await act(async () => {
-      await jest.advanceTimersByTimeAsync(800)
-    })
-
-    expect(result.current.balanceText).toBe('$550')
-
-    jest.useRealTimers()
+    expect(result.current.balanceInCents).toBe(55_000)
   })
 
   it('writes the scroll offset for the 3D scene and reports scrolling until the list is idle', async () => {

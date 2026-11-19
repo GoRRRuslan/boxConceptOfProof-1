@@ -8,7 +8,7 @@ export const makeStyles = (theme: IThemePalette, rarityColorHex: string) =>
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: 'rgba(5, 6, 9, 0.88)',
+      backgroundColor: theme.Colors.scrim,
       padding: ms(24),
     },
     sheet: {

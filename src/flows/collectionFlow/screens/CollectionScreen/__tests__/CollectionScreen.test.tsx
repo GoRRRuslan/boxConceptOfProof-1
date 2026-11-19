@@ -11,7 +11,7 @@ jest.mock('react-native-reanimated', () => jest.requireActual('@utils/testing/re
 const baseFacade: ICollectionFacade = {
   titleText: 'My Collection',
   totalValueLabelText: 'Total value',
-  totalValueText: '$0',
+  totalValueInCents: 0,
   countText: '0 watches',
   items: [],
   isEmpty: true,
@@ -49,7 +49,7 @@ describe('CollectionScreen', () => {
       ...baseFacade,
       isEmpty: false,
       countText: '2 watches',
-      totalValueText: '$160',
+      totalValueInCents: 16_000,
       items: [
         { ownershipIdentifier: 'purchase-2', nameText: 'GMT Master', brandText: 'Rolex', valueText: '$1,200', boxText: 'From Classic Box', thumbnailSource: 1, fullImageSource: 3, rarityLabelText: 'Epic', rarityColorHex: '#B05AE0' },
         { ownershipIdentifier: 'purchase-1', nameText: 'Casio Vintage', brandText: 'Casio', valueText: '$80', boxText: null, thumbnailSource: 2, fullImageSource: 4, rarityLabelText: 'Common', rarityColorHex: '#9FB7C4' },

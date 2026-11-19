@@ -13,6 +13,7 @@ import {
   LID_OPEN_DURATION_MILLISECONDS,
   OPEN_SWIPE_DISTANCE,
   TUCK_DELAY_MILLISECONDS,
+  TUCK_DURATION_MILLISECONDS,
 } from '@flows/openingFlow/_config/openingConfig'
 import { RARITY_STYLES } from '@flows/openingFlow/_config/rarityConfig'
 import { useFacadeDeviceTilt } from '@flows/openingFlow/_facades/useFacadeDeviceTilt'
@@ -80,7 +81,11 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
   const [isDragging, setIsDragging] = useState<boolean>(false)
   // After the finger lifts the box keeps turning (inertia): the renderer must keep drawing meanwhile.
   const [isInertiaRunning, setIsInertiaRunning] = useState<boolean>(false)
+  // The opened box has been put away after the reveal: nothing moves in the 3D scene any more.
+  const [isBoxPutAway, setIsBoxPutAway] = useState<boolean>(false)
   const inertiaTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  // The finger really started a drag (not just a tap): only then the box has inertia to play out.
+  const hasDragActivated = useRef<boolean>(false)
   const openingTimers = useRef<ReturnType<typeof setTimeout>[]>([])
   // After leaving, the box needs a moment to fly back before another one may be selected.
   const selectionLockedUntilMilliseconds = useRef<number>(0)
@@ -104,12 +109,24 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
   const primaryActionState = getPrimaryActionForPhase(phase, isAffordable)
 
   // ------------------- Handlers -------------------------- //
+  // The timers of an opening (sounds, reveal, putting the box away) must never outlive it: after Done or a new
+  // selection a late timer would shrink the box that is flying home, or the next one.
+  const clearOpeningTimers = () => {
+    openingTimers.current.forEach(clearTimeout)
+
+    openingTimers.current = []
+
+    setIsBoxPutAway(false)
+  }
+
   const handleCardPress = (boxIdentifier: EBoxIdentifier) => {
     const cardIndex = cards.findIndex(card => card.identifier === boxIdentifier)
 
     if (phase !== EOpeningPhase.Browsing || cardIndex < 0 || Date.now() < selectionLockedUntilMilliseconds.current) {
       return
     }
+
+    clearOpeningTimers()
 
     setSelectedBoxIdentifier(boxIdentifier)
 
@@ -200,6 +217,9 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
       setTimeout(() => {
         sceneState.setBlocking(startTuck(sceneState.getBlocking(), Date.now()))
       }, ANTICIPATION_DURATION_MILLISECONDS + LID_OPEN_DURATION_MILLISECONDS + TUCK_DELAY_MILLISECONDS),
+      setTimeout(() => {
+        setIsBoxPutAway(true)
+      }, ANTICIPATION_DURATION_MILLISECONDS + LID_OPEN_DURATION_MILLISECONDS + TUCK_DELAY_MILLISECONDS + TUCK_DURATION_MILLISECONDS),
     )
   }
 
@@ -209,6 +229,8 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     }
 
     selectionLockedUntilMilliseconds.current = Date.now() + FOCUS_DURATION_MILLISECONDS
+
+    clearOpeningTimers()
 
     sceneState.setBlocking(startClose(sceneState.getBlocking(), Date.now()))
 
@@ -236,6 +258,8 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     runOnJS: true,
     enabled: isGestureEnabled,
     onActivate: () => {
+      hasDragActivated.current = true
+
       clearTimeout(inertiaTimer.current)
 
       setIsInertiaRunning(false)
@@ -268,6 +292,12 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
       }
     },
     onFinalize: () => {
+      if (!hasDragActivated.current) {
+        return
+      }
+
+      hasDragActivated.current = false
+
       dragState.setBlocking({ ...dragState.getBlocking(), isDragging: false })
 
       setIsDragging(false)
@@ -341,6 +371,7 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     isOverlayVisible: phase !== EOpeningPhase.Browsing,
     isListHidden: phase !== EOpeningPhase.Browsing,
     isDragging: isDragging || isInertiaRunning || phase === EOpeningPhase.Opening,
+    isBoxPutAway,
     boxNameText: selectedBox?.name ?? '',
     priceText: selectedBox ? formatCurrency(selectedBox.priceInCents) : '',
     hintText: getHintText(t, phase, isAffordable),

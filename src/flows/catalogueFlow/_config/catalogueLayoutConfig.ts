@@ -30,6 +30,10 @@ export const PARKED_BOX_HEIGHT_UNITS = -1000
 // Boxes pop into the list one after the other the first time the scene appears.
 export const ENTRANCE_DURATION_MILLISECONDS = 520
 export const ENTRANCE_STAGGER_MILLISECONDS = 90
+// Cards further down than this appear together with the last staggered one.
+export const ENTRANCE_MAXIMUM_STAGGERED_CARDS = 5
+// How long the texts of a card take to fade in and slide into place.
+export const CARD_TEXT_ENTRANCE_DURATION_MILLISECONDS = 450
 
 // A pressed box is squeezed a little before it flies to the middle.
 export const PRESS_SCALE = 0.92

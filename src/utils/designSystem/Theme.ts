@@ -8,6 +8,10 @@ export interface IThemePalette {
     textSecondary: string
     textOnAccent: string
     danger: string
+    // Full-screen white of the reveal flash.
+    flash: string
+    // Dark veil behind a sheet, so the screen under it is still faintly visible.
+    scrim: string
   }
 }
 
@@ -21,5 +25,7 @@ export const theme: IThemePalette = {
     textSecondary: '#9A9484',
     textOnAccent: '#0B0D12',
     danger: '#E4572E',
+    flash: '#FFFFFF',
+    scrim: 'rgba(5, 6, 9, 0.88)',
   },
 }

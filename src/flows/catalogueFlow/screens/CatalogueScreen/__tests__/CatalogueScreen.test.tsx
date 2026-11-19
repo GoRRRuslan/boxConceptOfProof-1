@@ -28,7 +28,7 @@ const handleCardPress = jest.fn()
 const baseFacade = {
   titleText: 'Mystery Boxes',
   balanceLabelText: 'Balance',
-  balanceText: '$1,000',
+  balanceInCents: 100_000,
   loadingText: 'Loading boxes…',
   errorText: 'Could not load the boxes.',
   retryLabelText: 'Try again',

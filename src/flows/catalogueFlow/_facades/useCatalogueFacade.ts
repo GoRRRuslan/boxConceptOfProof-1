@@ -13,9 +13,7 @@ import type { ICatalogueCard, ICatalogueFacade, ICatalogueSceneSync, ICatalogueV
 import useStore from '@models/mainStorage/_storeConfigured'
 import type { EBoxIdentifier } from '@networking/api/MysteryBoxApi/_types'
 import { useGetBoxesQuery } from '@networking/requests/queries/BoxQueries/useGetBoxesQuery'
-import { useAnimatedNumber } from '@services/animation/useAnimatedNumber'
 import { useRenderFpsMeter } from '@services/performance/useRenderFpsMeter'
-import { formatCurrency } from '@utils/formatCurrency'
 
 // The list counts as "scrolling" until this long after its last scroll event (covers the fling).
 const SCROLL_IDLE_MILLISECONDS = 250
@@ -62,10 +60,9 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     isScrolling ||
     isPressing ||
     opening.isDragging ||
-    // Revealed stays continuous: the light inside the box pulses.
-    [EOpeningPhase.Inspecting, EOpeningPhase.Purchasing, EOpeningPhase.Ready, EOpeningPhase.Opening, EOpeningPhase.Revealed].includes(opening.phase)
-  const animatedBalanceInCents = useAnimatedNumber(balanceInCents)
-  const balanceText = useMemo(() => formatCurrency(animatedBalanceInCents), [animatedBalanceInCents])
+    [EOpeningPhase.Inspecting, EOpeningPhase.Purchasing, EOpeningPhase.Ready, EOpeningPhase.Opening].includes(opening.phase) ||
+    // Revealed stays continuous (the light inside the box pulses) until the box has been put away.
+    (opening.phase === EOpeningPhase.Revealed && !opening.isBoxPutAway)
   const pressState = useMemo(() => createSynchronizable<IPressState>(INITIAL_PRESS_STATE), [])
   const sceneSync: ICatalogueSceneSync = useMemo(
     () => ({
@@ -156,7 +153,7 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   return {
     titleText: t('catalogue.title'),
     balanceLabelText: t('catalogue.balanceLabel'),
-    balanceText,
+    balanceInCents,
     loadingText: t('catalogue.loading'),
     errorText: t('catalogue.error'),
     retryLabelText: t('catalogue.retry'),

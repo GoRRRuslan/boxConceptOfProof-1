@@ -6,8 +6,11 @@ import '@i18next/i18init'
 import {
   ANTICIPATION_DURATION_MILLISECONDS,
   DRAG_INERTIA_MAXIMUM_MILLISECONDS,
+  FOCUS_DURATION_MILLISECONDS,
   LID_OPEN_DURATION_MILLISECONDS,
   OPEN_SWIPE_DISTANCE,
+  TUCK_DELAY_MILLISECONDS,
+  TUCK_DURATION_MILLISECONDS,
 } from '@flows/openingFlow/_config/openingConfig'
 import { useOpeningFacade } from '@flows/openingFlow/_facades/useOpeningFacade'
 import { EOpeningPhase } from '@flows/openingFlow/_types'
@@ -342,6 +345,21 @@ describe('useOpeningFacade', () => {
     jest.useRealTimers()
   })
 
+  it('does not keep the renderer busy after a plain tap that never became a drag', async () => {
+    jest.useFakeTimers()
+
+    const { result } = await renderFacade()
+    const gesture = (result.current.gesture as unknown as { pan: Record<string, (event?: unknown) => void> }).pan
+
+    await act(() => {
+      gesture.onFinalize()
+    })
+
+    expect(result.current.isDragging).toBe(false)
+
+    jest.useRealTimers()
+  })
+
   describe('opening: anticipation, light, reveal', () => {
     const buyAndGetReady = async (result: Awaited<ReturnType<typeof renderFacade>>['result']) => {
       await act(() => {
@@ -391,6 +409,97 @@ describe('useOpeningFacade', () => {
       expect(result.current.phase).toBe(EOpeningPhase.Revealed)
 
       jest.useRealTimers()
+    })
+
+    describe('putting the box away after the reveal', () => {
+      const openAndReveal = async (result: Awaited<ReturnType<typeof renderFacade>>['result']) => {
+        await buyAndGetReady(result)
+
+        await act(async () => {
+          result.current.primaryButton?.onPress()
+
+          await jest.advanceTimersByTimeAsync(ANTICIPATION_DURATION_MILLISECONDS + LID_OPEN_DURATION_MILLISECONDS + 10)
+        })
+      }
+
+      it('puts the box away after a moment and then lets the renderer rest', async () => {
+        jest.useFakeTimers()
+
+        const { result } = await renderFacade()
+
+        await openAndReveal(result)
+
+        expect(result.current.phase).toBe(EOpeningPhase.Revealed)
+
+        expect(result.current.isBoxPutAway).toBe(false)
+
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(TUCK_DELAY_MILLISECONDS)
+        })
+
+        expect(result.current.sceneState.getBlocking()).toMatchObject({ tuckTarget: 1 })
+
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(TUCK_DURATION_MILLISECONDS)
+        })
+
+        expect(result.current.isBoxPutAway).toBe(true)
+
+        jest.useRealTimers()
+      })
+
+      it('a late timer never puts away a box that is already flying home', async () => {
+        jest.useFakeTimers()
+
+        const { result } = await renderFacade()
+
+        await openAndReveal(result)
+
+        // Done before the box is put away.
+        await act(() => {
+          result.current.primaryButton?.onPress()
+        })
+
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(TUCK_DELAY_MILLISECONDS + TUCK_DURATION_MILLISECONDS + 1000)
+        })
+
+        expect(result.current.sceneState.getBlocking()).toMatchObject({ tuckTarget: 0 })
+
+        expect(result.current.isBoxPutAway).toBe(false)
+
+        jest.useRealTimers()
+      })
+
+      it('a late timer never puts away the next box that is selected right after Done', async () => {
+        jest.useFakeTimers()
+
+        const { result } = await renderFacade()
+
+        await openAndReveal(result)
+
+        await act(() => {
+          result.current.primaryButton?.onPress()
+        })
+
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(FOCUS_DURATION_MILLISECONDS + 10)
+        })
+
+        await act(() => {
+          result.current.handleCardPress(EBoxIdentifier.Starter)
+        })
+
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(TUCK_DELAY_MILLISECONDS + TUCK_DURATION_MILLISECONDS + 1000)
+        })
+
+        expect(result.current.phase).toBe(EOpeningPhase.Inspecting)
+
+        expect(result.current.sceneState.getBlocking()).toMatchObject({ tuckTarget: 0, focusTarget: 1 })
+
+        jest.useRealTimers()
+      })
     })
 
     it('tells the scene the colour of the light inside before the box is opened', async () => {

@@ -16,7 +16,7 @@ export interface ICollectionItem {
 export interface ICollectionFacade {
   titleText: string
   totalValueLabelText: string
-  totalValueText: string
+  totalValueInCents: number
   countText: string
   items: ICollectionItem[]
   isEmpty: boolean

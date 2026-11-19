@@ -25,7 +25,7 @@ const CatalogueScreen = () => {
   const {
     titleText,
     balanceLabelText,
-    balanceText,
+    balanceInCents,
     loadingText,
     errorText,
     retryLabelText,
@@ -115,7 +115,7 @@ const CatalogueScreen = () => {
       <ScreenHeader
         titleText={titleText}
         trailingLabelText={balanceLabelText}
-        trailingValueText={balanceText}
+        trailingValueInCents={balanceInCents}
         testID="balanceHeader"
       />
       <View style={styles.listRegion} onLayout={handleListLayout}>

@@ -1,6 +1,8 @@
 import { ScaledSheet, ms, mvs } from 'react-native-size-matters'
 
-export const makeStyles = (colorHex: string) =>
+import type { IThemePalette } from '@utils/designSystem/Theme'
+
+export const makeStyles = (theme: IThemePalette, colorHex: string) =>
   ScaledSheet.create({
     glowContainer: {
       position: 'absolute',
@@ -32,7 +34,7 @@ export const makeStyles = (colorHex: string) =>
       right: 0,
       bottom: 0,
       left: 0,
-      backgroundColor: '#FFFFFF',
+      backgroundColor: theme.Colors.flash,
     },
     // Particles fly out from the middle of the watch image.
     particleOrigin: {

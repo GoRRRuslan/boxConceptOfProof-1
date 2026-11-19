@@ -9,8 +9,6 @@ import type { ICollectionFacade } from '@flows/collectionFlow/_types'
 import useStore from '@models/mainStorage/_storeConfigured'
 import { ETabRoute, type TTabParamList } from '@navigation/_types'
 import { useGetBoxesQuery } from '@networking/requests/queries/BoxQueries/useGetBoxesQuery'
-import { useAnimatedNumber } from '@services/animation/useAnimatedNumber'
-import { formatCurrency } from '@utils/formatCurrency'
 
 export const useCollectionFacade = (): ICollectionFacade => {
   const { t } = useTranslation()
@@ -32,8 +30,6 @@ export const useCollectionFacade = (): ICollectionFacade => {
 
   // -------------------------- Values ------------------------- //
   const totalValueInCents = useMemo(() => computeCollectionValue(ownedWatches), [ownedWatches])
-  const animatedTotalValueInCents = useAnimatedNumber(totalValueInCents)
-  const totalValueText = useMemo(() => formatCurrency(animatedTotalValueInCents), [animatedTotalValueInCents])
   const selectedItem = useMemo(
     () => items.find(item => item.ownershipIdentifier === selectedOwnershipIdentifier) ?? null,
     [items, selectedOwnershipIdentifier],
@@ -55,7 +51,7 @@ export const useCollectionFacade = (): ICollectionFacade => {
   return {
     titleText: t('collection.title'),
     totalValueLabelText: t('collection.totalValue'),
-    totalValueText,
+    totalValueInCents,
     countText: t('collection.count', { count: ownedWatches.length }),
     items,
     isEmpty: ownedWatches.length === 0,

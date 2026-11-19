@@ -49,7 +49,7 @@ export interface ICatalogueViewport {
 export interface ICatalogueFacade {
   titleText: string
   balanceLabelText: string
-  balanceText: string
+  balanceInCents: number
   loadingText: string
   errorText: string
   retryLabelText: string

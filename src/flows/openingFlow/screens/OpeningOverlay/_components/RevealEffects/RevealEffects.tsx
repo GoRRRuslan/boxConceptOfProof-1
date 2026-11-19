@@ -4,7 +4,11 @@ import Animated from 'react-native-reanimated'
 
 import { computeParticleTrajectory } from '@flows/openingFlow/_facadesLogic/computeParticleTrajectory'
 import { Particle } from '@flows/openingFlow/screens/OpeningOverlay/_components/Particle'
-import { useFacadeRevealEffects } from '@flows/openingFlow/screens/OpeningOverlay/_components/RevealEffects/_facades/useFacadeRevealEffects'
+import {
+  useFacadeRevealFlash,
+  useFacadeRevealGlow,
+} from '@flows/openingFlow/screens/OpeningOverlay/_components/RevealEffects/_facades/useFacadeRevealEffects'
+import { theme } from '@utils/designSystem/Theme'
 import { makeStyles } from '@flows/openingFlow/screens/OpeningOverlay/_components/RevealEffects/RevealEffects.styles'
 
 interface IRevealEffectsProps {
@@ -16,8 +20,8 @@ interface IRevealEffectsProps {
 // Glow behind the watch, a flash and a burst of particles: the better the prize the bigger the show.
 // `Particles` and `Flash` are drawn on top of everything, the glow below the watch (see OpeningOverlay).
 export const RevealGlow = ({ colorHex }: Pick<IRevealEffectsProps, 'colorHex'>) => {
-  const styles = useMemo(() => makeStyles(colorHex), [colorHex])
-  const { innerGlowStyle, outerGlowStyle } = useFacadeRevealEffects(0)
+  const styles = useMemo(() => makeStyles(theme, colorHex), [colorHex])
+  const { innerGlowStyle, outerGlowStyle } = useFacadeRevealGlow()
 
   return (
     <View style={styles.glowContainer} pointerEvents="none" testID="revealGlow">
@@ -28,8 +32,8 @@ export const RevealGlow = ({ colorHex }: Pick<IRevealEffectsProps, 'colorHex'>) 
 }
 
 export const RevealBurst = ({ colorHex, flashOpacity, particleCount }: IRevealEffectsProps) => {
-  const styles = useMemo(() => makeStyles(colorHex), [colorHex])
-  const { flashStyle } = useFacadeRevealEffects(flashOpacity)
+  const styles = useMemo(() => makeStyles(theme, colorHex), [colorHex])
+  const { flashStyle } = useFacadeRevealFlash(flashOpacity)
   const trajectories = useMemo(
     () => Array.from({ length: particleCount }, (_, index) => computeParticleTrajectory(index, particleCount)),
     [particleCount],

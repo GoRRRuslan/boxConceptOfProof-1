@@ -108,6 +108,8 @@ export interface IOpeningFacade {
   isOverlayVisible: boolean
   isListHidden: boolean
   isDragging: boolean
+  // After the reveal the opened box is put away; from then on nothing moves in the scene and it may rest.
+  isBoxPutAway: boolean
   boxNameText: string
   priceText: string
   hintText: string

@@ -1,5 +1,11 @@
 import { useEffect, useMemo } from 'react'
-import { RenderCallbackContext, useFilamentContext, useModel, useWorkletEffect } from 'react-native-filament'
+import {
+  RenderCallbackContext,
+  useConfigureAssetShadow,
+  useFilamentContext,
+  useModel,
+  useWorkletEffect,
+} from 'react-native-filament'
 import { createSynchronizable } from 'react-native-worklets'
 
 import boxModelSource from '@assets/models/box.glb'
@@ -82,6 +88,14 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
   const looks = useMemo(() => cards.map(card => ({ color: card.colorLinearRgba, finish: card.finish })), [cards])
 
   // ------------------- Side effects ----------------------- //
+  // The boxes cast and receive shadows (the lid shades the inside, the base shades itself).
+  useConfigureAssetShadow({
+    renderableManager,
+    ...(model.state === 'loaded' ? { asset: model.asset } : {}),
+    castShadow: true,
+    receiveShadow: true,
+  })
+
   // The entrance (boxes popping in one after the other) starts the moment the model is ready.
   useEffect(() => {
     if (model.state === 'loaded') {

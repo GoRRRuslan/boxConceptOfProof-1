@@ -27,8 +27,11 @@ export const INITIAL_DRAG_STATE: IDragState = {
   isResetting: false,
 }
 
-const clampPitch = (pitchRadians: number): number =>
-  Math.min(DRAG_PITCH_MAXIMUM_RADIANS, Math.max(DRAG_PITCH_MINIMUM_RADIANS, pitchRadians))
+const clampPitch = (pitchRadians: number): number => {
+  'worklet'
+
+  return Math.min(DRAG_PITCH_MAXIMUM_RADIANS, Math.max(DRAG_PITCH_MINIMUM_RADIANS, pitchRadians))
+}
 
 // One frame of the inspection physics while the finger is up:
 //  - a double tap makes everything glide back to the default view,

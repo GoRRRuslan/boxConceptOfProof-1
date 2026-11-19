@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
-import { Camera, DefaultLight, FilamentView, type FrameInfo } from 'react-native-filament'
+import { Camera, EnvironmentalLight, FilamentView, type FrameInfo, Light } from 'react-native-filament'
 
 import { CAMERA_DISTANCE, CAMERA_FOCAL_LENGTH_MILLIMETERS } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
+import { ENVIRONMENT_LIGHT_INTENSITY, SCENE_LIGHTS } from '@flows/catalogueFlow/_config/sceneRenderConfig'
 import type { ICatalogueCard, ICatalogueSceneSync, ICatalogueViewport } from '@flows/catalogueFlow/_types'
 import { CatalogueBoxes } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene/_components/CatalogueBoxes/CatalogueBoxes'
 import { makeStyles } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene/CatalogueScene.styles'
@@ -34,7 +35,17 @@ export const CatalogueScene = ({
         cameraTarget={[0, 0, 0]}
         focalLengthInMillimeters={CAMERA_FOCAL_LENGTH_MILLIMETERS}
       />
-      <DefaultLight />
+      <EnvironmentalLight source={{ uri: 'RNF_default_env_ibl.ktx' }} intensity={ENVIRONMENT_LIGHT_INTENSITY} />
+      {SCENE_LIGHTS.map(light => (
+        <Light
+          key={light.direction.join()}
+          type="directional"
+          intensity={light.intensity}
+          colorKelvin={light.colorKelvin}
+          direction={light.direction}
+          castShadows={light.castShadows}
+        />
+      ))}
       {cards.length > 0 && viewport ? (
         <CatalogueBoxes
           key={cards.length}

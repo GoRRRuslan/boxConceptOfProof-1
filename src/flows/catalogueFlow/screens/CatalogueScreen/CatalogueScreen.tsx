@@ -10,6 +10,7 @@ import { PerformanceOverlay } from '@components/PerformanceOverlay'
 import { EPerformanceOverlayPlacement } from '@components/PerformanceOverlay/_types'
 import { AppButton } from '@components/buttons/AppButton'
 import { ScreenContainer } from '@components/_layout/ScreenContainer'
+import { CATALOGUE_SCENE_RENDER_PROPS } from '@flows/catalogueFlow/_config/sceneRenderConfig'
 import { useCatalogueFacade } from '@flows/catalogueFlow/_facades/useCatalogueFacade'
 import type { ICatalogueCard } from '@flows/catalogueFlow/_types'
 import { BoxCard } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/BoxCard'
@@ -61,7 +62,7 @@ const CatalogueScreen = () => {
 
   const renderScene = () => (
     <View style={styles.sceneLayer} pointerEvents="none">
-      <FilamentScene>
+      <FilamentScene {...CATALOGUE_SCENE_RENDER_PROPS}>
         <CatalogueScene
           cards={cards}
           viewport={viewport}

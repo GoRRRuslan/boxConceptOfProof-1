@@ -6,7 +6,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 
 import { makeStyles } from '@app/App.styles'
 import { useAppFacade } from '@app/useAppFacade'
-import { CatalogueScreen } from '@flows/catalogueFlow/screens/CatalogueScreen'
+import { AppNavigationContainer } from '@navigation/navigationContainer'
 import { FilamentSpikeScreen } from '@flows/spikeFlow/screens/FilamentSpikeScreen'
 
 const App = () => {
@@ -17,7 +17,7 @@ const App = () => {
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          {isPerformanceLab ? <FilamentSpikeScreen /> : <CatalogueScreen />}
+          {isPerformanceLab ? <FilamentSpikeScreen /> : <AppNavigationContainer />}
           <StatusBar style="light" />
         </QueryClientProvider>
       </SafeAreaProvider>

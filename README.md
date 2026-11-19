@@ -285,7 +285,7 @@ boxConceptOfProof-1/
 ├── app.config.ts                     # Expo config (dynamic)
 ├── babel.config.js · metro.config.js # aliases, worklets plugin, .glb assets
 ├── eslint.config.mjs · .prettierrc.json
-├── docs/                             # ASSIGNMENT, DEVELOPMENT_PLAN, PERFORMANCE, STAGE_1_FINDINGS, STAGE_2_DOMAIN, STAGE_3_CATALOGUE, STAGE_4_OPENING, MODEL, reference.png
+├── docs/                             # ASSIGNMENT, DEVELOPMENT_PLAN, PERFORMANCE, STAGE_1_FINDINGS, STAGE_2_DOMAIN, STAGE_3_CATALOGUE, STAGE_4_OPENING, STAGE_5_COLLECTION, MODEL, reference.png
 ├── scripts/
 │   ├── installFilamentBinaries.sh
 │   └── perf/                         # FPS analysis, Perfetto + Instruments capture
@@ -295,10 +295,12 @@ boxConceptOfProof-1/
     ├── app/                          # App.tsx, useAppFacade.ts, App.styles.ts
     ├── assets/                       # models/box.glb · images/watches/*.png · images/app/*
     ├── components/                   # _layout/ScreenContainer · AppText · PerformanceOverlay · buttons/AppButton
+    ├── navigation/                   # tab navigator, navigation container + theme
     ├── models/mainStorage/           # WalletStore · CollectionStore · PurchaseStore · _storeConfigured (session-scoped Zustand)
     ├── networking/                   # api/MysteryBoxApi (mock) · requests/{queries,mutations} · errorHandling
     ├── flows/
     │   ├── catalogueFlow/            # Stage 3: 3D catalogue (facade, adapter, pose maths, screen)
+    │   ├── collectionFlow/           # Stage 5: collection tab (facade, adapter, screen)
     │   ├── openingFlow/              # Stage 4: phases, drag, lid, reveal, purchase (facade, logic, overlay)
     │   └── spikeFlow/                # current flow (becomes catalogue/opening/collection)
     │       ├── _facades/             # useFilamentSpikeFacade (+ __tests__)
@@ -325,7 +327,7 @@ boxConceptOfProof-1/
 | 2 | Domain + asynchronous mock API + Zustand stores + purchase mutation (one deduction, one watch, no duplicates) with unit tests — see [docs/STAGE_2_DOMAIN.md](docs/STAGE_2_DOMAIN.md) | ✅ done |
 | 3 | Live 3D catalogue: FlashList over one shared Filament canvas, per-box colours, balance header, 60 FPS while scrolling — see [docs/STAGE_3_CATALOGUE.md](docs/STAGE_3_CATALOGUE.md) | ✅ done |
 | 4 | Opening experience: select, drag to inspect, buy, animated lid, watch reveal, haptics, error handling — see [docs/STAGE_4_OPENING.md](docs/STAGE_4_OPENING.md) | ✅ done |
-| 5 | Collection tab, navigation, visual consistency | planned |
+| 5 | Bottom tabs, collection of won watches (newest first, total value), empty state — see [docs/STAGE_5_COLLECTION.md](docs/STAGE_5_COLLECTION.md) | ✅ done |
 | 6 | Test matrix, device profiling gate, polish, handoff | planned |
 
 Definition of done (from the estimate): the full flow works on both platforms; every successful purchase produces exactly one balance deduction and one watch; a failed purchase leaves balance and collection unchanged. Details: [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).

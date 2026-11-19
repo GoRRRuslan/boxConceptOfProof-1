@@ -15,14 +15,14 @@ export const makeStyles = (theme: IThemePalette) =>
       fontSize: ms(22),
       fontWeight: '700',
     },
-    balance: {
+    trailing: {
       alignItems: 'flex-end',
     },
-    balanceLabel: {
+    trailingLabel: {
       fontSize: ms(12),
       color: theme.Colors.textSecondary,
     },
-    balanceAmount: {
+    trailingValue: {
       fontSize: ms(20),
       fontWeight: '700',
       color: theme.Colors.accent,

@@ -46,5 +46,19 @@
       "serverError": "Something went wrong. Nothing was charged — try again.",
       "boxNotFound": "This box is no longer available."
     }
+  },
+  "collection": {
+    "title": "My Collection",
+    "totalValue": "Total value",
+    "count_one": "{{count}} watch",
+    "count_other": "{{count}} watches",
+    "fromBox": "From {{box}}",
+    "emptyTitle": "No watches yet",
+    "emptyDescription": "Buy a mystery box and the watch you win will appear here.",
+    "browse": "Browse boxes"
+  },
+  "tabs": {
+    "catalogue": "Boxes",
+    "collection": "Collection"
   }
 }

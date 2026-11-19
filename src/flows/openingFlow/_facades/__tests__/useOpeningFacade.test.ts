@@ -47,6 +47,14 @@ jest.mock('@assets/images/watches/full/perpetual.webp', () => 3, { virtual: true
 
 jest.mock('@assets/images/watches/full/sky-dweller.webp', () => 4, { virtual: true })
 
+jest.mock('@assets/images/watches/thumb/casio.webp', () => 5, { virtual: true })
+
+jest.mock('@assets/images/watches/thumb/gmt.webp', () => 6, { virtual: true })
+
+jest.mock('@assets/images/watches/thumb/perpetual.webp', () => 7, { virtual: true })
+
+jest.mock('@assets/images/watches/thumb/sky-dweller.webp', () => 8, { virtual: true })
+
 const boxesData = { boxes: BOX_CATALOGUE, watches: WATCH_CATALOGUE }
 const cards = BOX_CATALOGUE.map(box => ({ identifier: box.identifier }) as never)
 const [starterBox, , , legendBox] = BOX_CATALOGUE

@@ -10,7 +10,7 @@ import {
   FOCUS_DURATION_MILLISECONDS,
   LID_OPEN_DURATION_MILLISECONDS,
 } from '@flows/openingFlow/_config/openingConfig'
-import { WATCH_IMAGE_SOURCES } from '@flows/openingFlow/_config/watchImageSources'
+import { WATCH_IMAGE_SOURCES } from '@utils/watchImageSources'
 import { getPrimaryActionForPhase } from '@flows/openingFlow/_facadesLogic/getPrimaryActionForPhase'
 import {
   INITIAL_OPENING_SCENE_STATE,

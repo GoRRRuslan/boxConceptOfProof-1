@@ -5,13 +5,13 @@ import { FilamentScene } from 'react-native-filament'
 
 import { AppText } from '@components/AppText'
 import { FadingView } from '@components/FadingView'
+import { ScreenHeader } from '@components/ScreenHeader'
 import { PerformanceOverlay } from '@components/PerformanceOverlay'
 import { EPerformanceOverlayPlacement } from '@components/PerformanceOverlay/_types'
 import { AppButton } from '@components/buttons/AppButton'
 import { ScreenContainer } from '@components/_layout/ScreenContainer'
 import { useCatalogueFacade } from '@flows/catalogueFlow/_facades/useCatalogueFacade'
 import type { ICatalogueCard } from '@flows/catalogueFlow/_types'
-import { BalanceHeader } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/BalanceHeader'
 import { BoxCard } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/BoxCard'
 import { CatalogueScene } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene'
 import { makeStyles } from '@flows/catalogueFlow/screens/CatalogueScreen/CatalogueScreen.styles'
@@ -103,7 +103,12 @@ const CatalogueScreen = () => {
 
   return (
     <ScreenContainer testID="catalogueScreen">
-      <BalanceHeader titleText={titleText} balanceLabelText={balanceLabelText} balanceText={balanceText} />
+      <ScreenHeader
+        titleText={titleText}
+        trailingLabelText={balanceLabelText}
+        trailingValueText={balanceText}
+        testID="balanceHeader"
+      />
       <View style={styles.listRegion} onLayout={handleListLayout}>
         {renderScene()}
         <FadingView isVisible={!opening.isListHidden} style={styles.listLayer}>

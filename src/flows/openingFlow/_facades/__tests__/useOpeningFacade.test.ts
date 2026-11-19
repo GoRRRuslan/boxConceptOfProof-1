@@ -3,7 +3,12 @@ import { act, renderHook, waitFor } from '@testing-library/react-native'
 import { createElement, type ReactNode } from 'react'
 
 import '@i18next/i18init'
-import { DRAG_INERTIA_MAXIMUM_MILLISECONDS, LID_OPEN_DURATION_MILLISECONDS } from '@flows/openingFlow/_config/openingConfig'
+import {
+  ANTICIPATION_DURATION_MILLISECONDS,
+  DRAG_INERTIA_MAXIMUM_MILLISECONDS,
+  LID_OPEN_DURATION_MILLISECONDS,
+  OPEN_SWIPE_DISTANCE,
+} from '@flows/openingFlow/_config/openingConfig'
 import { useOpeningFacade } from '@flows/openingFlow/_facades/useOpeningFacade'
 import { EOpeningPhase } from '@flows/openingFlow/_types'
 import useStore from '@models/mainStorage/_storeConfigured'
@@ -15,13 +20,45 @@ import { BOX_CATALOGUE } from '@networking/api/MysteryBoxApi/_mockData/boxCatalo
 import { WATCH_CATALOGUE } from '@networking/api/MysteryBoxApi/_mockData/watchCatalogue'
 import { EBoxIdentifier, EMockFailureMode } from '@networking/api/MysteryBoxApi/_types'
 import { hapticFeedback } from '@services/haptics/hapticFeedback'
+import { soundEffects } from '@services/sounds/soundEffects'
 
 const mockSceneStates: unknown[] = []
 
-jest.mock('react-native-gesture-handler', () => ({ usePanGesture: (config: unknown) => config }))
+jest.mock('react-native-gesture-handler', () => ({
+  usePanGesture: (config: unknown) => config,
+  usePinchGesture: (config: unknown) => config,
+  useTapGesture: (config: unknown) => config,
+  // The composed gesture is just the three configs, so the tests can call each callback.
+  useSimultaneousGestures: (pan: unknown, pinch: unknown, tap: unknown) => ({ pan, pinch, tap }),
+}))
+
+jest.mock('expo-sensors', () => ({
+  DeviceMotion: { isAvailableAsync: () => Promise.resolve(false), setUpdateInterval: jest.fn(), addListener: jest.fn() },
+}))
+
+jest.mock('@services/sounds/soundEffects', () => ({
+  ESoundEffect: {
+    Select: 'select',
+    Purchase: 'purchase',
+    Anticipation: 'anticipation',
+    LidOpen: 'lidOpen',
+    RevealCommon: 'revealCommon',
+    RevealRare: 'revealRare',
+    RevealLegendary: 'revealLegendary',
+    Error: 'error',
+  },
+  soundEffects: { play: jest.fn() },
+}))
 
 jest.mock('@services/haptics/hapticFeedback', () => ({
-  hapticFeedback: { success: jest.fn(), error: jest.fn(), lidOpening: jest.fn(), selection: jest.fn() },
+  hapticFeedback: {
+    success: jest.fn(),
+    error: jest.fn(),
+    lidOpening: jest.fn(),
+    selection: jest.fn(),
+    anticipation: jest.fn(),
+    rarityReveal: jest.fn(),
+  },
 }))
 
 jest.mock('react-native-worklets', () => ({
@@ -146,10 +183,10 @@ describe('useOpeningFacade', () => {
 
     expect(result.current.primaryButton?.isDisabled).toBe(true)
 
-    expect(hapticFeedback.lidOpening).toHaveBeenCalled()
+    expect(hapticFeedback.anticipation).toHaveBeenCalled()
 
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(LID_OPEN_DURATION_MILLISECONDS + 10)
+      await jest.advanceTimersByTimeAsync(ANTICIPATION_DURATION_MILLISECONDS + LID_OPEN_DURATION_MILLISECONDS + 10)
     })
 
     expect(result.current.phase).toBe(EOpeningPhase.Revealed)
@@ -282,7 +319,7 @@ describe('useOpeningFacade', () => {
     jest.useFakeTimers()
 
     const { result } = await renderFacade()
-    const gesture = result.current.panGesture as unknown as Record<string, (event?: unknown) => void>
+    const gesture = (result.current.gesture as unknown as { pan: Record<string, (event?: unknown) => void> }).pan
 
     await act(() => {
       gesture.onActivate()
@@ -303,5 +340,247 @@ describe('useOpeningFacade', () => {
     expect(result.current.isDragging).toBe(false)
 
     jest.useRealTimers()
+  })
+
+  describe('opening: anticipation, light, reveal', () => {
+    const buyAndGetReady = async (result: Awaited<ReturnType<typeof renderFacade>>['result']) => {
+      await act(() => {
+        result.current.handleCardPress(EBoxIdentifier.Starter)
+      })
+
+      await act(async () => {
+        result.current.primaryButton?.onPress()
+
+        await jest.advanceTimersByTimeAsync(50)
+      })
+    }
+
+    it('the lid starts only after the anticipation, and the reveal comes after the lid', async () => {
+      jest.useFakeTimers()
+
+      const { result } = await renderFacade()
+
+      await buyAndGetReady(result)
+
+      await act(() => {
+        result.current.primaryButton?.onPress()
+      })
+
+      const scene = result.current.sceneState.getBlocking() as { lidStartedAtMilliseconds: number; openStartedAtMilliseconds: number }
+
+      expect(scene.lidStartedAtMilliseconds - scene.openStartedAtMilliseconds).toBe(ANTICIPATION_DURATION_MILLISECONDS)
+
+      expect(hapticFeedback.anticipation).toHaveBeenCalled()
+
+      expect(soundEffects.play).toHaveBeenCalledWith('anticipation')
+
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(ANTICIPATION_DURATION_MILLISECONDS + 10)
+      })
+
+      expect(hapticFeedback.lidOpening).toHaveBeenCalled()
+
+      expect(soundEffects.play).toHaveBeenCalledWith('lidOpen')
+
+      expect(result.current.phase).toBe(EOpeningPhase.Opening)
+
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(LID_OPEN_DURATION_MILLISECONDS)
+      })
+
+      expect(result.current.phase).toBe(EOpeningPhase.Revealed)
+
+      jest.useRealTimers()
+    })
+
+    it('tells the scene the colour of the light inside before the box is opened', async () => {
+      jest.useFakeTimers()
+
+      const { result } = await renderFacade()
+
+      await buyAndGetReady(result)
+
+      const scene = result.current.sceneState.getBlocking() as { glowColorLinear: number[] }
+
+      // The first purchase is a Casio: a common prize with a soft blue-grey glow.
+      expect(scene.glowColorLinear).toEqual([0.35, 0.5, 0.58])
+
+      jest.useRealTimers()
+    })
+
+    it('the reveal knows the rarity of the prize and plays the matching sound and haptics', async () => {
+      jest.useFakeTimers()
+
+      const { result } = await renderFacade()
+
+      await buyAndGetReady(result)
+
+      await act(() => {
+        result.current.primaryButton?.onPress()
+      })
+
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(ANTICIPATION_DURATION_MILLISECONDS + LID_OPEN_DURATION_MILLISECONDS + 10)
+      })
+
+      expect(result.current.reveal).toMatchObject({ rarityLabelText: 'Common', particleCount: 0, flashOpacity: 0 })
+
+      expect(soundEffects.play).toHaveBeenCalledWith('revealCommon')
+
+      expect(hapticFeedback.rarityReveal).toHaveBeenCalledWith(0)
+
+      jest.useRealTimers()
+    })
+
+    it('plays a sound for every step of the purchase', async () => {
+      const { result } = await renderFacade()
+
+      await act(() => {
+        result.current.handleCardPress(EBoxIdentifier.Starter)
+      })
+
+      expect(soundEffects.play).toHaveBeenCalledWith('select')
+
+      await act(() => {
+        result.current.primaryButton?.onPress()
+      })
+
+      await waitFor(() => {
+        expect(soundEffects.play).toHaveBeenCalledWith('purchase')
+      })
+    })
+
+    it('plays the error sound when the purchase fails', async () => {
+      mockApiSettings.purchaseFailureMode = EMockFailureMode.ServerError
+
+      const { result } = await renderFacade()
+
+      await act(() => {
+        result.current.handleCardPress(EBoxIdentifier.Starter)
+      })
+
+      await act(() => {
+        result.current.primaryButton?.onPress()
+      })
+
+      await waitFor(() => {
+        expect(soundEffects.play).toHaveBeenCalledWith('error')
+      })
+    })
+  })
+
+  describe('gestures', () => {
+    const getGestures = (result: Awaited<ReturnType<typeof renderFacade>>['result']) =>
+      result.current.gesture as unknown as {
+        pan: Record<string, (event?: unknown) => void>
+        pinch: Record<string, (event?: unknown) => void>
+        tap: Record<string, (event?: unknown) => void>
+      }
+
+    it('pinch zooms the box within limits', async () => {
+      const { result } = await renderFacade()
+
+      await act(() => {
+        result.current.handleCardPress(EBoxIdentifier.Starter)
+      })
+
+      await act(() => {
+        getGestures(result).pinch.onUpdate({ scaleChange: 1.5 })
+      })
+
+      expect((result.current.dragState.getBlocking() as { zoom: number }).zoom).toBeCloseTo(1.5)
+
+      await act(() => {
+        getGestures(result).pinch.onUpdate({ scaleChange: 10 })
+      })
+
+      expect((result.current.dragState.getBlocking() as { zoom: number }).zoom).toBe(2)
+    })
+
+    it('a double tap resets the turn and the zoom', async () => {
+      const { result } = await renderFacade()
+
+      await act(() => {
+        result.current.handleCardPress(EBoxIdentifier.Starter)
+      })
+
+      await act(() => {
+        getGestures(result).pinch.onUpdate({ scaleChange: 1.5 })
+
+        getGestures(result).tap.onActivate()
+      })
+
+      expect((result.current.dragState.getBlocking() as { isResetting: boolean }).isResetting).toBe(true)
+    })
+
+    it('dragging turns the box while inspecting', async () => {
+      const { result } = await renderFacade()
+
+      await act(() => {
+        result.current.handleCardPress(EBoxIdentifier.Starter)
+      })
+
+      await act(() => {
+        getGestures(result).pan.onUpdate({ changeX: 50, changeY: 10 })
+      })
+
+      expect((result.current.dragState.getBlocking() as { yawRadians: number }).yawRadians).toBeGreaterThan(0)
+    })
+
+    it('swiping up on a bought box opens it, a short swipe does not', async () => {
+      jest.useFakeTimers()
+
+      const { result } = await renderFacade()
+
+      await act(() => {
+        result.current.handleCardPress(EBoxIdentifier.Starter)
+      })
+
+      await act(async () => {
+        result.current.primaryButton?.onPress()
+
+        await jest.advanceTimersByTimeAsync(50)
+      })
+
+      expect(result.current.phase).toBe(EOpeningPhase.Ready)
+
+      await act(() => {
+        getGestures(result).pan.onDeactivate({ velocityX: 0, velocityY: 0, translationY: -(OPEN_SWIPE_DISTANCE - 20) })
+      })
+
+      expect(result.current.phase).toBe(EOpeningPhase.Ready)
+
+      await act(() => {
+        getGestures(result).pan.onDeactivate({ velocityX: 0, velocityY: 0, translationY: -(OPEN_SWIPE_DISTANCE + 20) })
+      })
+
+      expect(result.current.phase).toBe(EOpeningPhase.Opening)
+
+      jest.useRealTimers()
+    })
+
+    it('does not tilt the box when the finger moves up and down on a bought box', async () => {
+      jest.useFakeTimers()
+
+      const { result } = await renderFacade()
+
+      await act(() => {
+        result.current.handleCardPress(EBoxIdentifier.Starter)
+      })
+
+      await act(async () => {
+        result.current.primaryButton?.onPress()
+
+        await jest.advanceTimersByTimeAsync(50)
+      })
+
+      await act(() => {
+        getGestures(result).pan.onUpdate({ changeX: 0, changeY: 80 })
+      })
+
+      expect((result.current.dragState.getBlocking() as { pitchRadians: number }).pitchRadians).toBe(0)
+
+      jest.useRealTimers()
+    })
   })
 })

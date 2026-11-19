@@ -8,6 +8,9 @@ export interface ICollectionItem {
   // Which box it came from; null while the boxes are not loaded (nothing is guessed).
   boxText: string | null
   thumbnailSource: ImageSourcePropType
+  fullImageSource: ImageSourcePropType
+  rarityLabelText: string
+  rarityColorHex: string
 }
 
 export interface ICollectionFacade {
@@ -21,4 +24,9 @@ export interface ICollectionFacade {
   emptyDescriptionText: string
   browseLabelText: string
   handleBrowsePress: () => void
+  // The watch shown big in the detail sheet; null while none is opened.
+  selectedItem: ICollectionItem | null
+  closeLabelText: string
+  handleItemPress: (ownershipIdentifier: string) => void
+  handleDetailClose: () => void
 }

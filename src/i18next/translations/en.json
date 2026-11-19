@@ -35,8 +35,8 @@
     "opening": "Opening…",
     "done": "Done",
     "back": "Back",
-    "hintInspect": "Drag to turn the box",
-    "hintReady": "Your box is ready",
+    "hintInspect": "Drag to turn · pinch to zoom · double tap to reset",
+    "hintReady": "Tap the button or swipe up to open",
     "hintOpening": "Here it comes…",
     "revealTitle": "You got",
     "watchValue": "Worth {{amount}}",
@@ -45,6 +45,12 @@
       "networkError": "Network problem. Nothing was charged — try again.",
       "serverError": "Something went wrong. Nothing was charged — try again.",
       "boxNotFound": "This box is no longer available."
+    },
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "legendary": "Legendary!"
     }
   },
   "collection": {
@@ -55,7 +61,9 @@
     "fromBox": "From {{box}}",
     "emptyTitle": "No watches yet",
     "emptyDescription": "Buy a mystery box and the watch you win will appear here.",
-    "browse": "Browse boxes"
+    "browse": "Browse boxes",
+    "detailClose": "Close",
+    "detailBox": "Won in {{box}}"
   },
   "tabs": {
     "catalogue": "Boxes",

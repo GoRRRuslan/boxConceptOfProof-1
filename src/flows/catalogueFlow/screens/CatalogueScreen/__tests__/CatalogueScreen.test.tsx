@@ -18,11 +18,7 @@ jest.mock('@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueSce
 
 jest.mock('@components/FadingView', () => ({ FadingView: ({ children }: { children: unknown }) => children }))
 
-jest.mock('react-native-reanimated', () => {
-  const { View } = jest.requireActual('react-native')
-
-  return { __esModule: true, default: { View }, ZoomIn: { duration: () => undefined } }
-})
+jest.mock('react-native-reanimated', () => jest.requireActual('@utils/testing/reanimatedStub'))
 
 jest.mock('react-native-gesture-handler', () => ({
   GestureDetector: ({ children }: { children: unknown }) => children,
@@ -47,6 +43,7 @@ const baseFacade = {
       affordabilityText: null,
       isAffordable: true,
       colorLinearRgba: [0, 0, 1, 1],
+      finish: { roughness: 0.5, metallic: 0, clearCoat: 0 },
     },
   ],
   viewport: null,
@@ -65,6 +62,9 @@ const baseFacade = {
   handleListLayout: jest.fn(),
   handleScroll: jest.fn(),
   handleRetryPress: jest.fn(),
+  handleCardPressIn: jest.fn(),
+  handleCardPressOut: jest.fn(),
+  sceneSync: {},
 } as unknown as ICatalogueFacade
 
 const mockFacade = (overrides: Partial<ICatalogueFacade>) => {
@@ -135,7 +135,7 @@ describe('CatalogueScreen', () => {
         isBackVisible: true,
         primaryButton: null,
         reveal: null,
-        panGesture: {} as never,
+        gesture: {} as never,
         handleBackPress: jest.fn(),
       },
     })

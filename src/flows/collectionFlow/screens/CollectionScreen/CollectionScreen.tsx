@@ -6,6 +6,7 @@ import { ScreenHeader } from '@components/ScreenHeader'
 import { ScreenContainer } from '@components/_layout/ScreenContainer'
 import { useCollectionFacade } from '@flows/collectionFlow/_facades/useCollectionFacade'
 import type { ICollectionItem } from '@flows/collectionFlow/_types'
+import { CollectionDetailModal } from '@flows/collectionFlow/screens/CollectionScreen/_components/CollectionDetailModal'
 import { EmptyCollection } from '@flows/collectionFlow/screens/CollectionScreen/_components/EmptyCollection'
 import { WatchListItem } from '@flows/collectionFlow/screens/CollectionScreen/_components/WatchListItem'
 import { makeStyles } from '@flows/collectionFlow/screens/CollectionScreen/CollectionScreen.styles'
@@ -26,10 +27,14 @@ const CollectionScreen = () => {
     emptyDescriptionText,
     browseLabelText,
     handleBrowsePress,
+    selectedItem,
+    closeLabelText,
+    handleItemPress,
+    handleDetailClose,
   } = useCollectionFacade()
 
   // --------------------- Render methods ------------------//
-  const renderItem = ({ item }: { item: ICollectionItem }) => <WatchListItem item={item} />
+  const renderItem = ({ item }: { item: ICollectionItem }) => <WatchListItem item={item} onPress={handleItemPress} />
 
   const renderList = () => (
     <FlashList
@@ -64,6 +69,7 @@ const CollectionScreen = () => {
       ) : (
         renderList()
       )}
+      <CollectionDetailModal item={selectedItem} closeLabelText={closeLabelText} onClose={handleDetailClose} />
     </ScreenContainer>
   )
 }

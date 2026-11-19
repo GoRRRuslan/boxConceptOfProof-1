@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { Image, View } from 'react-native'
+import { Image, Pressable, View } from 'react-native'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 
 import { AppText } from '@components/AppText'
 import type { ICollectionItem } from '@flows/collectionFlow/_types'
@@ -8,20 +9,33 @@ import { theme } from '@utils/designSystem/Theme'
 
 interface IWatchListItemProps {
   item: ICollectionItem
+  onPress: (ownershipIdentifier: string) => void
 }
 
-export const WatchListItem = ({ item }: IWatchListItemProps) => {
-  const styles = useMemo(() => makeStyles(theme), [])
+export const WatchListItem = ({ item, onPress }: IWatchListItemProps) => {
+  const styles = useMemo(() => makeStyles(theme, item.rarityColorHex), [item.rarityColorHex])
 
   return (
-    <View style={styles.row} testID={`collectionItem-${item.ownershipIdentifier}`}>
-      <Image source={item.thumbnailSource} style={styles.thumbnail} resizeMode="contain" />
-      <View style={styles.texts}>
-        <AppText style={styles.name}>{item.nameText}</AppText>
-        <AppText style={styles.brand}>{item.brandText}</AppText>
-        {item.boxText ? <AppText style={styles.box}>{item.boxText}</AppText> : null}
-      </View>
-      <AppText style={styles.value}>{item.valueText}</AppText>
-    </View>
+    // A newly won watch slides in; every row can be tapped for a big picture.
+    <Animated.View entering={FadeInDown.duration(400)}>
+      <Pressable
+        style={styles.row}
+        onPress={() => {
+          onPress(item.ownershipIdentifier)
+        }}
+        testID={`collectionItem-${item.ownershipIdentifier}`}
+      >
+        <Image source={item.thumbnailSource} style={styles.thumbnail} resizeMode="contain" />
+        <View style={styles.texts}>
+          <AppText style={styles.name}>{item.nameText}</AppText>
+          <AppText style={styles.brand}>{item.brandText}</AppText>
+          {item.boxText ? <AppText style={styles.box}>{item.boxText}</AppText> : null}
+        </View>
+        <View style={styles.trailing}>
+          <AppText style={styles.value}>{item.valueText}</AppText>
+          <AppText style={styles.rarity}>{item.rarityLabelText}</AppText>
+        </View>
+      </Pressable>
+    </Animated.View>
   )
 }

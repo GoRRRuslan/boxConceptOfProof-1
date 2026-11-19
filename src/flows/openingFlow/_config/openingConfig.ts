@@ -24,6 +24,36 @@ export const DRAG_INERTIA_STOP_VELOCITY = 0.02
 // fastest speed stops well before this).
 export const DRAG_INERTIA_MAXIMUM_MILLISECONDS = 2500
 
-// A very slow sway keeps the centred box alive while the user does nothing.
-export const IDLE_SWAY_AMPLITUDE_RADIANS = 0.06
-export const IDLE_SWAY_PERIOD_MILLISECONDS = 4000
+// Anticipation: before the lid moves the box shakes and swells for a moment.
+export const ANTICIPATION_DURATION_MILLISECONDS = 800
+export const ANTICIPATION_SHAKE_YAW_RADIANS = 0.07
+export const ANTICIPATION_SHAKE_PITCH_RADIANS = 0.03
+export const ANTICIPATION_SWELL = 0.1
+
+// Dolly: the focused box also moves towards the camera (perspective makes it grow, like a camera push-in).
+export const DOLLY_DEPTH_UNITS = 0.9
+
+// Pinch to zoom
+export const ZOOM_MINIMUM = 0.7
+export const ZOOM_MAXIMUM = 2
+export const ZOOM_DEFAULT = 1
+
+// After a while without touches the box turns slowly by itself.
+export const AUTO_ROTATE_DELAY_MILLISECONDS = 1500
+export const AUTO_ROTATE_RAMP_MILLISECONDS = 1000
+export const AUTO_ROTATE_RADIANS_PER_SECOND = 0.4
+
+// Double tap: yaw/pitch/zoom glide back to their defaults. Fraction still left after one second.
+export const RESET_REMAINING_FRACTION_PER_SECOND = 0.0005
+export const RESET_FINISHED_THRESHOLD = 0.002
+
+// Device tilt (gyroscope) turns the focused box a little.
+export const TILT_YAW_RADIANS = 0.22
+export const TILT_PITCH_RADIANS = 0.14
+
+// Swiping up this far (pixels) on a bought box opens it.
+export const OPEN_SWIPE_DISTANCE = 90
+
+// Light from inside the opened box.
+export const GLOW_MAXIMUM = 0.9
+export const GLOW_PULSE_PERIOD_MILLISECONDS = 1600

@@ -3,6 +3,7 @@ import {
   computeAnimatedProgress,
   easeInOutCubic,
   easeOutBack,
+  easeOutCubic,
   interpolate,
 } from '@flows/openingFlow/_facadesLogic/openingEasing'
 
@@ -15,7 +16,7 @@ describe('openingEasing', () => {
     expect(interpolate(10, 20, 0.25)).toBe(12.5)
   })
 
-  it.each([easeInOutCubic, easeOutBack])('starts at 0 and ends at 1', easing => {
+  it.each([easeInOutCubic, easeOutBack, easeOutCubic])('starts at 0 and ends at 1', easing => {
     expect(easing(0)).toBeCloseTo(0)
 
     expect(easing(1)).toBeCloseTo(1)

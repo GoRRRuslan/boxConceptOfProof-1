@@ -1,27 +1,41 @@
 import { useMemo } from 'react'
 import { Pressable, View } from 'react-native'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 
 import { AppText } from '@components/AppText'
 import type { ICatalogueCard } from '@flows/catalogueFlow/_types'
 import type { EBoxIdentifier } from '@networking/api/MysteryBoxApi/_types'
+import { ENTRANCE_STAGGER_MILLISECONDS } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
 import { makeStyles } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/BoxCard/BoxCard.styles'
 import { theme } from '@utils/designSystem/Theme'
 
+// Cards further down than this appear together with the last staggered one.
+const MAXIMUM_STAGGERED_CARDS = 5
+
 interface IBoxCardProps {
   card: ICatalogueCard
+  index: number
   onPress: (boxIdentifier: EBoxIdentifier) => void
+  onPressIn: (boxIdentifier: EBoxIdentifier) => void
+  onPressOut: () => void
 }
 
 // A card is transparent on top (the 3D box shows through the slot) with the box facts below it.
-export const BoxCard = ({ card, onPress }: IBoxCardProps) => {
+export const BoxCard = ({ card, index, onPress, onPressIn, onPressOut }: IBoxCardProps) => {
   const styles = useMemo(() => makeStyles(theme), [])
 
   return (
+    // The texts fade in one card after the other (the 3D boxes pop in on their own, see the scene).
+    <Animated.View entering={FadeInDown.delay(Math.min(index, MAXIMUM_STAGGERED_CARDS) * ENTRANCE_STAGGER_MILLISECONDS)}>
     <Pressable
       style={styles.card}
       onPress={() => {
         onPress(card.identifier)
       }}
+      onPressIn={() => {
+        onPressIn(card.identifier)
+      }}
+      onPressOut={onPressOut}
       testID={`boxCard-${card.identifier}`}
     >
       <View style={styles.boxSlot} />
@@ -38,5 +52,6 @@ export const BoxCard = ({ card, onPress }: IBoxCardProps) => {
         ) : null}
       </View>
     </Pressable>
+    </Animated.View>
   )
 }

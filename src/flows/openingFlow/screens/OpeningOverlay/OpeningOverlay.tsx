@@ -1,11 +1,13 @@
 import { useMemo } from 'react'
-import { Image, View } from 'react-native'
+import { View } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
-import Animated, { ZoomIn } from 'react-native-reanimated'
+import Animated, { FadeInUp } from 'react-native-reanimated'
 
 import { AppText } from '@components/AppText'
 import { AppButton } from '@components/buttons/AppButton'
 import type { IOpeningFacade } from '@flows/openingFlow/_types'
+import { RevealBurst, RevealGlow } from '@flows/openingFlow/screens/OpeningOverlay/_components/RevealEffects'
+import { WatchRevealImage } from '@flows/openingFlow/screens/OpeningOverlay/_components/WatchRevealImage'
 import { makeStyles } from '@flows/openingFlow/screens/OpeningOverlay/OpeningOverlay.styles'
 import { theme } from '@utils/designSystem/Theme'
 
@@ -16,25 +18,31 @@ interface IOpeningOverlayProps {
 // Everything the user sees on top of the 3D box while it is opened: title, hint, errors, the one
 // primary button and the revealed watch. The drag area under it turns the box.
 export const OpeningOverlay = ({ opening }: IOpeningOverlayProps) => {
-  const styles = useMemo(() => makeStyles(theme), [])
   const { reveal, primaryButton } = opening
+  const styles = useMemo(() => makeStyles(theme, reveal?.rarityColorHex ?? theme.Colors.accent), [reveal?.rarityColorHex])
 
   const renderReveal = () =>
     reveal ? (
-      <Animated.View entering={ZoomIn.duration(550)} style={styles.reveal} testID="revealedWatch">
+      <View style={styles.reveal} pointerEvents="none" testID="revealedWatch">
+        <RevealGlow colorHex={reveal.rarityColorHex} />
         <AppText style={styles.revealTitle}>{reveal.titleText}</AppText>
-        <Image source={reveal.imageSource} style={styles.watchImage} resizeMode="contain" testID="revealedWatchImage" />
-        <AppText style={styles.watchName} testID="revealedWatchName">
-          {reveal.nameText}
-        </AppText>
-        <AppText style={styles.watchBrand}>{reveal.brandText}</AppText>
-        <AppText style={styles.watchValue}>{reveal.valueText}</AppText>
-      </Animated.View>
+        <WatchRevealImage source={reveal.imageSource} />
+        <Animated.View entering={FadeInUp.delay(450).duration(450)} style={styles.revealTexts}>
+          <AppText style={styles.rarity} testID="revealedRarity">
+            {reveal.rarityLabelText}
+          </AppText>
+          <AppText style={styles.watchName} testID="revealedWatchName">
+            {reveal.nameText}
+          </AppText>
+          <AppText style={styles.watchBrand}>{reveal.brandText}</AppText>
+          <AppText style={styles.watchValue}>{reveal.valueText}</AppText>
+        </Animated.View>
+      </View>
     ) : null
 
   return (
     <View style={styles.container} pointerEvents="box-none" testID="openingOverlay">
-      <GestureDetector gesture={opening.panGesture}>
+      <GestureDetector gesture={opening.gesture}>
         <View style={styles.dragArea} testID="dragArea" />
       </GestureDetector>
       <View style={styles.header} pointerEvents="box-none">
@@ -69,6 +77,9 @@ export const OpeningOverlay = ({ opening }: IOpeningOverlayProps) => {
           />
         ) : null}
       </View>
+      {reveal ? (
+        <RevealBurst colorHex={reveal.rarityColorHex} flashOpacity={reveal.flashOpacity} particleCount={reveal.particleCount} />
+      ) : null}
     </View>
   )
 }

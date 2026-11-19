@@ -11,14 +11,46 @@ import { BOX_CATALOGUE } from '@networking/api/MysteryBoxApi/_mockData/boxCatalo
 
 const mockSetBlocking = jest.fn()
 
-jest.mock('react-native-gesture-handler', () => ({ usePanGesture: () => ({}) }))
+jest.mock('react-native-gesture-handler', () => ({
+  usePanGesture: () => ({}),
+  usePinchGesture: () => ({}),
+  useTapGesture: () => ({}),
+  useSimultaneousGestures: () => ({}),
+}))
+
+jest.mock('expo-sensors', () => ({
+  DeviceMotion: { isAvailableAsync: () => Promise.resolve(false), setUpdateInterval: jest.fn(), addListener: jest.fn() },
+}))
+
+jest.mock('@services/sounds/soundEffects', () => ({
+  ESoundEffect: {},
+  soundEffects: { play: jest.fn() },
+}))
 
 jest.mock('@services/haptics/hapticFeedback', () => ({
-  hapticFeedback: { success: jest.fn(), error: jest.fn(), lidOpening: jest.fn(), selection: jest.fn() },
+  hapticFeedback: {
+    success: jest.fn(),
+    error: jest.fn(),
+    lidOpening: jest.fn(),
+    selection: jest.fn(),
+    anticipation: jest.fn(),
+    rarityReveal: jest.fn(),
+  },
 }))
 
 jest.mock('react-native-worklets', () => ({
-  createSynchronizable: () => ({ setBlocking: mockSetBlocking, getBlocking: () => 0 }),
+  createSynchronizable: (initial: unknown) => {
+    let value = initial
+
+    return {
+      getBlocking: () => value,
+      setBlocking: (next: unknown) => {
+        value = next
+
+        mockSetBlocking(next)
+      },
+    }
+  },
   scheduleOnRN: jest.fn(),
 }))
 
@@ -57,7 +89,9 @@ describe('useCatalogueFacade', () => {
     expect(result.current.isLoadingBoxes).toBe(false)
   })
 
-  it('shows the wallet balance and follows it', async () => {
+  it('shows the wallet balance and counts to a new balance instead of jumping', async () => {
+    jest.useFakeTimers()
+
     const { result } = await renderHook(() => useCatalogueFacade(), { wrapper: createWrapper() })
 
     expect(result.current.balanceText).toBe('$1,000')
@@ -66,7 +100,24 @@ describe('useCatalogueFacade', () => {
       useStore.setState({ balanceInCents: 55_000 })
     })
 
+    // Not there yet: the number is counting down.
+    expect(result.current.balanceText).toBe('$1,000')
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(300)
+    })
+
+    expect(result.current.balanceText).not.toBe('$1,000')
+
+    expect(result.current.balanceText).not.toBe('$550')
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(800)
+    })
+
     expect(result.current.balanceText).toBe('$550')
+
+    jest.useRealTimers()
   })
 
   it('writes the scroll offset for the 3D scene and reports scrolling until the list is idle', async () => {
@@ -119,5 +170,53 @@ describe('useCatalogueFacade', () => {
     })
 
     expect(result.current.viewport).toEqual({ width: 390, height: 640 })
+  })
+
+  it('squeezes the pressed box until the finger lifts', async () => {
+    const { result } = await renderHook(() => useCatalogueFacade(), { wrapper: createWrapper() })
+
+    await waitFor(() => {
+      expect(result.current.cards.length).toBeGreaterThan(0)
+    })
+
+    await act(() => {
+      result.current.handleCardPressIn(BOX_CATALOGUE[2].identifier)
+    })
+
+    expect(result.current.sceneSync.pressState.getBlocking()).toMatchObject({ cardIndex: 2, isPressed: true })
+
+    await act(() => {
+      result.current.handleCardPressOut()
+    })
+
+    expect(result.current.sceneSync.pressState.getBlocking()).toMatchObject({ cardIndex: 2, isPressed: false })
+  })
+
+  it('keeps the renderer busy while a card is pressed and until the box has bounced back', async () => {
+    jest.useFakeTimers()
+
+    const { result } = await renderHook(() => useCatalogueFacade(), { wrapper: createWrapper() })
+
+    expect(result.current.isRenderContinuous).toBe(false)
+
+    await act(() => {
+      result.current.handleCardPressIn(BOX_CATALOGUE[0].identifier)
+    })
+
+    expect(result.current.isRenderContinuous).toBe(true)
+
+    await act(() => {
+      result.current.handleCardPressOut()
+    })
+
+    expect(result.current.isRenderContinuous).toBe(true)
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(400)
+    })
+
+    expect(result.current.isRenderContinuous).toBe(false)
+
+    jest.useRealTimers()
   })
 })

@@ -1,30 +1,42 @@
 import type { TFunction } from 'i18next'
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { usePanGesture } from 'react-native-gesture-handler'
+import { usePanGesture, usePinchGesture, useSimultaneousGestures, useTapGesture } from 'react-native-gesture-handler'
 import { createSynchronizable } from 'react-native-worklets'
 
 import type { ICatalogueCard } from '@flows/catalogueFlow/_types'
 import {
+  ANTICIPATION_DURATION_MILLISECONDS,
   DRAG_INERTIA_MAXIMUM_MILLISECONDS,
   DRAG_RADIANS_PER_PIXEL,
   FOCUS_DURATION_MILLISECONDS,
   LID_OPEN_DURATION_MILLISECONDS,
+  OPEN_SWIPE_DISTANCE,
 } from '@flows/openingFlow/_config/openingConfig'
-import { WATCH_IMAGE_SOURCES } from '@utils/watchImageSources'
+import { RARITY_STYLES } from '@flows/openingFlow/_config/rarityConfig'
+import { useFacadeDeviceTilt } from '@flows/openingFlow/_facades/useFacadeDeviceTilt'
 import { getPrimaryActionForPhase } from '@flows/openingFlow/_facadesLogic/getPrimaryActionForPhase'
+import { getWatchRarity } from '@flows/openingFlow/_facadesLogic/getWatchRarity'
 import {
   INITIAL_OPENING_SCENE_STATE,
+  setGlowColor,
   startClose,
   startFocus,
   startLidOpen,
 } from '@flows/openingFlow/_facadesLogic/openingSceneState'
 import { transitionOpeningPhase } from '@flows/openingFlow/_facadesLogic/openingPhaseMachine'
-import { INITIAL_DRAG_STATE, applyDragMovement } from '@flows/openingFlow/_facadesLogic/stepDragInertia'
+import {
+  INITIAL_DRAG_STATE,
+  applyDragMovement,
+  applyZoom,
+  releaseDrag,
+  requestReset,
+} from '@flows/openingFlow/_facadesLogic/stepDragInertia'
 import {
   EOpeningEvent,
   EOpeningPhase,
   EOpeningPrimaryAction,
+  EWatchRarity,
   type IDragState,
   type IOpeningFacade,
   type IOpeningPrimaryButton,
@@ -36,7 +48,9 @@ import type { EBoxIdentifier, EPurchaseErrorCode, IGetBoxesResponse, IWatch } fr
 import { EBoxPurchaseResultStatus } from '@networking/requests/mutations/PurchaseMutations/_logic/runBoxPurchase'
 import { usePostPurchaseBoxMutation } from '@networking/requests/mutations/PurchaseMutations/usePostPurchaseBoxMutation'
 import { hapticFeedback } from '@services/haptics/hapticFeedback'
+import { ESoundEffect, soundEffects } from '@services/sounds/soundEffects'
 import { formatCurrency } from '@utils/formatCurrency'
+import { WATCH_IMAGE_SOURCES } from '@utils/watchImageSources'
 
 interface IUseOpeningFacadeParams {
   boxesData: IGetBoxesResponse | undefined
@@ -44,6 +58,13 @@ interface IUseOpeningFacadeParams {
 }
 
 const INTERACTIVE_PHASES = [EOpeningPhase.Inspecting, EOpeningPhase.Ready, EOpeningPhase.Revealed]
+
+const REVEAL_SOUNDS: Record<EWatchRarity, ESoundEffect> = {
+  [EWatchRarity.Common]: ESoundEffect.RevealCommon,
+  [EWatchRarity.Rare]: ESoundEffect.RevealRare,
+  [EWatchRarity.Epic]: ESoundEffect.RevealRare,
+  [EWatchRarity.Legendary]: ESoundEffect.RevealLegendary,
+}
 
 // Opening experience of one box on top of the catalogue: select -> inspect -> buy -> open -> reveal.
 export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams): IOpeningFacade => {
@@ -58,7 +79,7 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
   // After the finger lifts the box keeps turning (inertia): the renderer must keep drawing meanwhile.
   const [isInertiaRunning, setIsInertiaRunning] = useState<boolean>(false)
   const inertiaTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const lidTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const openingTimers = useRef<ReturnType<typeof setTimeout>[]>([])
   // After leaving, the box needs a moment to fly back before another one may be selected.
   const selectionLockedUntilMilliseconds = useRef<number>(0)
 
@@ -72,6 +93,7 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
   // Shared with the 3D scene, which reads them on every frame.
   const sceneState = useMemo(() => createSynchronizable<IOpeningSceneState>(INITIAL_OPENING_SCENE_STATE), [])
   const dragState = useMemo(() => createSynchronizable<IDragState>(INITIAL_DRAG_STATE), [])
+  const tilt = useMemo(() => createSynchronizable<[number, number]>([0, 0]), [])
   const selectedBox = useMemo(
     () => boxesData?.boxes.find(box => box.identifier === selectedBoxIdentifier),
     [boxesData, selectedBoxIdentifier],
@@ -93,13 +115,15 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
 
     setErrorCode(null)
 
-    dragState.setBlocking(INITIAL_DRAG_STATE)
+    dragState.setBlocking({ ...INITIAL_DRAG_STATE, lastInteractionAtMilliseconds: Date.now() })
 
     sceneState.setBlocking(startFocus(sceneState.getBlocking(), cardIndex, Date.now()))
 
     dispatchEvent(EOpeningEvent.BoxSelected)
 
     void hapticFeedback.selection()
+
+    soundEffects.play(ESoundEffect.Select)
   }
 
   const handleBuyPress = async () => {
@@ -114,20 +138,30 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     const result = await mutatePurchaseBoxAsync(selectedBox)
 
     if (result.status === EBoxPurchaseResultStatus.Success) {
-      setRevealedWatch(result.response.watch)
+      const { watch } = result.response
+
+      setRevealedWatch(watch)
+
+      // The light inside the box will glow in the colour of the prize.
+      sceneState.setBlocking(setGlowColor(sceneState.getBlocking(), RARITY_STYLES[getWatchRarity(watch.valueInCents)].glowColorLinear))
 
       dispatchEvent(EOpeningEvent.PurchaseSucceeded)
 
       void hapticFeedback.success()
+
+      soundEffects.play(ESoundEffect.Purchase)
     } else if (result.status === EBoxPurchaseResultStatus.Failed) {
       setErrorCode(result.errorCode)
 
       dispatchEvent(EOpeningEvent.PurchaseFailed)
 
       void hapticFeedback.error()
+
+      soundEffects.play(ESoundEffect.Error)
     }
   }
 
+  // Open: the box shakes and swells (anticipation), then the lid swings open, then the watch is revealed.
   const handleOpenPress = () => {
     if (phase !== EOpeningPhase.Ready) {
       return
@@ -137,11 +171,28 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
 
     dispatchEvent(EOpeningEvent.OpenPressed)
 
-    void hapticFeedback.lidOpening()
+    void hapticFeedback.anticipation()
 
-    lidTimer.current = setTimeout(() => {
-      dispatchEvent(EOpeningEvent.LidOpened)
-    }, LID_OPEN_DURATION_MILLISECONDS)
+    soundEffects.play(ESoundEffect.Anticipation)
+
+    openingTimers.current.push(
+      setTimeout(() => {
+        void hapticFeedback.lidOpening()
+
+        soundEffects.play(ESoundEffect.LidOpen)
+      }, ANTICIPATION_DURATION_MILLISECONDS),
+      setTimeout(() => {
+        dispatchEvent(EOpeningEvent.LidOpened)
+
+        if (revealedWatch) {
+          const rarity = getWatchRarity(revealedWatch.valueInCents)
+
+          soundEffects.play(REVEAL_SOUNDS[rarity])
+
+          hapticFeedback.rarityReveal(RARITY_STYLES[rarity].hapticImpactCount)
+        }
+      }, ANTICIPATION_DURATION_MILLISECONDS + LID_OPEN_DURATION_MILLISECONDS),
+    )
   }
 
   const handleBackPress = () => {
@@ -168,11 +219,14 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     }
   }
 
-  // ------------------- Gesture ------------------------- //
-  // Drag to inspect: the finger turns the box, a release keeps it turning (inertia, see the scene).
+  // ------------------- Gestures ------------------------- //
+  const isGestureEnabled = INTERACTIVE_PHASES.includes(phase)
+
+  // Turn with one finger; the box keeps turning after release (inertia, see the scene). On a bought box
+  // a swipe up opens it instead of tilting it.
   const panGesture = usePanGesture({
     runOnJS: true,
-    enabled: INTERACTIVE_PHASES.includes(phase),
+    enabled: isGestureEnabled,
     onActivate: () => {
       clearTimeout(inertiaTimer.current)
 
@@ -181,15 +235,29 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
       setIsDragging(true)
     },
     onUpdate: event => {
-      dragState.setBlocking(applyDragMovement(dragState.getBlocking(), event.changeX, event.changeY, DRAG_RADIANS_PER_PIXEL))
+      dragState.setBlocking(
+        applyDragMovement(
+          dragState.getBlocking(),
+          event.changeX,
+          phase === EOpeningPhase.Ready ? 0 : event.changeY,
+          DRAG_RADIANS_PER_PIXEL,
+          Date.now(),
+        ),
+      )
     },
     onDeactivate: event => {
-      dragState.setBlocking({
-        ...dragState.getBlocking(),
-        isDragging: false,
-        yawVelocityRadiansPerSecond: event.velocityX * DRAG_RADIANS_PER_PIXEL,
-        pitchVelocityRadiansPerSecond: event.velocityY * DRAG_RADIANS_PER_PIXEL,
-      })
+      dragState.setBlocking(
+        releaseDrag(
+          dragState.getBlocking(),
+          event.velocityX * DRAG_RADIANS_PER_PIXEL,
+          phase === EOpeningPhase.Ready ? 0 : event.velocityY * DRAG_RADIANS_PER_PIXEL,
+          Date.now(),
+        ),
+      )
+
+      if (phase === EOpeningPhase.Ready && event.translationY < -OPEN_SWIPE_DISTANCE) {
+        handleOpenPress()
+      }
     },
     onFinalize: () => {
       dragState.setBlocking({ ...dragState.getBlocking(), isDragging: false })
@@ -204,10 +272,41 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     },
   })
 
+  // Pinch to zoom.
+  const pinchGesture = usePinchGesture({
+    runOnJS: true,
+    enabled: isGestureEnabled,
+    onUpdate: event => {
+      dragState.setBlocking(applyZoom(dragState.getBlocking(), event.scaleChange, Date.now()))
+    },
+  })
+
+  // Double tap: everything glides back to the default view.
+  const doubleTapGesture = useTapGesture({
+    runOnJS: true,
+    enabled: isGestureEnabled,
+    numberOfTaps: 2,
+    onActivate: () => {
+      dragState.setBlocking(requestReset(dragState.getBlocking(), Date.now()))
+
+      setIsInertiaRunning(true)
+
+      clearTimeout(inertiaTimer.current)
+
+      inertiaTimer.current = setTimeout(() => {
+        setIsInertiaRunning(false)
+      }, DRAG_INERTIA_MAXIMUM_MILLISECONDS)
+    },
+  })
+
+  const gesture = useSimultaneousGestures(panGesture, pinchGesture, doubleTapGesture)
+
   // ------------------- Side effects ----------------------- //
+  useFacadeDeviceTilt({ isActive: phase !== EOpeningPhase.Browsing, tilt })
+
   useEffect(
     () => () => {
-      clearTimeout(lidTimer.current)
+      openingTimers.current.forEach(clearTimeout)
 
       clearTimeout(inertiaTimer.current)
     },
@@ -227,21 +326,13 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     : null
 
   const reveal: IOpeningReveal | null =
-    phase === EOpeningPhase.Revealed && revealedWatch
-      ? {
-          titleText: t('opening.revealTitle'),
-          nameText: revealedWatch.name,
-          brandText: revealedWatch.brand,
-          valueText: t('opening.watchValue', { amount: formatCurrency(revealedWatch.valueInCents) }),
-          imageSource: WATCH_IMAGE_SOURCES[revealedWatch.identifier],
-        }
-      : null
+    phase === EOpeningPhase.Revealed && revealedWatch ? buildReveal(t, revealedWatch) : null
 
   return {
     phase,
     isOverlayVisible: phase !== EOpeningPhase.Browsing,
     isListHidden: phase !== EOpeningPhase.Browsing,
-    isDragging: isDragging || isInertiaRunning,
+    isDragging: isDragging || isInertiaRunning || phase === EOpeningPhase.Opening,
     boxNameText: selectedBox?.name ?? '',
     priceText: selectedBox ? formatCurrency(selectedBox.priceInCents) : '',
     hintText: getHintText(t, phase, isAffordable),
@@ -250,11 +341,30 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     isBackVisible: phase === EOpeningPhase.Inspecting || phase === EOpeningPhase.Ready,
     primaryButton,
     reveal,
-    panGesture,
+    gesture,
+    tilt,
     sceneState,
     dragState,
     handleCardPress,
     handleBackPress,
+  }
+}
+
+const buildReveal = (t: TFunction, watch: IWatch): IOpeningReveal => {
+  const rarity = getWatchRarity(watch.valueInCents)
+  const style = RARITY_STYLES[rarity]
+
+  return {
+    titleText: t('opening.revealTitle'),
+    nameText: watch.name,
+    brandText: watch.brand,
+    valueText: t('opening.watchValue', { amount: formatCurrency(watch.valueInCents) }),
+    imageSource: WATCH_IMAGE_SOURCES[watch.identifier],
+    rarity,
+    rarityLabelText: t(`opening.rarity.${rarity}`),
+    rarityColorHex: style.colorHex,
+    flashOpacity: style.flashOpacity,
+    particleCount: style.particleCount,
   }
 }
 

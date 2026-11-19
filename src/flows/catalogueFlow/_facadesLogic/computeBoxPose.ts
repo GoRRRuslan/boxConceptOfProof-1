@@ -10,6 +10,7 @@ import {
   CARD_HEIGHT,
   LIST_TOP_PADDING,
   PARKED_BOX_HEIGHT_UNITS,
+  SIGNATURE_YAW_STEP_RADIANS,
   SENSOR_HEIGHT_MILLIMETERS,
   VISIBILITY_MARGIN_IN_CARDS,
 } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
@@ -45,7 +46,11 @@ export const computeBoxPose = ({ cardIndex, scrollOffset, viewportHeight }: IBox
     isVisible,
     scale: (BOX_SLOT_HEIGHT * BOX_SLOT_FILL * worldUnitsPerPixel) / BOX_WIDTH_UNITS,
     pitchRadians: BOX_BASE_PITCH_RADIANS,
-    yawRadians: BOX_BASE_YAW_RADIANS + (offsetFromViewportCenter / viewportHeight) * BOX_PARALLAX_YAW_RADIANS,
+    // Each box is turned a little differently (-1, 0, +1 steps, repeating) and turns more while it travels across the screen.
+    yawRadians:
+      BOX_BASE_YAW_RADIANS +
+      ((cardIndex % 3) - 1) * SIGNATURE_YAW_STEP_RADIANS +
+      (offsetFromViewportCenter / viewportHeight) * BOX_PARALLAX_YAW_RADIANS,
     translateY: isVisible ? -offsetFromViewportCenter * worldUnitsPerPixel : PARKED_BOX_HEIGHT_UNITS,
   }
 }

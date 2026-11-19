@@ -1,6 +1,7 @@
 import { BOX_WIDTH_UNITS, CAMERA_DISTANCE, CAMERA_FOCAL_LENGTH_MILLIMETERS, SENSOR_HEIGHT_MILLIMETERS } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
 import type { IBoxPose } from '@flows/catalogueFlow/_facadesLogic/computeBoxPose'
 import {
+  DOLLY_DEPTH_UNITS,
   FOCUSED_BASE_PITCH_RADIANS,
   FOCUSED_BASE_YAW_RADIANS,
   FOCUSED_CLOSED_CENTER_OFFSET_FRACTION,
@@ -9,6 +10,7 @@ import {
   FOCUSED_OPEN_WIDTH_FRACTION,
 } from '@flows/openingFlow/_config/openingConfig'
 import { interpolate } from '@flows/openingFlow/_facadesLogic/openingEasing'
+import type { IAnticipationEffect } from '@flows/openingFlow/_facadesLogic/openingSceneState'
 import type { IOpeningPose } from '@flows/openingFlow/_types'
 
 interface IOpeningPoseParams {
@@ -19,25 +21,37 @@ interface IOpeningPoseParams {
   lidProgress: number
   // 0 = in the list, 1 = centred; already eased.
   focusProgress: number
+  // Same animation with an overshoot: drives the push towards the camera.
+  dollyProgress: number
   viewportWidth: number
   viewportHeight: number
   dragYawRadians: number
   dragPitchRadians: number
-  idleSwayRadians: number
+  zoom: number
+  autoYawRadians: number
+  tiltYawRadians: number
+  tiltPitchRadians: number
+  anticipation: IAnticipationEffect
 }
 
 // Blends a card's list pose with the centred "inspect" pose. The focused card flies to the middle
-// of the screen and grows; every other card shrinks away. Pure maths, runs on the worklet runtime.
+// of the screen, grows and is pushed towards the camera; every other card shrinks away. Pure maths,
+// runs on the worklet runtime.
 export const computeOpeningPose = ({
   listPose,
   isFocusedCard,
   lidProgress,
   focusProgress,
+  dollyProgress,
   viewportWidth,
   viewportHeight,
   dragYawRadians,
   dragPitchRadians,
-  idleSwayRadians,
+  zoom,
+  autoYawRadians,
+  tiltYawRadians,
+  tiltPitchRadians,
+  anticipation,
 }: IOpeningPoseParams): IOpeningPose => {
   'worklet'
 
@@ -50,6 +64,7 @@ export const computeOpeningPose = ({
       yawRadians: listPose.yawRadians,
       pitchRadians: listPose.pitchRadians,
       translateY: listPose.translateY,
+      translateZ: 0,
     }
   }
 
@@ -59,12 +74,17 @@ export const computeOpeningPose = ({
   const offsetFraction = interpolate(FOCUSED_CLOSED_CENTER_OFFSET_FRACTION, FOCUSED_OPEN_CENTER_OFFSET_FRACTION, lidProgress)
   const focusedScale = (widthFraction * viewportWidth * worldUnitsPerPixel) / BOX_WIDTH_UNITS
   const focusedTranslateY = -offsetFraction * viewportHeight * worldUnitsPerPixel
+  const focusedYaw =
+    FOCUSED_BASE_YAW_RADIANS + dragYawRadians + autoYawRadians + tiltYawRadians + anticipation.jitterYawRadians
+  const focusedPitch = FOCUSED_BASE_PITCH_RADIANS + dragPitchRadians + tiltPitchRadians + anticipation.jitterPitchRadians
 
   return {
     isVisible: true,
-    scale: interpolate(listPose.scale, focusedScale, focusProgress),
-    yawRadians: interpolate(listPose.yawRadians, FOCUSED_BASE_YAW_RADIANS + dragYawRadians + idleSwayRadians, focusProgress),
-    pitchRadians: interpolate(listPose.pitchRadians, FOCUSED_BASE_PITCH_RADIANS + dragPitchRadians, focusProgress),
+    // Zoom and swell only count once the box has arrived in the centre.
+    scale: interpolate(listPose.scale, focusedScale, focusProgress) * (1 + (zoom * anticipation.swell - 1) * focusProgress),
+    yawRadians: interpolate(listPose.yawRadians, focusedYaw, focusProgress),
+    pitchRadians: interpolate(listPose.pitchRadians, focusedPitch, focusProgress),
     translateY: interpolate(listPose.translateY, focusedTranslateY, focusProgress),
+    translateZ: DOLLY_DEPTH_UNITS * dollyProgress,
   }
 }

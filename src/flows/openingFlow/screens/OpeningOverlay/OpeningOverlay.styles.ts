@@ -2,7 +2,7 @@ import { ScaledSheet, ms, mvs } from 'react-native-size-matters'
 
 import type { IThemePalette } from '@utils/designSystem/Theme'
 
-export const makeStyles = (theme: IThemePalette) =>
+export const makeStyles = (theme: IThemePalette, rarityColorHex: string) =>
   ScaledSheet.create({
     container: {
       position: 'absolute',
@@ -48,9 +48,14 @@ export const makeStyles = (theme: IThemePalette) =>
       fontSize: ms(14),
       color: theme.Colors.textSecondary,
     },
-    watchImage: {
-      width: ms(135),
-      height: ms(200),
+    revealTexts: {
+      alignItems: 'center',
+    },
+    rarity: {
+      fontSize: ms(15),
+      fontWeight: '800',
+      letterSpacing: 1,
+      color: rarityColorHex,
     },
     watchName: {
       fontSize: ms(22),

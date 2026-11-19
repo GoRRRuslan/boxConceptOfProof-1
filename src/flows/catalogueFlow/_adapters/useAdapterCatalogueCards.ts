@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { getBoxFinish } from '@flows/catalogueFlow/_facadesLogic/getBoxFinish'
 import { convertHexToLinearColor } from '@flows/catalogueFlow/_facadesLogic/convertHexToLinearColor'
 import type { ICatalogueCard } from '@flows/catalogueFlow/_types'
 import type { IGetBoxesResponse } from '@networking/api/MysteryBoxApi/_types'
@@ -40,6 +41,7 @@ export const useAdapterCatalogueCards = ({ boxesData, balanceInCents }: IUseAdap
         affordabilityText: isAffordable ? null : t('catalogue.notEnoughBalance'),
         isAffordable,
         colorLinearRgba: convertHexToLinearColor(box.colorHex),
+        finish: getBoxFinish(box.priceInCents),
       }
     })
   }, [t, boxesData, balanceInCents])

@@ -1,16 +1,12 @@
-import type { Synchronizable } from 'react-native-worklets'
-
 import { RenderOnDemand } from '@components/RenderOnDemand'
-import type { ICatalogueCard, ICatalogueViewport } from '@flows/catalogueFlow/_types'
+import type { ICatalogueCard, ICatalogueSceneSync, ICatalogueViewport } from '@flows/catalogueFlow/_types'
 import { useFacadeCatalogueBoxes } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene/_components/CatalogueBoxes/_facades/useFacadeCatalogueBoxes'
-import type { IDragState, IOpeningPhaseKey, IOpeningSceneState } from '@flows/openingFlow/_types'
+import type { IOpeningPhaseKey } from '@flows/openingFlow/_types'
 
 interface ICatalogueBoxesProps {
   cards: ICatalogueCard[]
   viewport: ICatalogueViewport
-  scrollOffset: Synchronizable<number>
-  openingScene: Synchronizable<IOpeningSceneState>
-  dragState: Synchronizable<IDragState>
+  sceneSync: ICatalogueSceneSync
   phaseKey: IOpeningPhaseKey
   isRenderContinuous: boolean
 }
@@ -20,13 +16,11 @@ interface ICatalogueBoxesProps {
 export const CatalogueBoxes = ({
   cards,
   viewport,
-  scrollOffset,
-  openingScene,
-  dragState,
+  sceneSync,
   phaseKey,
   isRenderContinuous,
 }: ICatalogueBoxesProps) => {
-  const { modelState } = useFacadeCatalogueBoxes({ cards, viewport, scrollOffset, openingScene, dragState })
+  const { modelState } = useFacadeCatalogueBoxes({ cards, viewport, sceneSync })
 
   // Keeps the renderer running while something moves; a still screen stops rendering (battery).
   return (

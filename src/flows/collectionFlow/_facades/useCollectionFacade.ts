@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native'
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useAdapterCollectionItems } from '@flows/collectionFlow/_adapters/useAdapterCollectionItems'
@@ -9,6 +9,7 @@ import type { ICollectionFacade } from '@flows/collectionFlow/_types'
 import useStore from '@models/mainStorage/_storeConfigured'
 import { ETabRoute, type TTabParamList } from '@navigation/_types'
 import { useGetBoxesQuery } from '@networking/requests/queries/BoxQueries/useGetBoxesQuery'
+import { useAnimatedNumber } from '@services/animation/useAnimatedNumber'
 import { formatCurrency } from '@utils/formatCurrency'
 
 export const useCollectionFacade = (): ICollectionFacade => {
@@ -16,6 +17,9 @@ export const useCollectionFacade = (): ICollectionFacade => {
 
   // ------------------------ Navigation ----------------------- //
   const navigation = useNavigation<BottomTabNavigationProp<TTabParamList>>()
+
+  // --------------------------- State ------------------------- //
+  const [selectedOwnershipIdentifier, setSelectedOwnershipIdentifier] = useState<string | null>(null)
 
   // --------------------------- Store ------------------------- //
   const ownedWatches = useStore(state => state.ownedWatches)
@@ -27,11 +31,25 @@ export const useCollectionFacade = (): ICollectionFacade => {
   const items = useAdapterCollectionItems({ ownedWatches, boxesData })
 
   // -------------------------- Values ------------------------- //
-  const totalValueText = useMemo(() => formatCurrency(computeCollectionValue(ownedWatches)), [ownedWatches])
+  const totalValueInCents = useMemo(() => computeCollectionValue(ownedWatches), [ownedWatches])
+  const animatedTotalValueInCents = useAnimatedNumber(totalValueInCents)
+  const totalValueText = useMemo(() => formatCurrency(animatedTotalValueInCents), [animatedTotalValueInCents])
+  const selectedItem = useMemo(
+    () => items.find(item => item.ownershipIdentifier === selectedOwnershipIdentifier) ?? null,
+    [items, selectedOwnershipIdentifier],
+  )
 
   // ------------------- Handlers -------------------------- //
   const handleBrowsePress = () => {
     navigation.navigate(ETabRoute.Catalogue)
+  }
+
+  const handleItemPress = (ownershipIdentifier: string) => {
+    setSelectedOwnershipIdentifier(ownershipIdentifier)
+  }
+
+  const handleDetailClose = () => {
+    setSelectedOwnershipIdentifier(null)
   }
 
   return {
@@ -45,5 +63,9 @@ export const useCollectionFacade = (): ICollectionFacade => {
     emptyDescriptionText: t('collection.emptyDescription'),
     browseLabelText: t('collection.browse'),
     handleBrowsePress,
+    selectedItem,
+    closeLabelText: t('collection.detailClose'),
+    handleItemPress,
+    handleDetailClose,
   }
 }

@@ -33,7 +33,7 @@ const CatalogueScreen = () => {
     cards,
     viewport,
     listRef,
-    scrollOffset,
+    sceneSync,
     opening,
     phaseKey,
     isRenderContinuous,
@@ -44,10 +44,20 @@ const CatalogueScreen = () => {
     handleListLayout,
     handleScroll,
     handleRetryPress,
+    handleCardPressIn,
+    handleCardPressOut,
   } = useCatalogueFacade()
 
   // --------------------- Render methods ------------------//
-  const renderCard = ({ item }: { item: ICatalogueCard }) => <BoxCard card={item} onPress={opening.handleCardPress} />
+  const renderCard = ({ item, index }: { item: ICatalogueCard; index: number }) => (
+    <BoxCard
+      card={item}
+      index={index}
+      onPress={opening.handleCardPress}
+      onPressIn={handleCardPressIn}
+      onPressOut={handleCardPressOut}
+    />
+  )
 
   const renderScene = () => (
     <View style={styles.sceneLayer} pointerEvents="none">
@@ -55,9 +65,7 @@ const CatalogueScreen = () => {
         <CatalogueScene
           cards={cards}
           viewport={viewport}
-          scrollOffset={scrollOffset}
-          openingScene={opening.sceneState}
-          dragState={opening.dragState}
+          sceneSync={sceneSync}
           phaseKey={phaseKey}
           isRenderContinuous={isRenderContinuous}
           renderCallback={renderCallback}

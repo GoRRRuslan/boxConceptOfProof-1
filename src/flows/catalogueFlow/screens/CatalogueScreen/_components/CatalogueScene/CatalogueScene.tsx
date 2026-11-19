@@ -1,19 +1,16 @@
 import { useMemo } from 'react'
 import { Camera, DefaultLight, FilamentView, type FrameInfo } from 'react-native-filament'
-import type { Synchronizable } from 'react-native-worklets'
 
 import { CAMERA_DISTANCE, CAMERA_FOCAL_LENGTH_MILLIMETERS } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
-import type { ICatalogueCard, ICatalogueViewport } from '@flows/catalogueFlow/_types'
+import type { ICatalogueCard, ICatalogueSceneSync, ICatalogueViewport } from '@flows/catalogueFlow/_types'
 import { CatalogueBoxes } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene/_components/CatalogueBoxes/CatalogueBoxes'
 import { makeStyles } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene/CatalogueScene.styles'
-import type { IDragState, IOpeningPhaseKey, IOpeningSceneState } from '@flows/openingFlow/_types'
+import type { IOpeningPhaseKey } from '@flows/openingFlow/_types'
 
 interface ICatalogueSceneProps {
   cards: ICatalogueCard[]
   viewport: ICatalogueViewport | null
-  scrollOffset: Synchronizable<number>
-  openingScene: Synchronizable<IOpeningSceneState>
-  dragState: Synchronizable<IDragState>
+  sceneSync: ICatalogueSceneSync
   phaseKey: IOpeningPhaseKey
   isRenderContinuous: boolean
   renderCallback: (frameInfo: FrameInfo) => void
@@ -23,9 +20,7 @@ interface ICatalogueSceneProps {
 export const CatalogueScene = ({
   cards,
   viewport,
-  scrollOffset,
-  openingScene,
-  dragState,
+  sceneSync,
   phaseKey,
   isRenderContinuous,
   renderCallback,
@@ -45,9 +40,7 @@ export const CatalogueScene = ({
           key={cards.length}
           cards={cards}
           viewport={viewport}
-          scrollOffset={scrollOffset}
-          openingScene={openingScene}
-          dragState={dragState}
+          sceneSync={sceneSync}
           phaseKey={phaseKey}
           isRenderContinuous={isRenderContinuous}
         />

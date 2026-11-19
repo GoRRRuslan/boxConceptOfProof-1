@@ -1,5 +1,5 @@
 import type { ImageSourcePropType } from 'react-native'
-import type { usePanGesture } from 'react-native-gesture-handler'
+import type { useSimultaneousGestures } from 'react-native-gesture-handler'
 import type { Synchronizable } from 'react-native-worklets'
 
 import type { EBoxIdentifier } from '@networking/api/MysteryBoxApi/_types'
@@ -41,7 +41,11 @@ export interface IOpeningSceneState {
   focusStartedAtMilliseconds: number
   lidTarget: 0 | 1
   lidFromProgress: number
+  // The lid starts moving after the anticipation; 0 while the box is not being opened.
   lidStartedAtMilliseconds: number
+  openStartedAtMilliseconds: number
+  // Colour (linear RGB) of the light inside the box once it is open; depends on the rarity of the prize.
+  glowColorLinear: [number, number, number]
 }
 
 // Rotation of the focused box by the user's finger, with inertia after release.
@@ -51,6 +55,12 @@ export interface IDragState {
   yawVelocityRadiansPerSecond: number
   pitchVelocityRadiansPerSecond: number
   isDragging: boolean
+  zoom: number
+  // Slow turning by itself while nobody touches the box.
+  autoYawRadians: number
+  lastInteractionAtMilliseconds: number
+  // Double tap: gliding back to the default orientation and zoom.
+  isResetting: boolean
 }
 
 export interface IOpeningPose {
@@ -59,6 +69,7 @@ export interface IOpeningPose {
   yawRadians: number
   pitchRadians: number
   translateY: number
+  translateZ: number
 }
 
 export enum EOpeningPrimaryAction {
@@ -80,6 +91,12 @@ export interface IOpeningReveal {
   brandText: string
   valueText: string
   imageSource: ImageSourcePropType
+  rarity: EWatchRarity
+  rarityLabelText: string
+  rarityColorHex: string
+  // The show around the watch grows with its rarity.
+  flashOpacity: number
+  particleCount: number
 }
 
 export interface IOpeningFacade {
@@ -95,9 +112,19 @@ export interface IOpeningFacade {
   isBackVisible: boolean
   primaryButton: IOpeningPrimaryButton | null
   reveal: IOpeningReveal | null
-  panGesture: ReturnType<typeof usePanGesture>
+  // Pan (turn) + pinch (zoom) + double tap (reset), all at once.
+  gesture: ReturnType<typeof useSimultaneousGestures>
+  // Device tilt, written while a box is open.
+  tilt: Synchronizable<[number, number]>
   sceneState: Synchronizable<IOpeningSceneState>
   dragState: Synchronizable<IDragState>
   handleCardPress: (boxIdentifier: EBoxIdentifier) => void
   handleBackPress: () => void
+}
+
+export enum EWatchRarity {
+  Common = 'common',
+  Rare = 'rare',
+  Epic = 'epic',
+  Legendary = 'legendary',
 }

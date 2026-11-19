@@ -68,7 +68,9 @@ describe('useCollectionFacade', () => {
     expect(result.current.countText).toBe('0 watches')
   })
 
-  it('shows the owned watches with their count and total value', async () => {
+  it('shows the owned watches with their count; the total value counts up to its new value', async () => {
+    jest.useFakeTimers()
+
     const { result } = await renderHook(() => useCollectionFacade(), { wrapper: createWrapper() })
 
     await act(() => {
@@ -81,7 +83,13 @@ describe('useCollectionFacade', () => {
 
     expect(result.current.countText).toBe('2 watches')
 
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(900)
+    })
+
     expect(result.current.totalValueText).toBe('$1,280')
+
+    jest.useRealTimers()
   })
 
   it('uses the singular for one watch', async () => {
@@ -102,5 +110,27 @@ describe('useCollectionFacade', () => {
     })
 
     expect(mockNavigate).toHaveBeenCalledWith(ETabRoute.Catalogue)
+  })
+
+  it('opens the detail of a tapped watch and closes it again', async () => {
+    const { result } = await renderHook(() => useCollectionFacade(), { wrapper: createWrapper() })
+
+    await act(() => {
+      useStore.setState({ ownedWatches: [ownedWatch('purchase-1', casio), ownedWatch('purchase-2', gmt)] })
+    })
+
+    expect(result.current.selectedItem).toBeNull()
+
+    await act(() => {
+      result.current.handleItemPress('purchase-2')
+    })
+
+    expect(result.current.selectedItem).toMatchObject({ ownershipIdentifier: 'purchase-2', nameText: gmt.name, rarityLabelText: 'Epic' })
+
+    await act(() => {
+      result.current.handleDetailClose()
+    })
+
+    expect(result.current.selectedItem).toBeNull()
   })
 })

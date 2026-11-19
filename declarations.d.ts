@@ -9,3 +9,9 @@ declare module '*.webp' {
 
   export default imageModule
 }
+
+declare module '*.wav' {
+  const soundModule: number
+
+  export default soundModule
+}

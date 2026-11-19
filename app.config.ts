@@ -29,6 +29,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-asset',
+    'expo-audio',
     'expo-font',
     'expo-localization',
     'expo-status-bar',

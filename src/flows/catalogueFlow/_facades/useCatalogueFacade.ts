@@ -5,17 +5,21 @@ import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 
 import { createSynchronizable } from 'react-native-worklets'
 
 import { CARD_HEIGHT, LIST_TOP_PADDING } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
+import { INITIAL_PRESS_STATE, type IPressState, endPress, startPress } from '@flows/catalogueFlow/_facadesLogic/computeCardAnimation'
 import { useAdapterCatalogueCards } from '@flows/catalogueFlow/_adapters/useAdapterCatalogueCards'
 import { useOpeningFacade } from '@flows/openingFlow/_facades/useOpeningFacade'
 import { EOpeningPhase } from '@flows/openingFlow/_types'
-import type { ICatalogueCard, ICatalogueFacade, ICatalogueViewport } from '@flows/catalogueFlow/_types'
+import type { ICatalogueCard, ICatalogueFacade, ICatalogueSceneSync, ICatalogueViewport } from '@flows/catalogueFlow/_types'
 import useStore from '@models/mainStorage/_storeConfigured'
+import type { EBoxIdentifier } from '@networking/api/MysteryBoxApi/_types'
 import { useGetBoxesQuery } from '@networking/requests/queries/BoxQueries/useGetBoxesQuery'
+import { useAnimatedNumber } from '@services/animation/useAnimatedNumber'
 import { useRenderFpsMeter } from '@services/performance/useRenderFpsMeter'
 import { formatCurrency } from '@utils/formatCurrency'
 
 // The list counts as "scrolling" until this long after its last scroll event (covers the fling).
 const SCROLL_IDLE_MILLISECONDS = 250
+const PRESS_RELEASE_RENDER_MILLISECONDS = 350
 // Measurement builds show the live frame-rate overlay: EXPO_PUBLIC_SHOW_PERFORMANCE=1
 const IS_PERFORMANCE_OVERLAY_VISIBLE = process.env.EXPO_PUBLIC_SHOW_PERFORMANCE === '1'
 // Measurement builds can scroll the list up and down by themselves: EXPO_PUBLIC_AUTO_SCROLL=1
@@ -33,6 +37,9 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   // --------------------------- State ------------------------- //
   const [viewport, setViewport] = useState<ICatalogueViewport | null>(null)
   const [isScrolling, setIsScrolling] = useState<boolean>(false)
+  // A finger is on a card (or just left it): the squeeze animation needs frames.
+  const [isPressing, setIsPressing] = useState<boolean>(false)
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const listRef = useRef<FlashListRef<ICatalogueCard> | null>(null)
   const scrollIdleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -52,8 +59,24 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   // Shared with the 3D scene: written on every scroll event, read on every rendered frame.
   const scrollOffset = useMemo(() => createSynchronizable(0), [])
   const isRenderContinuous =
-    isScrolling || opening.isDragging || [EOpeningPhase.Inspecting, EOpeningPhase.Purchasing, EOpeningPhase.Ready, EOpeningPhase.Opening].includes(opening.phase)
-  const balanceText = useMemo(() => formatCurrency(balanceInCents), [balanceInCents])
+    isScrolling ||
+    isPressing ||
+    opening.isDragging ||
+    // Revealed stays continuous: the light inside the box pulses.
+    [EOpeningPhase.Inspecting, EOpeningPhase.Purchasing, EOpeningPhase.Ready, EOpeningPhase.Opening, EOpeningPhase.Revealed].includes(opening.phase)
+  const animatedBalanceInCents = useAnimatedNumber(balanceInCents)
+  const balanceText = useMemo(() => formatCurrency(animatedBalanceInCents), [animatedBalanceInCents])
+  const pressState = useMemo(() => createSynchronizable<IPressState>(INITIAL_PRESS_STATE), [])
+  const sceneSync: ICatalogueSceneSync = useMemo(
+    () => ({
+      scrollOffset,
+      openingScene: opening.sceneState,
+      dragState: opening.dragState,
+      tilt: opening.tilt,
+      pressState,
+    }),
+    [scrollOffset, opening.sceneState, opening.dragState, opening.tilt, pressState],
+  )
 
   // ------------------- Handlers -------------------------- //
   const handleListLayout = (event: LayoutChangeEvent) => {
@@ -76,6 +99,28 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
 
   const handleRetryPress = () => {
     void boxesRefetch()
+  }
+
+  // The box under the finger is squeezed a little until the finger lifts.
+  const handleCardPressIn = (boxIdentifier: EBoxIdentifier) => {
+    const cardIndex = cards.findIndex(card => card.identifier === boxIdentifier)
+
+    pressState.setBlocking(startPress(pressState.getBlocking(), cardIndex, Date.now()))
+
+    clearTimeout(pressTimer.current)
+
+    setIsPressing(true)
+  }
+
+  const handleCardPressOut = () => {
+    pressState.setBlocking(endPress(pressState.getBlocking(), Date.now()))
+
+    // Keep drawing until the box has bounced back.
+    clearTimeout(pressTimer.current)
+
+    pressTimer.current = setTimeout(() => {
+      setIsPressing(false)
+    }, PRESS_RELEASE_RENDER_MILLISECONDS)
   }
 
   // ------------------- Side effects ----------------------- //
@@ -102,6 +147,8 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   useEffect(
     () => () => {
       clearTimeout(scrollIdleTimer.current)
+
+      clearTimeout(pressTimer.current)
     },
     [],
   )
@@ -118,7 +165,7 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     cards,
     viewport,
     listRef,
-    scrollOffset,
+    sceneSync,
     opening,
     phaseKey: opening.phase,
     isRenderContinuous,
@@ -129,5 +176,7 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     handleListLayout,
     handleScroll,
     handleRetryPress,
+    handleCardPressIn,
+    handleCardPressOut,
   }
 }

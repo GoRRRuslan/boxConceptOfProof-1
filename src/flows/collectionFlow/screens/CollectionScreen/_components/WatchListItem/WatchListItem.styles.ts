@@ -2,7 +2,7 @@ import { ScaledSheet, ms } from 'react-native-size-matters'
 
 import type { IThemePalette } from '@utils/designSystem/Theme'
 
-export const makeStyles = (theme: IThemePalette) =>
+export const makeStyles = (theme: IThemePalette, rarityColorHex: string) =>
   ScaledSheet.create({
     row: {
       flexDirection: 'row',
@@ -33,6 +33,15 @@ export const makeStyles = (theme: IThemePalette) =>
     box: {
       fontSize: ms(12),
       color: theme.Colors.textSecondary,
+    },
+    trailing: {
+      alignItems: 'flex-end',
+      gap: ms(2),
+    },
+    rarity: {
+      fontSize: ms(12),
+      fontWeight: '700',
+      color: rarityColorHex,
     },
     value: {
       fontSize: ms(16),

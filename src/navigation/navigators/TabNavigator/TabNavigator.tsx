@@ -23,6 +23,8 @@ export const TabNavigator = () => {
       detachInactiveScreens={false}
       screenOptions={{
         headerShown: false,
+        // Switching tabs fades instead of cutting.
+        animation: 'fade',
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
         tabBarIconStyle: styles.tabIcon,

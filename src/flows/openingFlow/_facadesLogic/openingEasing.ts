@@ -18,6 +18,14 @@ export const easeInOutCubic = (progress: number): number => {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
 }
 
+export const easeOutCubic = (progress: number): number => {
+  'worklet'
+
+  const t = clampToUnitInterval(progress)
+
+  return 1 - (1 - t) ** 3
+}
+
 // Overshoots a little before settling: the lid "pops" open.
 export const easeOutBack = (progress: number): number => {
   'worklet'

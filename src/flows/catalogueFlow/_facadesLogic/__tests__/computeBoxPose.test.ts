@@ -65,4 +65,15 @@ describe('computeBoxPose', () => {
 
     expect(pose.isVisible).toBe(true)
   })
+
+  it('turns neighbouring boxes a little differently (signature poses) in a repeating pattern', () => {
+    const yaw = (cardIndex: number) => computeBoxPose({ cardIndex, scrollOffset: cardIndex * CARD_HEIGHT, viewportHeight: VIEWPORT_HEIGHT }).yawRadians
+
+    expect(yaw(0)).not.toBeCloseTo(yaw(1))
+
+    expect(yaw(1)).not.toBeCloseTo(yaw(2))
+
+    // Every third box has the same signature.
+    expect(yaw(3)).toBeCloseTo(yaw(0))
+  })
 })

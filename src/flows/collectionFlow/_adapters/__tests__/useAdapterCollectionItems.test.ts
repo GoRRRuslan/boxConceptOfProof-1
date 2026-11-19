@@ -73,4 +73,24 @@ describe('useAdapterCollectionItems', () => {
 
     expect(result.current[0].boxText).toBeNull()
   })
+
+  it('gives every watch its rarity: label and colour', async () => {
+    const ownedWatches = [owned('purchase-1', casio), owned('purchase-2', gmt)]
+    const { result } = await renderHook(() => useAdapterCollectionItems({ ownedWatches, boxesData }))
+    const [newest, oldest] = result.current
+
+    expect(newest.rarityLabelText).toBe('Epic')
+
+    expect(oldest.rarityLabelText).toBe('Common')
+
+    expect(newest.rarityColorHex).not.toBe(oldest.rarityColorHex)
+  })
+
+  it('shows the full-size picture for the detail sheet and the small one for the list', async () => {
+    const { result } = await renderHook(() => useAdapterCollectionItems({ ownedWatches: [owned('purchase-1', gmt)], boxesData }))
+
+    expect(result.current[0].fullImageSource).toBe(2)
+
+    expect(result.current[0].thumbnailSource).toBe(6)
+  })
 })

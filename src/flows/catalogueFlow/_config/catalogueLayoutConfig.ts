@@ -26,3 +26,14 @@ export const BOX_PARALLAX_YAW_RADIANS = 0.9
 // Cards further than this many card heights from the middle of the viewport are parked off screen.
 export const VISIBILITY_MARGIN_IN_CARDS = 1.5
 export const PARKED_BOX_HEIGHT_UNITS = -1000
+
+// Boxes pop into the list one after the other the first time the scene appears.
+export const ENTRANCE_DURATION_MILLISECONDS = 520
+export const ENTRANCE_STAGGER_MILLISECONDS = 90
+
+// A pressed box is squeezed a little before it flies to the middle.
+export const PRESS_SCALE = 0.92
+export const PRESS_DURATION_MILLISECONDS = 140
+
+// Every box sits a little differently (turned by this much, repeating every three boxes).
+export const SIGNATURE_YAW_STEP_RADIANS = 0.18

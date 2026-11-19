@@ -4,12 +4,19 @@ import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 
 import type { FrameInfo } from 'react-native-filament'
 import type { Synchronizable } from 'react-native-worklets'
 
-import type { IOpeningFacade, IOpeningPhaseKey } from '@flows/openingFlow/_types'
+import type { IPressState } from '@flows/catalogueFlow/_facadesLogic/computeCardAnimation'
+import type { IDragState, IOpeningFacade, IOpeningPhaseKey, IOpeningSceneState } from '@flows/openingFlow/_types'
 import type { EBoxIdentifier } from '@networking/api/MysteryBoxApi/_types'
 import type { IRenderFrameStats } from '@services/performance/summarizeFrameDeltas'
 
 // Linear RGBA, each channel 0..1.
 export type TColorRgba = [number, number, number, number]
+
+export interface IBoxFinish {
+  roughness: number
+  metallic: number
+  clearCoat: number
+}
 
 export interface ICatalogueCard {
   identifier: EBoxIdentifier
@@ -20,6 +27,18 @@ export interface ICatalogueCard {
   affordabilityText: string | null
   isAffordable: boolean
   colorLinearRgba: TColorRgba
+  finish: IBoxFinish
+}
+
+// Shared values written by React (list, finger, sensors) and read by the 3D scene on every frame.
+export interface ICatalogueSceneSync {
+  scrollOffset: Synchronizable<number>
+  openingScene: Synchronizable<IOpeningSceneState>
+  dragState: Synchronizable<IDragState>
+  // Device tilt, each axis -1..1 (zero without a gyroscope).
+  tilt: Synchronizable<[number, number]>
+  // Which card the finger is on (it is squeezed a little).
+  pressState: Synchronizable<IPressState>
 }
 
 export interface ICatalogueViewport {
@@ -39,8 +58,8 @@ export interface ICatalogueFacade {
   cards: ICatalogueCard[]
   viewport: ICatalogueViewport | null
   listRef: RefObject<FlashListRef<ICatalogueCard> | null>
-  // Written by the list on every scroll event, read by the 3D scene on every frame.
-  scrollOffset: Synchronizable<number>
+  // Written by the list, the finger and the sensors, read by the 3D scene on every frame.
+  sceneSync: ICatalogueSceneSync
   opening: IOpeningFacade
   phaseKey: IOpeningPhaseKey
   // True while anything moves (scroll, drag, opening): the renderer must keep drawing.
@@ -52,4 +71,6 @@ export interface ICatalogueFacade {
   handleListLayout: (event: LayoutChangeEvent) => void
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   handleRetryPress: () => void
+  handleCardPressIn: (boxIdentifier: EBoxIdentifier) => void
+  handleCardPressOut: () => void
 }

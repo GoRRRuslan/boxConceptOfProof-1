@@ -133,6 +133,14 @@ Two more lessons from this hunt:
 
 **How to use it:** `yarn androidEmulatorStart` boots the emulator headless. You can still look at the screen with `adb exec-out screencap -p > shot.png` or record it with `adb shell screenrecord`.
 
+### Android backend: OpenGL ES (default) or Vulkan (2026-11-20)
+
+On a cold emulator the first catalogue frame can show the list with **no boxes for 10 to 15 s**: Filament's OpenGL ES backend, translated by the emulator, is still compiling the glTF shaders. The native-module repo (boxConceptOfProof-3) removed this by creating the engine with the **Vulkan** backend. We tried the same here: `FilamentScene` accepts `backend`, and with `backend="vulkan"` the boxes are on screen with the first list frame (about 1.8 s after launch, 3 of 3 checks).
+
+The price on the emulator: with Vulkan, the emulator **window** scrolls the list at **34 to 40 FPS** (two 60 s runs: 40.4 and 34.4 FPS, 22 to 29 % slow frames, worst frame 200 ms). Without a window (headless) Vulkan holds **60.0 FPS, 0 slow frames, worst frame 17 ms** ([log](data/android-catalogue-scroll-vulkan-headless.log)). OpenGL ES in the window holds 60 FPS (section 1).
+
+Decision: the default stays OpenGL ES (a smooth window), and Vulkan is opt-in: build with `EXPO_PUBLIC_ANDROID_BACKEND=vulkan` (`src/flows/catalogueFlow/_config/sceneRenderConfig.ts`). Not tested: a physical Android phone, where neither the emulator's GL translation nor its window compositing exists, so both backends may behave differently there.
+
 ---
 
 ## 5. What we did to make it fast

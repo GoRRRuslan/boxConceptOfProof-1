@@ -1,10 +1,15 @@
+import { Platform } from 'react-native'
 import type { FilamentProviderProps } from 'react-native-filament'
 
 // How the shared 3D view is rendered (the same on iOS and Android).
 export const CATALOGUE_SCENE_RENDER_PROPS: Pick<
   FilamentProviderProps,
-  'antiAliasing' | 'dithering' | 'postProcessing' | 'shadowing' | 'ambientOcclusionOptions' | 'bloomOptions'
+  'backend' | 'antiAliasing' | 'dithering' | 'postProcessing' | 'shadowing' | 'ambientOcclusionOptions' | 'bloomOptions'
 > = {
+  // Android backend. Default: Filament's own pick (OpenGL ES). Vulkan (EXPO_PUBLIC_ANDROID_BACKEND=vulkan) shows the boxes with the
+  // first list frame on a cold emulator (OpenGL ES shader compile took 10-15 s there), but the emulator WINDOW then scrolls at only
+  // 34-40 FPS (headless: 60.0). Measured in docs/PERFORMANCE.md, section 7. Real devices were not tested.
+  backend: Platform.OS === 'android' && process.env.EXPO_PUBLIC_ANDROID_BACKEND === 'vulkan' ? 'vulkan' : 'default',
   antiAliasing: 'FXAA',
   dithering: 'temporal',
   postProcessing: true,

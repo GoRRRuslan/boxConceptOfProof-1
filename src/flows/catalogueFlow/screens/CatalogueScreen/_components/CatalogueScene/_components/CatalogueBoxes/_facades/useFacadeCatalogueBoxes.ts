@@ -27,9 +27,11 @@ import {
 import { isDragStateAnimating, stepDragInertia } from '@flows/openingFlow/_facadesLogic/stepDragInertia'
 import {
   computeCameraPunch,
+  computeIridescenceTint,
   computeJitterScale,
   computeLidSettleDegrees,
   computeSeamIntensity,
+  getIridescenceStrength,
   getPopElapsedMilliseconds,
   getRarityProfile,
   stepScrollSway,
@@ -107,6 +109,19 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
   // Scroll speed -> sway of the boxes: the last offset and time we saw, and the filtered sway.
   const swayState = useMemo(() => createSynchronizable<[number, number, number]>([0, 0, 0]), [])
   const { updateSceneEffects } = useFacadeSceneEffects(cards)
+  // The outer body (base and lid) of every box: its colour shimmers on the glossy boxes (iridescence).
+  const bodyTargetsByCard = useMemo(
+    () =>
+      instances.map(instance =>
+        instance.getEntities().flatMap(entity => {
+          const partName = nameComponentManager.getEntityName(entity)
+          const primitiveIndex = partName === undefined ? undefined : BODY_PRIMITIVE_BY_PART[partName]
+
+          return primitiveIndex === undefined ? [] : [{ entity, primitiveIndex }]
+        })),
+    [instances, nameComponentManager],
+  )
+  const lastIridescenceTints = useMemo(() => createSynchronizable<number[][]>([]), [])
   const looks = useMemo(() => cards.map(card => ({ color: card.colorLinearRgba, finish: card.finish })), [cards])
 
   // ------------------- Side effects ----------------------- //
@@ -247,6 +262,31 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
 
         poses.push(pose)
 
+        // Iridescence: the glossy boxes shimmer with the turn of the box (colour added to the base colour).
+        const iridescenceStrength = getIridescenceStrength(looks[cardIndex].finish.metallic)
+
+        if (iridescenceStrength > 0 && pose.isVisible) {
+          const tint = computeIridescenceTint(iridescenceStrength, pose.yawRadians, pose.pitchRadians, nowMilliseconds)
+          const previousTints = lastIridescenceTints.getBlocking()
+          const previousTint = previousTints[cardIndex] as number[] | undefined
+
+          if (!previousTint || Math.abs(previousTint[0] - tint[0]) + Math.abs(previousTint[1] - tint[1]) + Math.abs(previousTint[2] - tint[2]) > 0.006) {
+            const [baseRed, baseGreen, baseBlue, baseAlpha] = looks[cardIndex].color
+
+            bodyTargetsByCard[cardIndex].forEach(({ entity, primitiveIndex }) => {
+              renderableManager
+                .getMaterialInstanceAt(entity, primitiveIndex)
+                .setFloat4Parameter('baseColorFactor', [Math.max(0, baseRed + tint[0]), Math.max(0, baseGreen + tint[1]), Math.max(0, baseBlue + tint[2]), baseAlpha])
+            })
+
+            const nextTints = [...previousTints]
+
+            nextTints[cardIndex] = tint
+
+            lastIridescenceTints.setBlocking(nextTints)
+          }
+        }
+
         if (isFocusedCard) {
           focusedPose = pose
 
@@ -337,6 +377,9 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
       entranceStartedAt,
       lastGlowStrength,
       seamEntitiesByCard,
+      bodyTargetsByCard,
+      lastIridescenceTints,
+      looks,
       lastSeamIntensity,
       swayState,
       updateSceneEffects,

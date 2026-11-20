@@ -11,6 +11,7 @@ Start here. Each row says what a document is for, so you can open the right one 
 | Understand the architecture and where code lives | [../README.md → Architecture](../README.md#4-project-architecture), [Project Structure](../README.md#9-project-structure) |
 | See how the 3D scene works (one scene, hinge, render on demand) | [../README.md → Real-time 3D](../README.md#5-real-time-3d), [MODEL.md](MODEL.md) |
 | See every animation, where it lives and how it works | [ANIMATIONS.md](ANIMATIONS.md) |
+| See the show around the box (seams, light, sparks, shock waves, camera punch) | [EFFECTS.md](EFFECTS.md) |
 | **Test the app (rules, iOS, Android, FPS)** | **[TESTING.md](TESTING.md)** |
 | See what was tested and the result, plus bugs found | [TEST_CHECKLIST.md](TEST_CHECKLIST.md) |
 | See FPS numbers, method and history | [PERFORMANCE.md](PERFORMANCE.md) |
@@ -29,6 +30,7 @@ Start here. Each row says what a document is for, so you can open the right one 
 | [CATALOGUE.md](CATALOGUE.md) | The live 3D catalogue over one shared scene |
 | [COLLECTION.md](COLLECTION.md) | Tabs and the collection |
 | [ANIMATIONS.md](ANIMATIONS.md) | All animations with screenshots |
+| [EFFECTS.md](EFFECTS.md) | The show around the box: timeline, rarity table, how it is drawn |
 | [TESTING.md](TESTING.md) | Testing guide and the golden rules |
 | [TEST_CHECKLIST.md](TEST_CHECKLIST.md) | Cases, results per platform, bugs found, gaps |
 | [PERFORMANCE.md](PERFORMANCE.md) | FPS report: numbers, method, history, limits |

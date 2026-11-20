@@ -155,7 +155,7 @@ Where the pieces live:
 | Raw logs | `docs/data/` |
 | Screenshots and charts | `docs/media/` (`yarn perfCharts` redraws the charts) |
 | In-app meter and overlay | `src/services/performance/`, `src/components/PerformanceOverlay/` |
-| Build-time switches | `EXPO_PUBLIC_SHOW_PERFORMANCE=1`, `EXPO_PUBLIC_AUTO_SCROLL=1`, `EXPO_PUBLIC_INITIAL_SCREEN=spike`, `EXPO_PUBLIC_AUTO_BENCHMARK`, `EXPO_PUBLIC_AUTO_BOXES`, `EXPO_PUBLIC_PERF_SINK_URL`, `EXPO_PUBLIC_ANDROID_BACKEND=vulkan` (Vulkan instead of OpenGL ES, see PERFORMANCE.md) |
+| Build-time switches | `EXPO_PUBLIC_SHOW_PERFORMANCE=1`, `EXPO_PUBLIC_AUTO_SCROLL=1`, `EXPO_PUBLIC_INITIAL_SCREEN=spike`, `EXPO_PUBLIC_AUTO_BENCHMARK`, `EXPO_PUBLIC_AUTO_BOXES`, `EXPO_PUBLIC_PERF_SINK_URL`, `EXPO_PUBLIC_ANDROID_BACKEND=opengl` (OpenGL ES instead of the default Vulkan on Android, see PERFORMANCE.md) |
 
 Results to date (final code): the catalogue scrolls at **60.0 FPS with 0 slow frames, worst frame 17 ms, on iOS and Android**; the Android emulator window held 60 FPS for 30 s, twice.
 

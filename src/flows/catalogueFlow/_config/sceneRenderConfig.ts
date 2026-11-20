@@ -6,10 +6,10 @@ export const CATALOGUE_SCENE_RENDER_PROPS: Pick<
   FilamentProviderProps,
   'backend' | 'antiAliasing' | 'dithering' | 'postProcessing' | 'shadowing' | 'ambientOcclusionOptions' | 'bloomOptions'
 > = {
-  // Android backend. Default: Filament's own pick (OpenGL ES). Vulkan (EXPO_PUBLIC_ANDROID_BACKEND=vulkan) shows the boxes with the
-  // first list frame on a cold emulator (OpenGL ES shader compile took 10-15 s there), but the emulator WINDOW then scrolls at only
-  // 34-40 FPS (headless: 60.0). Measured in docs/PERFORMANCE.md, section 7. Real devices were not tested.
-  backend: Platform.OS === 'android' && process.env.EXPO_PUBLIC_ANDROID_BACKEND === 'vulkan' ? 'vulkan' : 'default',
+  // Android backend. Vulkan by default: the boxes are on screen with the first list frame, while Filament's own pick (OpenGL ES)
+  // needed 10-15 s to compile the glTF shaders on a cold emulator. Measured at 60 FPS headless and in the emulator window
+  // (docs/PERFORMANCE.md, section 7). EXPO_PUBLIC_ANDROID_BACKEND=opengl switches back. Real devices were not tested.
+  backend: Platform.OS === 'android' && process.env.EXPO_PUBLIC_ANDROID_BACKEND !== 'opengl' ? 'vulkan' : 'default',
   antiAliasing: 'FXAA',
   dithering: 'temporal',
   postProcessing: true,

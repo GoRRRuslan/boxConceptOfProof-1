@@ -28,6 +28,9 @@ import {
 import type { IOpeningPose, IOpeningSceneState } from '@flows/openingFlow/_types'
 
 const PARKED_HEIGHT = -1000
+// For this long after the first frame every hidden effect object is drawn once, tiny, in the middle of the view: its material is compiled
+// during the entrance and not as a hitch of about 50 ms when the lid is let go.
+const WARM_UP_MILLISECONDS = 3500
 const HIDDEN_SCALE = 0.0001
 // How far behind its box (in model units) the aura sits.
 const AURA_DEPTH_BEHIND_BOX = 0.9
@@ -60,6 +63,7 @@ export const useFacadeSceneEffects = (cards: ICatalogueCard[]) => {
   const auraColors = useMemo(() => cards.map(card => [card.colorLinearRgba[0], card.colorLinearRgba[1], card.colorLinearRgba[2]]), [cards])
   const lastAuraAlpha = useMemo(() => createSynchronizable<number[]>(cards.map(() => -1)), [cards])
   const lastShaftAlpha = useMemo(() => createSynchronizable<number>(-1), [])
+  const warmUpStartedAt = useMemo(() => createSynchronizable<number>(0), [])
   const lastSparkTintLevel = useMemo(() => createSynchronizable<number>(-2), [])
   const lastRingAlpha = useMemo(() => createSynchronizable<number[]>(Array.from({ length: RING_POOL_SIZE }, () => -1)), [])
 
@@ -113,7 +117,16 @@ export const useFacadeSceneEffects = (cards: ICatalogueCard[]) => {
 
   // Called from the render callback (Filament runtime) once per frame, after the box poses have been set.
   const updateSceneEffects = useMemo(() => {
-    const place = (root: Entity | undefined, x: number, y: number, z: number, scaleX: number, scaleY: number, scaleZ: number) => {
+    const place = (
+      root: Entity | undefined,
+      x: number,
+      y: number,
+      z: number,
+      scaleX: number,
+      scaleY: number,
+      scaleZ: number,
+      isWarmingUp: boolean,
+    ) => {
       'worklet'
 
       if (!root) {
@@ -124,7 +137,7 @@ export const useFacadeSceneEffects = (cards: ICatalogueCard[]) => {
       const matrix = transformManager
         .createIdentityMatrix()
         .scaling(isHidden ? [HIDDEN_SCALE, HIDDEN_SCALE, HIDDEN_SCALE] : [scaleX, scaleY, scaleZ])
-        .translate([x, isHidden ? PARKED_HEIGHT : y, z])
+        .translate([x, isHidden ? (isWarmingUp ? 0 : PARKED_HEIGHT) : y, z])
 
       transformManager.setTransform(root, matrix)
     }
@@ -141,6 +154,12 @@ export const useFacadeSceneEffects = (cards: ICatalogueCard[]) => {
       'worklet'
 
       const { scene, nowMilliseconds, focusProgress, tuckProgress, seamIntensity, poses, focusedPose, shakeX } = frame
+
+      if (warmUpStartedAt.getBlocking() === 0) {
+        warmUpStartedAt.setBlocking(nowMilliseconds)
+      }
+
+      const isWarmingUp = nowMilliseconds - warmUpStartedAt.getBlocking() < WARM_UP_MILLISECONDS
       const popElapsed = getPopElapsedMilliseconds(scene, nowMilliseconds)
       const anticipation = getAnticipationLinear(scene, nowMilliseconds)
       const isArmed = scene.rarityLevel >= 0
@@ -171,6 +190,7 @@ export const useFacadeSceneEffects = (cards: ICatalogueCard[]) => {
           alpha > 0 ? diameter : 0,
           diameter,
           1,
+          isWarmingUp,
         )
 
         if (Math.abs(alpha - auraAlphas[cardIndex]) > AURA_ALPHA_STEP) {
@@ -192,14 +212,14 @@ export const useFacadeSceneEffects = (cards: ICatalogueCard[]) => {
 
       // Everything below belongs to the focused box.
       for (let index = 0; index < discRoots.length - cards.length; index += 1) {
-        place(discRoots[index], 0, 0, 0, 0, 0, 0)
+        place(discRoots[index], 0, 0, 0, 0, 0, 0, isWarmingUp)
       }
 
       if (!pose || scene.focusedCardIndex < 0) {
-        place(shaftRoots[0], 0, 0, 0, 0, 0, 0)
+        place(shaftRoots[0], 0, 0, 0, 0, 0, 0, isWarmingUp)
 
         ringRoots.forEach(root => {
-          place(root, 0, 0, 0, 0, 0, 0)
+          place(root, 0, 0, 0, 0, 0, 0, isWarmingUp)
         })
 
         return
@@ -222,6 +242,7 @@ export const useFacadeSceneEffects = (cards: ICatalogueCard[]) => {
           point.scale * unit,
           point.scale * unit,
           1,
+          isWarmingUp,
         )
       }
 
@@ -239,6 +260,7 @@ export const useFacadeSceneEffects = (cards: ICatalogueCard[]) => {
           point.scale * unit,
           point.scale * unit,
           1,
+          isWarmingUp,
         )
       }
 
@@ -267,6 +289,7 @@ export const useFacadeSceneEffects = (cards: ICatalogueCard[]) => {
         shaft.scaleX * unit * BOX_WIDTH_UNITS,
         shaft.scaleY * unit * BOX_WIDTH_UNITS,
         shaft.scaleX * unit * BOX_WIDTH_UNITS,
+        isWarmingUp,
       )
 
       if (Math.abs(shaft.alpha - lastShaftAlpha.getBlocking()) > AURA_ALPHA_STEP) {
@@ -283,7 +306,7 @@ export const useFacadeSceneEffects = (cards: ICatalogueCard[]) => {
         const ring = computeRingEffect(index, popElapsed, scene.rarityLevel)
         const diameter = ring.scale * unit * BOX_WIDTH_UNITS
 
-        place(ringRoots[index], mouthX + shakeX, mouthY, mouthZ + IN_FRONT_OF_BOX_MODEL_UNITS * unit, ring.alpha > 0 ? diameter : 0, diameter, 1)
+        place(ringRoots[index], mouthX + shakeX, mouthY, mouthZ + IN_FRONT_OF_BOX_MODEL_UNITS * unit, ring.alpha > 0 ? diameter : 0, diameter, 1, isWarmingUp)
 
         if (Math.abs(ring.alpha - ringAlphas[index]) > AURA_ALPHA_STEP) {
           tint(ringRenderables[index], glowRed * boost + 0.3, glowGreen * boost + 0.3, glowBlue * boost + 0.3, ring.alpha)
@@ -309,6 +332,7 @@ export const useFacadeSceneEffects = (cards: ICatalogueCard[]) => {
     lastShaftAlpha,
     lastRingAlpha,
     lastSparkTintLevel,
+    warmUpStartedAt,
   ])
 
   return { isEffectsLoaded: isLoaded, updateSceneEffects }

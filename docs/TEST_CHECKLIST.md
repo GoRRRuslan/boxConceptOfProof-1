@@ -7,7 +7,7 @@ What was checked, how, and the result. Release builds on the **iOS Simulator (iP
 | Check | Command | Result |
 |---|---|---|
 | Lint + types | `yarn ciPipeline` | ✅ clean |
-| Unit + component tests | `yarn test` | ✅ 260 tests, 43 suites |
+| Unit + component tests | `yarn test` | ✅ 278 tests, 45 suites |
 | Clean clone: install → lint → types → tests | see section 4 | ✅ |
 
 ## 2. Manual — functional

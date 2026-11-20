@@ -53,6 +53,8 @@ The code base follows the conventions of an enterprise React Native app: feature
 - 🧪 Jest + React Native Testing Library, ESLint 9 + Prettier, `ciPipeline`
 - 📦 **Vendored** 3D dependency with a reproducible binary installer — builds on a clean machine
 - 🌟 A **show around the box**: breathing and flashing seams, a soft light curtain from the open box to the watch, shock waves, sparks, camera punch, lid settle, hold-to-open — bigger for rarer prizes ([docs/EFFECTS.md](docs/EFFECTS.md))
+- 🎨 **One shared colour grade** (more saturation and contrast) applied to the boxes, identical in all three repositories, so the boxes look equally rich everywhere
+- 🧭 A [rendering report](docs/RENDERING_REPORT.md) that compares the three ways of drawing the scene (Filament, three.js on WebGPU, an own native module): FPS, pros and cons
 - ✨ A full set of animations (push-in, anticipation, rarity reveal, gestures, sound) described with screenshots in [docs/ANIMATIONS.md](docs/ANIMATIONS.md)
 - 📊 Reproducible performance tooling and a plain-English [performance report](docs/PERFORMANCE.md)
 
@@ -62,7 +64,7 @@ The code base follows the conventions of an enterprise React Native app: feature
 |---|---|
 | Framework | Expo SDK 58, React Native 0.88.1 (new architecture), React 19.3 |
 | Language | TypeScript 6.0 (strict) |
-| 3D | `react-native-filament` 2.0.0-rc.6 (vendored) |
+| 3D | `react-native-filament` 2.0.0-rc.6 (vendored): the Filament engine, Metal on iOS, OpenGL ES / Vulkan on Android, driven from worklets |
 | Animation / gestures | Reanimated 4.7 + `react-native-worklets` 0.13, Gesture Handler 3, Haptics |
 | State | Zustand 5 (client), TanStack Query 5 (mock API) |
 | Navigation | React Navigation 7 (bottom tabs) |
@@ -366,7 +368,7 @@ The published `react-native-filament@1.11.0` does not work on React Native 0.88:
 
 ```bash
 yarn ciPipeline   # eslint . && tsc --noEmit      → must be clean
-yarn test         # jest                            → 260 tests, 43 suites
+yarn test         # jest                            → 278 tests, 45 suites
 yarn doctor       # expo-doctor
 ```
 
@@ -374,7 +376,7 @@ yarn doctor       # expo-doctor
 |---|---|
 | ESLint (strict-type-checked, stylistic, react-native, react-hooks) | ✅ clean |
 | TypeScript 6 strict | ✅ clean |
-| Jest + RNTL | ✅ 260 / 260 |
+| Jest + RNTL | ✅ 278 / 278 |
 | Clean clone: install → lint → types → tests → both prebuilds | ✅ (see [checklist](docs/TEST_CHECKLIST.md#4-clean-clone)) |
 | Full flow on iOS 27 and Android 37, including the animations | ✅ (see [checklist](docs/TEST_CHECKLIST.md)) |
 

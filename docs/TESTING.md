@@ -97,7 +97,7 @@ A release build carries its JavaScript inside, so it needs **no Metro server**. 
 
 ```bash
 yarn ciPipeline   # ESLint + TypeScript — must be clean
-yarn test         # Jest + React Native Testing Library — 260 tests, 43 suites
+yarn test         # Jest + React Native Testing Library — 278 tests, 45 suites
 ```
 
 What the tests cover: purchase rules (exactly once, failure, lost response), the opening phase machine and timers, scene state, pose and drag maths, rarity, sounds and device tilt (with the native modules mocked), the facades, and the UI components. What they **cannot** catch and what you must therefore check on a device: the worklet code that talks to Filament (for example a helper called from a worklet that lacks the `'worklet'` directive only fails at runtime), the real look of animations, real audio and haptics.

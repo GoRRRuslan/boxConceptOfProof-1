@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native'
-import { AppState, type AppStateStatus } from 'react-native'
+import { AppState, type AppStateStatus, Platform } from 'react-native'
 
 import { useFacadeRenderOnDemand } from '@components/RenderOnDemand/_facades/useFacadeRenderOnDemand'
 
@@ -43,8 +43,13 @@ const renderParams = (activityKey: string, warmupKey = 'ready') => ({
 })
 
 describe('useFacadeRenderOnDemand', () => {
+  const originalPlatform = Platform.OS
+
   beforeEach(() => {
     jest.useFakeTimers()
+
+    // The existing cases are the Android rules (a 300 ms gap between stop and start, a 2 s watchdog); iOS has its own cases below.
+    Platform.OS = 'android'
 
     mockChoreographer.start.mockClear()
 
@@ -65,6 +70,8 @@ describe('useFacadeRenderOnDemand', () => {
 
   afterEach(() => {
     jest.useRealTimers()
+
+    Platform.OS = originalPlatform
   })
 
   it('starts rendering immediately and keeps going through the startup window', async () => {
@@ -334,5 +341,63 @@ describe('useFacadeRenderOnDemand', () => {
     await jest.advanceTimersByTimeAsync(30_000)
 
     expect(mockChoreographer.stop).not.toHaveBeenCalled()
+  })
+
+  describe('on iOS', () => {
+    beforeEach(() => {
+      Platform.OS = 'ios'
+    })
+
+    it('restarts a renderer that draws no frames after 0.7 s (a frozen scene was seen for 2 s on a device) and starts again at once', async () => {
+      mockFramesPerRead = 0
+
+      await renderHook(() => {
+        useFacadeRenderOnDemand({ ...renderParams('a'), isContinuous: true })
+      })
+
+      await jest.advanceTimersByTimeAsync(600)
+
+      expect(mockChoreographer.stop).not.toHaveBeenCalled()
+
+      await jest.advanceTimersByTimeAsync(500)
+
+      // About 1.1 s of silence: well before the 2 s of Android, the first restart has happened.
+      expect(mockChoreographer.stop.mock.calls.length).toBeGreaterThanOrEqual(1)
+
+      // No restart gap on iOS: every stop is followed by a start at once.
+      expect(mockChoreographer.start.mock.calls.length).toBeGreaterThanOrEqual(1)
+
+      expect(mockChoreographer.start.mock.calls.length).toBeLessThanOrEqual(mockChoreographer.stop.mock.calls.length)
+    })
+
+    it('stops when its tab is hidden and restarts cleanly when the tab is shown again', async () => {
+      const { rerender } = await renderHook(
+        (isScreenFocused: boolean) => {
+          useFacadeRenderOnDemand({ ...renderParams('a'), isContinuous: true, isScreenFocused })
+        },
+        { initialProps: true },
+      )
+
+      await jest.advanceTimersByTimeAsync(1000)
+
+      expect(mockChoreographer.stop).not.toHaveBeenCalled()
+
+      await rerender(false)
+
+      expect(mockChoreographer.stop).toHaveBeenCalledTimes(1)
+
+      await jest.advanceTimersByTimeAsync(2000)
+
+      // Hidden: nothing is started.
+      expect(mockChoreographer.start).not.toHaveBeenCalled()
+
+      await rerender(true)
+
+      await jest.advanceTimersByTimeAsync(20)
+
+      expect(mockChoreographer.stop).toHaveBeenCalledTimes(2)
+
+      expect(mockChoreographer.start).toHaveBeenCalledTimes(1)
+    })
   })
 })

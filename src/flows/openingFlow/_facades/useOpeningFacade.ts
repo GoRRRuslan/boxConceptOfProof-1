@@ -62,6 +62,9 @@ interface IUseOpeningFacadeParams {
   cards: ICatalogueCard[]
 }
 
+// When the sounds are prepared: after the entrance of the boxes, before anyone has tapped anything.
+const SOUND_PREPARE_DELAY_MILLISECONDS = 2500
+
 const INTERACTIVE_PHASES = [EOpeningPhase.Inspecting, EOpeningPhase.Ready, EOpeningPhase.Revealed]
 
 const REVEAL_SOUNDS: Record<EWatchRarity, ESoundEffect> = {
@@ -281,12 +284,13 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
 
       setIsDragging(true)
     },
+    // Vertical drag is inverted on purpose: the finger moving up turns the top of the box up (and down turns it down).
     onUpdate: event => {
       dragState.setBlocking(
         applyDragMovement(
           dragState.getBlocking(),
           event.changeX,
-          phase === EOpeningPhase.Ready ? 0 : event.changeY,
+          phase === EOpeningPhase.Ready ? 0 : -event.changeY,
           DRAG_RADIANS_PER_PIXEL,
           Date.now(),
         ),
@@ -297,7 +301,7 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
         releaseDrag(
           dragState.getBlocking(),
           event.velocityX * DRAG_RADIANS_PER_PIXEL,
-          phase === EOpeningPhase.Ready ? 0 : event.velocityY * DRAG_RADIANS_PER_PIXEL,
+          phase === EOpeningPhase.Ready ? 0 : -event.velocityY * DRAG_RADIANS_PER_PIXEL,
           Date.now(),
         ),
       )
@@ -375,6 +379,15 @@ export const useOpeningFacade = ({ boxesData, cards }: IUseOpeningFacadeParams):
     },
     [],
   )
+
+  // The audio session and the players are created while the app is idle after the start, not on the first sound (a stall of about a second).
+  useEffect(() => {
+    const prepareTimer = setTimeout(soundEffects.prepare, SOUND_PREPARE_DELAY_MILLISECONDS)
+
+    return () => {
+      clearTimeout(prepareTimer)
+    }
+  }, [])
 
   // ------------------------ View data ------------------------ //
   const primaryButton: IOpeningPrimaryButton | null = primaryActionState

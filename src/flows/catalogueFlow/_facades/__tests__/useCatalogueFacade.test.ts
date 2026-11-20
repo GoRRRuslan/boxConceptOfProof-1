@@ -12,7 +12,7 @@ import { BOX_CATALOGUE } from '@networking/api/MysteryBoxApi/_mockData/boxCatalo
 const mockSetBlocking = jest.fn()
 const mockSetParams = jest.fn()
 
-jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ setParams: mockSetParams }) }))
+jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ setParams: mockSetParams, addListener: () => () => undefined }) }))
 
 jest.mock('react-native-gesture-handler', () => ({
   usePanGesture: () => ({}),
@@ -28,7 +28,7 @@ jest.mock('expo-sensors', () => ({
 
 jest.mock('@services/sounds/soundEffects', () => ({
   ESoundEffect: {},
-  soundEffects: { play: jest.fn() },
+  soundEffects: { play: jest.fn(), prepare: jest.fn() },
 }))
 
 jest.mock('@services/haptics/hapticFeedback', () => ({

@@ -16,6 +16,7 @@ import useStore from '@models/mainStorage/_storeConfigured'
 import type { EBoxIdentifier } from '@networking/api/MysteryBoxApi/_types'
 import { ETabRoute, type TTabParamList } from '@navigation/_types'
 import { useGetBoxesQuery } from '@networking/requests/queries/BoxQueries/useGetBoxesQuery'
+import { logDiagnostic } from '@services/performance/diagnosticLog'
 import { useRenderFpsMeter } from '@services/performance/useRenderFpsMeter'
 
 // The list counts as "scrolling" until this long after its last scroll event (covers the fling).
@@ -46,6 +47,9 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   const pressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const listRef = useRef<FlashListRef<ICatalogueCard> | null>(null)
   const scrollIdleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const isScrollingLogged = useRef<boolean>(false)
+  // Diagnostics: when the scroll events of the current gesture arrived (how evenly does the list deliver them to the scene?).
+  const scrollEventTimestamps = useRef<number[]>([])
 
   // --------------------------- Store ------------------------- //
   const balanceInCents = useStore(state => state.balanceInCents)
@@ -91,11 +95,33 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     scrollOffset.setBlocking(event.nativeEvent.contentOffset.y)
 
+    scrollEventTimestamps.current.push(performance.now())
+
+    if (!isScrollingLogged.current) {
+      isScrollingLogged.current = true
+
+      logDiagnostic('scroll.start', { offset: event.nativeEvent.contentOffset.y })
+    }
+
     setIsScrolling(true)
 
     clearTimeout(scrollIdleTimer.current)
 
     scrollIdleTimer.current = setTimeout(() => {
+      isScrollingLogged.current = false
+
+      const timestamps = scrollEventTimestamps.current
+      const gaps = timestamps.slice(1).map((timestamp, index) => timestamp - timestamps[index]).sort((first, second) => first - second)
+
+      logDiagnostic('scroll.end', {
+        events: timestamps.length,
+        medianGapMilliseconds: Math.round((gaps[Math.floor(gaps.length / 2)] ?? 0) * 10) / 10,
+        p95GapMilliseconds: Math.round((gaps[Math.floor(gaps.length * 0.95)] ?? 0) * 10) / 10,
+        maxGapMilliseconds: Math.round((gaps[gaps.length - 1] ?? 0) * 10) / 10,
+      })
+
+      scrollEventTimestamps.current = []
+
       setIsScrolling(false)
     }, SCROLL_IDLE_MILLISECONDS)
   }
@@ -153,6 +179,22 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
       clearInterval(autoScrollTimer)
     }
   }, [viewport, cards.length])
+
+  // The Boxes tab coming and going (e.g. a trip to the Collection and back): the renderer's behaviour around it is what is looked at.
+  useEffect(() => {
+    const unsubscribeFocus = navigation.addListener('focus', () => {
+      logDiagnostic('tab.focus', { tab: 'catalogue' })
+    })
+    const unsubscribeBlur = navigation.addListener('blur', () => {
+      logDiagnostic('tab.blur', { tab: 'catalogue' })
+    })
+
+    return () => {
+      unsubscribeFocus()
+
+      unsubscribeBlur()
+    }
+  }, [navigation])
 
   useEffect(
     () => () => {

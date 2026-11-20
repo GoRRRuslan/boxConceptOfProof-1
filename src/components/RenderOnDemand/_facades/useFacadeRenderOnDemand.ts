@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { AppState } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import { RenderCallbackContext, useFilamentContext } from 'react-native-filament'
 import { runOnRuntimeAsync } from 'react-native-worklets'
+
+import { logDiagnostic } from '@services/performance/diagnosticLog'
 
 interface IUseFacadeRenderOnDemandParams {
   activityKey: string
@@ -11,6 +13,8 @@ interface IUseFacadeRenderOnDemandParams {
   minimumFrames: number
   maximumMilliseconds: number
   isContinuous: boolean
+  // False while the scene sits on a tab that is not shown (it is stopped), true again when the tab comes back (clean restart).
+  isScreenFocused?: boolean
 }
 
 declare global {
@@ -22,11 +26,13 @@ const FRAME_POLL_INTERVAL_MILLISECONDS = 120
 // Android's FilamentChoreographer.stop() cannot cancel the frame callback that is already queued
 // (it removes a different lambda instance), so stop() followed by start() within one frame leaves two
 // frame loops running forever and multiplies the frame rate. Keep stop() and the next start() apart.
-const MINIMUM_RESTART_GAP_MILLISECONDS = 300
+const getMinimumRestartGapMilliseconds = () => (Platform.OS === 'ios' ? 0 : 300)
 // How often the watchdog looks at the frame counter, and how long the counter may stand still while
 // the renderer is believed to run before the renderer is restarted.
-const WATCHDOG_INTERVAL_MILLISECONDS = 500
-const WATCHDOG_STALL_MILLISECONDS = 2000
+// iOS looks twice as often and gives up after 0.7 s: its display link can stay paused after a tab was hidden, and a 2 s freeze of the
+// boxes (while the text of the list scrolls on) was seen on a device.
+const getWatchdogIntervalMilliseconds = () => (Platform.OS === 'ios' ? 250 : 500)
+const getWatchdogStallMilliseconds = () => (Platform.OS === 'ios' ? 700 : 2000)
 
 // Filament's choreographer renders every display refresh, even for a static scene. This keeps it
 // running only while something changes: it is (re)started whenever `activityKey` changes and
@@ -53,6 +59,7 @@ export const useFacadeRenderOnDemand = ({
   minimumFrames,
   maximumMilliseconds,
   isContinuous,
+  isScreenFocused = true,
 }: IUseFacadeRenderOnDemandParams) => {
   const { choreographer, workletRuntime } = useFilamentContext()
   const lastWarmupKey = useRef<string | null>(null)
@@ -60,6 +67,7 @@ export const useFacadeRenderOnDemand = ({
   const isChoreographerRunning = useRef<boolean>(true)
   const lastStopTimestamp = useRef<number>(0)
   const [foregroundResyncCount, setForegroundResyncCount] = useState<number>(0)
+  const wasScreenFocused = useRef<boolean>(isScreenFocused)
 
   // ------------------- Side effects ----------------------- //
   RenderCallbackContext.useRenderCallback(() => {
@@ -70,6 +78,8 @@ export const useFacadeRenderOnDemand = ({
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextState => {
+      logDiagnostic('app.state', { nextState })
+
       if (nextState !== 'active') {
         return
       }
@@ -102,6 +112,26 @@ export const useFacadeRenderOnDemand = ({
 
     lastWarmupKey.current = warmupKey
 
+    // A tab that is hidden is not drawn, and iOS may leave the display link of a hidden view paused: stop cleanly when the scene is
+    // hidden, and start cleanly (below) when it is shown again, before the first scroll needs a frame.
+    if (wasScreenFocused.current !== isScreenFocused) {
+      wasScreenFocused.current = isScreenFocused
+
+      logDiagnostic('screen.focus', { isScreenFocused })
+
+      choreographer.stop()
+
+      isChoreographerRunning.current = false
+
+      lastStopTimestamp.current = Date.now()
+
+      if (!isScreenFocused) {
+        return undefined
+      }
+    }
+
+    logDiagnostic('renderer.activity', { activityKey, isWarmingUp, isContinuous, isChoreographerRunning: isChoreographerRunning.current })
+
     // Watchdog: the renderer is believed to run, but the frame counter stands still -> restart it. The
     // loop only lives while the renderer is believed to run (an intentionally stopped scene costs nothing).
     let isWatchdogLoopActive = false
@@ -120,7 +150,7 @@ export const useFacadeRenderOnDemand = ({
     // Starts the choreographer once the restart gap since the last stop has passed. Never calls start()
     // on a choreographer believed to run: on Android every extra start() adds another frame-callback loop.
     const startAfterGap = () => {
-      const remainingGapMilliseconds = Math.max(0, MINIMUM_RESTART_GAP_MILLISECONDS - (Date.now() - lastStopTimestamp.current))
+      const remainingGapMilliseconds = Math.max(0, getMinimumRestartGapMilliseconds() - (Date.now() - lastStopTimestamp.current))
 
       clearTimeout(startTimer)
 
@@ -129,6 +159,8 @@ export const useFacadeRenderOnDemand = ({
           choreographer.start()
 
           isChoreographerRunning.current = true
+
+          logDiagnostic('renderer.start')
 
           ensureWatchdog()
         }
@@ -151,7 +183,9 @@ export const useFacadeRenderOnDemand = ({
         watchdogLastFrameCount = frameCount
 
         watchdogLastProgressAt = now
-      } else if (isChoreographerRunning.current && now - watchdogLastProgressAt > WATCHDOG_STALL_MILLISECONDS) {
+      } else if (isChoreographerRunning.current && now - watchdogLastProgressAt > getWatchdogStallMilliseconds()) {
+        logDiagnostic('renderer.watchdog.restart', { stalledMilliseconds: now - watchdogLastProgressAt })
+
         choreographer.stop()
 
         isChoreographerRunning.current = false
@@ -169,7 +203,7 @@ export const useFacadeRenderOnDemand = ({
 
       watchdogTimer = setTimeout(() => {
         void watchdogAsync()
-      }, WATCHDOG_INTERVAL_MILLISECONDS)
+      }, getWatchdogIntervalMilliseconds())
     }
 
     ensureWatchdog = () => {
@@ -210,6 +244,8 @@ export const useFacadeRenderOnDemand = ({
         }
 
         if (isEnough || elapsedMilliseconds >= maximumMilliseconds) {
+          logDiagnostic('renderer.stop', { framesSinceActivity, elapsedMilliseconds, isEnough })
+
           choreographer.stop()
 
           isChoreographerRunning.current = false
@@ -251,6 +287,7 @@ export const useFacadeRenderOnDemand = ({
     minimumFrames,
     maximumMilliseconds,
     isContinuous,
+    isScreenFocused,
     foregroundResyncCount,
   ])
 }

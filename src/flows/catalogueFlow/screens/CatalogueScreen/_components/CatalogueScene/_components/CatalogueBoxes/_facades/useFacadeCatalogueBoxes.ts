@@ -34,7 +34,10 @@ import {
   getIridescenceStrength,
   getPopElapsedMilliseconds,
   getRarityProfile,
+  extrapolateScrollOffset,
+  stepParallaxOffset,
   stepScrollSway,
+  stepScrollVelocity,
 } from '@flows/openingFlow/_facadesLogic/computeSceneEffects'
 import type { IOpeningPose } from '@flows/openingFlow/_types'
 import { useFacadeSceneEffects } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene/_components/CatalogueBoxes/_facades/useFacadeSceneEffects'
@@ -106,8 +109,11 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
     [instances, nameComponentManager],
   )
   const lastSeamIntensity = useMemo(() => createSynchronizable<number>(-1), [])
-  // Scroll speed -> sway of the boxes: the last offset and time we saw, and the filtered sway.
-  const swayState = useMemo(() => createSynchronizable<[number, number, number]>([0, 0, 0]), [])
+  // Scroll speed -> sway of the boxes: [last offset, time it changed, smoothed scroll speed] and the filtered sway.
+  const scrollVelocityState = useMemo(() => createSynchronizable<[number, number, number]>([0, 0, 0]), [])
+  const swayState = useMemo(() => createSynchronizable<number>(0), [])
+  // The offset the parallax turn of the boxes is computed from (smoothed), and the first frame it was set on.
+  const parallaxOffsetState = useMemo(() => createSynchronizable<number | null>(null), [])
   const { updateSceneEffects } = useFacadeSceneEffects(cards)
   // The outer body (base and lid) of every box: its colour shimmers on the glossy boxes (iridescence).
   const bodyTargetsByCard = useMemo(
@@ -201,12 +207,19 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
         180
 
       // The boxes sway against the direction of a fast scroll.
-      const [lastScrollOffset, lastScrollTime, previousSway] = swayState.getBlocking()
-      const scrollDeltaSeconds = (nowMilliseconds - lastScrollTime) / 1000
-      const scrollVelocity = scrollDeltaSeconds > 0 && scrollDeltaSeconds < 0.2 ? (currentScrollOffset - lastScrollOffset) / scrollDeltaSeconds : 0
-      const sway = stepScrollSway(previousSway, scrollVelocity, Math.min(deltaSeconds, MAXIMUM_FRAME_SECONDS))
+      const frameSeconds = Math.min(deltaSeconds, MAXIMUM_FRAME_SECONDS)
+      const scrollVelocity = stepScrollVelocity(scrollVelocityState.getBlocking(), currentScrollOffset, nowMilliseconds, frameSeconds)
+      const sway = stepScrollSway(swayState.getBlocking(), scrollVelocity[2], frameSeconds)
+      const listScrollOffset = extrapolateScrollOffset(currentScrollOffset, scrollVelocity[2], scrollVelocity[1], nowMilliseconds)
+      const previousParallaxOffset = parallaxOffsetState.getBlocking()
+      const parallaxOffset =
+        previousParallaxOffset === null ? listScrollOffset : stepParallaxOffset(previousParallaxOffset, listScrollOffset, frameSeconds)
 
-      swayState.setBlocking([currentScrollOffset, nowMilliseconds, sway])
+      parallaxOffsetState.setBlocking(parallaxOffset)
+
+      scrollVelocityState.setBlocking(scrollVelocity)
+
+      swayState.setBlocking(sway)
 
       // Inspection physics: inertia after a flick, gliding back after a double tap, slow auto-rotation when left alone.
       const isAutoRotateAllowed = scene.focusTarget === 1 && scene.lidTarget === 0 && focusLinearProgress >= 1
@@ -228,8 +241,10 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
       let shakeX = 0
 
       rootEntities.forEach((rootEntity, cardIndex) => {
-        const baseListPose = computeBoxPose({ cardIndex, scrollOffset: currentScrollOffset, viewportHeight })
-        const listPose = { ...baseListPose, yawRadians: baseListPose.yawRadians + sway, pitchRadians: baseListPose.pitchRadians + sway * 0.5 }
+        const baseListPose = computeBoxPose({ cardIndex, scrollOffset: listScrollOffset, viewportHeight })
+        // Where the box is (and how big) follows the list at once; how it TURNS with its place on the screen follows a smoothed offset.
+        const parallaxYawRadians = computeBoxPose({ cardIndex, scrollOffset: parallaxOffset, viewportHeight }).yawRadians
+        const listPose = { ...baseListPose, yawRadians: parallaxYawRadians + sway, pitchRadians: baseListPose.pitchRadians + sway * 0.5 }
         const entranceScale = computeEntranceScale(nowMilliseconds - entranceStart - cardIndex * ENTRANCE_STAGGER_MILLISECONDS)
         const squeeze = press.cardIndex === cardIndex ? pressScale : 1
         const openingPose = computeOpeningPose({

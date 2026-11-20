@@ -1,5 +1,9 @@
 import type { ExpoConfig } from 'expo/config'
 
+// Native ABIs to build. arm64-v8a covers every modern phone and Apple-Silicon emulators; the other
+// ABIs only add ~190 MB of Filament/Bullet libraries to debug builds. Intel Macs: ANDROID_ARCHITECTURES=x86_64
+const androidArchitectures = (process.env.ANDROID_ARCHITECTURES ?? 'arm64-v8a').split(',')
+
 const config: ExpoConfig = {
   name: 'Mystery Watch',
   slug: 'mystery-watch',
@@ -25,10 +29,12 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-asset',
+    'expo-audio',
     'expo-font',
     'expo-localization',
     'expo-status-bar',
     'expo-dev-client',
+    ['expo-build-properties', { android: { buildArchs: androidArchitectures } }],
     [
       'expo-splash-screen',
       {

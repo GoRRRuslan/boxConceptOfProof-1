@@ -39,6 +39,8 @@ export default tseslint.config(
   {
     ignores: [
       'node_modules/*',
+      'vendor/*',
+      'scripts/*',
       'android/*',
       'ios/*',
       '__tests__/*',

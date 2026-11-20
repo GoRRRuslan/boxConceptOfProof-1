@@ -1,6 +1,5 @@
-# Stage 3 — Live 3D catalogue
+# Live 3D catalogue
 
-Note: in Stage 6 the box was made a little smaller in its slot (`BOX_SLOT_FILL` 0.72 → 0.64) so that at strong parallax it never touches the card text.
 
 ## What you see
 A scrollable list of 8 mystery boxes. Every box is a **real-time 3D model**, not an image: it has its own colour, turns a little while you scroll, and shows its price, the best possible prize and (when the balance is too low) "Not enough balance". The balance sits in a header above the list.
@@ -35,11 +34,7 @@ flowchart LR
 
 Reproduce: `yarn androidRunCatalogueScroll` + `yarn perfAndroidCatalogue`, `yarn iosRunCatalogueScroll --device "iPhone 17"` + `yarn perfIosCatalogue`. Raw data: `docs/data/*-catalogue-scroll.log`.
 
-## Findings worth knowing
+## Library notes
 - `MaterialInstance.name` is `undefined` in this library build, so boxes are coloured by part name (`Shell_Base`, `Shell_Lid`) and primitive index instead of by material name.
 - Material instances are **per instance**: each box can have its own colour from one loaded model.
 - `ModelInstance` transform props multiply onto the current transform on every update, so they are not suitable for scroll-driven motion; the scene sets absolute transforms with `transformManager.setTransform`.
-- The FPS meter now ignores the first callback after a render pause (it reported a 20 s "frame").
-
-## Not in this stage
-Tapping a box, purchase and opening come in Stage 4; tabs and the collection in Stage 5.

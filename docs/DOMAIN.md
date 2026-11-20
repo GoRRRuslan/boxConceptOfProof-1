@@ -1,6 +1,6 @@
-# Stage 2 — Domain, mock API and purchase state
+# Domain, mock API and purchase state
 
-## What exists now
+## Layers
 | Layer | Location | Content |
 |---|---|---|
 | Domain types | `src/networking/api/MysteryBoxApi/_types` | Watches, boxes (price in **integer cents**, colour, weighted drop table), purchase request/response, error codes, failure modes |
@@ -23,7 +23,7 @@ Balance and collection change in exactly one place: `PurchaseStore.completePurch
 All of it is covered by unit tests (`yarn test`): store rules, API mock, `runBoxPurchase` end to end against the mock API, and the mutation hook with React Query.
 
 ## Dev switches (for the manual checks and the demo)
-`mockApiSettings.purchaseFailureMode` and `mockApiSettings.latencyInMilliseconds` in `src/networking/api/MysteryBoxApi/_config/mockApiSettings.ts`. A visible control for them comes with the catalogue UI (Stage 3).
+`mockApiSettings.purchaseFailureMode` and `mockApiSettings.latencyInMilliseconds` in `src/networking/api/MysteryBoxApi/_config/mockApiSettings.ts`. Builds can also set `EXPO_PUBLIC_MOCK_PURCHASE_FAILURE`.
 
 ## Jest note
 `immer` ships ESM only for the default entry; `package.json` maps `^immer$` to its CJS build for Jest.

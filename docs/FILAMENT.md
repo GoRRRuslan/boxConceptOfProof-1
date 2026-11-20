@@ -1,4 +1,4 @@
-# Stage 1 — Filament spike findings
+# Filament: stack, decisions and limits
 
 ## Stack that works
 Expo SDK 58 · RN 0.88.1 · React 19.3 · Reanimated 4.7 + `react-native-worklets` 0.13 · **react-native-filament 2.0.0-rc.6** (unreleased branch, PR margelo/react-native-filament#349 "run on react-native-worklets").
@@ -12,7 +12,7 @@ Expo SDK 58 · RN 0.88.1 · React 19.3 · Reanimated 4.7 + `react-native-worklet
 
 Filament v2 (PR 349) drops `worklets-core` and runs on the `react-native-worklets` that Reanimated 4 already ships. Both problems disappear without local patches. The native Filament binaries are taken from the published 1.11 npm package (same procedure as the branch's own `setup-filament-quick.sh`); type declarations were generated with `tsc` from the branch sources.
 
-## Verified
+## What was verified on both platforms
 | Check | iOS (iPhone 17, iOS 27) | Android (Medium_Phone_API_37) |
 |---|---|---|
 | Build | ok | ok |
@@ -32,16 +32,10 @@ Materials per box colour: `EntitySelector` `materialParameters`.
 ## Emulator note
 The stock `Medium_Phone_API_37.0` AVD has 1 CPU core / 2 GB RAM, which makes Filament scenes crawl. Use an AVD with ≥ 4 cores, ≥ 4 GB and `hw.gpu.mode=host` (created here as `MW_Pixel9_API_37`).
 
-## Open points
-1. ~~Local `file:` dependency~~ — **resolved**: vendored in `vendor/react-native-filament` (3.9 MB) + `scripts/installFilamentBinaries.sh`; verified with a clean `node_modules` install and clean prebuild/build on both platforms.
-2. Camera framing: the open lid leaves the frame at the top; tune for the opening screen in Stage 4.
-3. Real-device performance (emulator frame stats are not representative) — see `docs/PERFORMANCE.md`.
-4. Hinge/lid transform is applied per `EntitySelector` with `multiplyWithCurrentTransform={false}`; keep this when moving to Reanimated shared values in Stage 4.
-
-## Risks and how they were resolved
-| # | Risk | Mitigation |
+## Constraints and how the app handles them
+| # | Constraint | Handling |
 |---|---|---|
-| R1 | `react-native-filament` 1.11 depends on `react-native-worklets-core`; Reanimated 4 depends on `react-native-worklets`. Open Filament issues mention `TurboModuleRegistry 'Worklets'` errors and Expo 54 + New Arch crashes | Stage 1 spike with go/no-go. Options: pinned versions + `patch-package`; Filament v2 branch (run on `react-native-worklets`); gestures via Gesture Handler shared values; last resort `three` + `expo-gl` |
-| R2 | Several live 3D views in a scrolling list | **Resolved in Stage 1:** several `FilamentScene`s do not work on Android (only the first draws). Use ONE shared scene/canvas; box models positioned from the list scroll offset |
-| R3 | Lid + wordmark must rotate about pivot `[0, 0.914876, 0.359181]` around +X, nodes have identity transforms | Pure function `T(p)·Rx(θ)·T(−p)` applied to both parts, unit-tested |
-| R4 | Scene lifecycle (background/foreground, teardown, source change) | One scene owner per screen, explicit dispose, manual checklist. **Resolved in Stage 6:** one long-lived scene for the whole app; background → foreground keeps the scene and the frame rate (no duplicated frame loops) on both platforms |
+| 1 | `react-native-filament` 1.11 needs `react-native-worklets-core`, which does not build on RN 0.88; Reanimated 4 uses `react-native-worklets` | Filament v2 (runs on `react-native-worklets`), vendored and pinned; see the first sections |
+| 2 | Several live 3D views in a scrolling list | Not possible on Android (only the first draws): ONE shared scene and canvas for the whole app, box models positioned from the list scroll offset |
+| 3 | Lid and wordmark must rotate about the pivot `[0, 0.914876, 0.359181]` around +X, and their nodes have identity transforms | Pure function `T(p)·Rx(θ)·T(−p)` applied to both parts, unit-tested |
+| 4 | Scene lifecycle (background and foreground, teardown) | One long-lived scene for the whole app; background to foreground keeps the scene and the frame rate (no duplicated frame loops) on both platforms |

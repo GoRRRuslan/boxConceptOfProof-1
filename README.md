@@ -23,9 +23,8 @@
 7. [Quality Gates and Tests](#7-quality-gates-and-tests)
 8. [Performance](#8-performance)
 9. [Project Structure](#9-project-structure)
-10. [Roadmap & Status](#10-roadmap--status)
-11. [Known Limits and Decisions](#11-known-limits-and-decisions)
-12. [Troubleshooting](#12-troubleshooting)
+10. [Known Limits and Decisions](#10-known-limits-and-decisions)
+11. [Troubleshooting](#11-troubleshooting)
 
 ---
 
@@ -172,7 +171,7 @@ Two tabs: **Boxes** and **Collection**.
 5. **Reveal.** A rarity pill (Common, Rare, Epic, Legendary!), the watch in two glowing circles, a flash and particles for the better prizes, then the price, name and brand. After a moment the opened box is put away; only then does **Done** appear. While a prize is shown the tab bar is invisible. **Done** returns to the list.
 6. **Collection tab.** Your watches, newest first, with the total value; tap a row for a large picture; an empty state with a "Browse boxes" button when you have none. A restart starts a new session (nothing is persisted, as required).
 
-Detailed write-ups with screenshots: [animations](docs/ANIMATIONS.md) · [Stage 2 domain](docs/STAGE_2_DOMAIN.md) · [Stage 3 catalogue](docs/STAGE_3_CATALOGUE.md) · [Stage 5 collection](docs/STAGE_5_COLLECTION.md) · [test checklist](docs/TEST_CHECKLIST.md).
+Detailed write-ups with screenshots: [animations](docs/ANIMATIONS.md) · [domain and purchase](docs/DOMAIN.md) · [catalogue](docs/CATALOGUE.md) · [collection and tabs](docs/COLLECTION.md) · [test checklist](docs/TEST_CHECKLIST.md).
 
 ### The phases of one box
 
@@ -395,7 +394,7 @@ Not unit-tested (verified on devices instead): the worklet code that talks to Fi
 
 ## 8. Performance
 
-**Result: 60 FPS on iOS and Android, 0 slow frames, from 1 to 64 boxes and while scrolling the real catalogue, also after the Stage 7 polish.** Plain-English report with charts, screenshots, methodology and limits: [docs/PERFORMANCE.md](docs/PERFORMANCE.md). How to run the measurements: [docs/TESTING.md, FPS testing](docs/TESTING.md#7-fps-testing).
+**Result: 60 FPS on iOS and Android, 0 slow frames, from 1 to 64 boxes and while scrolling the real catalogue, also with all lights, shadows and effects on.** Plain-English report with charts, screenshots, methodology and limits: [docs/PERFORMANCE.md](docs/PERFORMANCE.md). How to run the measurements: [docs/TESTING.md, FPS testing](docs/TESTING.md#7-fps-testing).
 
 ![](docs/media/chart-fps-by-scenario.svg)
 
@@ -434,7 +433,7 @@ boxConceptOfProof-1/
 ├── eslint.config.mjs · .prettierrc.json
 ├── docs/                             # see docs/README.md for the map
 │   ├── README.md · TESTING.md · TEST_CHECKLIST.md · PERFORMANCE.md · ANIMATIONS.md
-│   ├── ASSIGNMENT · STAGE_1…3, 5 · MODEL
+│   ├── ASSIGNMENT · FILAMENT · DOMAIN · CATALOGUE · COLLECTION · MODEL
 │   ├── media/                        # screenshots, charts, animations/ (frames used by ANIMATIONS.md)
 │   └── data/                         # raw measurement logs
 ├── scripts/
@@ -463,22 +462,7 @@ boxConceptOfProof-1/
 
 ---
 
-## 10. Roadmap & Status
-
-| Stage | Scope | Status |
-|---|---|---|
-| 0 | Scaffold on Expo SDK 58, reference structure, lint/ts/jest, both platforms running | ✅ done |
-| 1 | Filament spike: GLB, lighting, hinge, multi-box strategy, vendoring, performance analysis | ✅ done |
-| 2 | Domain, asynchronous mock API, stores, purchase mutation — [docs](docs/STAGE_2_DOMAIN.md) | ✅ done |
-| 3 | Live 3D catalogue over one shared canvas — [docs](docs/STAGE_3_CATALOGUE.md) | ✅ done |
-| 4 | Opening experience: inspect, buy, lid, reveal, haptics, errors — [docs](docs/ANIMATIONS.md#4-buying-and-opening) | ✅ done |
-| 5 | Tabs and the collection — [docs](docs/STAGE_5_COLLECTION.md) | ✅ done |
-| 6 | Tests, review, manual checklist, final performance run, handoff — [checklist](docs/TEST_CHECKLIST.md) | ✅ done |
-| 7 | Animation and visual polish: gestures, anticipation, rarity reveals, lights and shadows, sounds, review fixes — [animations](docs/ANIMATIONS.md) | ✅ done |
-
----
-
-## 11. Known Limits and Decisions
+## 10. Known Limits and Decisions
 
 - **Simulators/emulators only.** All numbers come from the iOS Simulator and the Android Emulator on an Apple M5 Pro; their GPU is much faster than a phone's. The pipeline is proven not to be the bottleneck; physical devices have not been measured yet (the same scripts work on them unchanged).
 - **One platform at a time** when testing or measuring (shared Mac GPU and CPU); see [docs/TESTING.md](docs/TESTING.md#rule-1--one-platform-at-a-time).
@@ -489,12 +473,12 @@ boxConceptOfProof-1/
 - Leaving after buying without opening is allowed — the watch is already in the collection.
 - **Self-healing renderer:** `RenderOnDemand` does not trust its own idea of "the renderer is running": a watchdog restarts it when no frame is drawn for 2 s although it should run, and returning to the foreground forces a clean stop/start.
 - **Rendering stops on its own:** after a reveal the renderer rests once the opened box has been put away; any change of phase wakes it for at least 600 ms.
-- **Not covered by tests or checks:** real audio and haptics (only the calls are tested), device tilt (not testable in a simulator), Android gestures after the Stage 7 polish (run on iOS), the FPS of the reveal on its own.
+- **Not covered by tests or checks:** real audio and haptics (only the calls are tested), device tilt (not testable in a simulator), Android gestures (run on iOS), the FPS of the reveal on its own.
 - Known, accepted review notes: `t` appears in some hook dependency arrays (stable, but against the stated rule); the drag state is written by both the gesture and the render loop without a lock (one lost finger delta at the moment of release at worst).
 
 ---
 
-## 12. Troubleshooting
+## 11. Troubleshooting
 
 | Symptom | Cause / fix |
 |---|---|
@@ -509,7 +493,7 @@ boxConceptOfProof-1/
 | Android emulator window does not open from a script or sandboxed shell | The windowed emulator needs a GUI session; start it from Android Studio or a normal terminal, or use the headless start (`yarn androidEmulatorStart`) |
 | Android emulator crawls / UI shows *Updating…* | Use an AVD with ≥ 4 cores / ≥ 4 GB / host GPU; let the post-boot update finish |
 | The list scrolls up and down by itself / an FPS overlay is on screen | You installed a **benchmark build** (`*RunCatalogueScroll`, `*RunOpening`, `*RunSuite`, `*RunBenchmark`). Install a normal one: `yarn iosRunRelease` / `yarn androidRunRelease` (or the development client: `yarn iosRun` / `yarn androidRun` + `yarn start`) |
-| 3D boxes frozen while the list moves ("Render paused") | Fixed in Stage 6: the renderer assumed it was running; iOS can leave its display link paused after the app returns from the background. `RenderOnDemand` now has a watchdog and restarts the renderer when it comes back to the foreground |
+| 3D boxes frozen while the list moves ("Render paused") | The renderer assumed it was running; iOS can leave its display link paused after the app returns from the background. `RenderOnDemand` has a watchdog and restarts the renderer when the app comes back to the foreground |
 | Release build shows old JavaScript (for example no FPS overlay in a benchmark build, or a fix that is not there) | Gradle does not track environment variables or always notice changes: delete `android/app/build/generated/assets/createBundleReleaseJsAndAssets` and `android/app/build/intermediates/assets/release`, then build again |
 | Filament native libraries missing after install | `bash scripts/installFilamentBinaries.sh` (needs network once) |
 | Metro cache issues | `yarn cleanCache` |

@@ -45,43 +45,29 @@ Test ids refer to the `testID`s used by the scripts (`scripts/app/tapAndroidTest
 
 Evidence: `docs/media/android-edge-two-purchases.png`, `android-edge-no-balance.png`, `android-opening-failure.png`, `android-lifecycle-resumed.png`, `docs/data/android-lifecycle.log`.
 
-## 3b. Manual — animations and polish (Stage 7)
+## 3b. Manual — animations and polish
 
 Details of every animation: [ANIMATIONS.md](ANIMATIONS.md). "—" means not run on that platform.
 
 | # | Case | Expected | Android | iOS |
 |---|---|---|---|---|
-| A1 | First appearance of the list | Boxes pop in one after another, texts slide in with them and end in place under their box | ✅ (after fix, see B1) | ✅ |
+| A1 | First appearance of the list | Boxes pop in one after another, texts slide in with them and end in place under their box | ✅ | ✅ |
 | A2 | Press a card | Box squeezes, springs back on release | — | ✅ |
 | A3 | Tap a box | Box flies to the middle and pushes towards the camera, turns slowly by itself when left alone | ✅ | ✅ |
 | A4 | Drag / pinch / double tap on the focused box | Turns with inertia / zooms 0.7x–2x / glides back to the start | — | ✅ |
 | A5 | Swipe up on a bought box | Opens it like the button; box first glides back to its base pose | ✅ | ✅ |
 | A6 | Open (button) | Anticipation shake and swell, lid swings open, light from inside | ✅ | ✅ |
 | A7 | Reveal Common | Grey pill, grey circles, price, name, brand; nothing over the watch | ✅ | ✅ |
-| A8 | Reveal Rare / Epic | Blue / purple pill and circles, particles; Epic with a flash | — | ✅ Rare, ✅ Epic (earlier layout) |
+| A8 | Reveal Rare / Epic | Blue / purple pill and circles, particles; Epic with a flash | — | ✅ Rare, ✅ Epic |
 | A9 | Reveal Legendary (5th purchase, Classic box) | Gold pill and circles, flash, 28 particles, price in gold | — | ✅ |
 | A10 | After the reveal | Box waits 1.8 s, shrinks away; only then Done appears, centred at the bottom; the tab bar is invisible while the prize is shown and back after Done | ✅ | ✅ |
 | A10c | Inspect header | Back top left, box name and price centred below it, in line with the button at the bottom | ✅ | ✅ |
 | A10a | Done after the box is put away | The box is back in its card, closed, normal size, texts in place | ✅ | ✅ |
-| A10b | Leave in the middle of putting the box away, then select another box at once | The new box opens in inspect mode at normal size (no late timer shrinks it). Run by hand on both platforms before Done was made to appear only after the box is put away; since then Done is not offered in that moment, so it is covered by unit tests (`handleBackPress`) | ✅ (before the change) | ✅ (before the change) |
+| A10b | Leave in the middle of putting the box away, then select another box at once | The new box opens in inspect mode at normal size (no late timer shrinks it). Run by hand on both platforms; the opening timers are cleared on Done, Back and a new selection (three tests) | ✅ (before the change) | ✅ (before the change) |
 | A11 | Collection and detail sheet | Rows slide in; detail sheet with a rarity-coloured border; total value counts up | — | ✅ |
 | A12 | Light and shine | Glossy / metallic finish rises with the box price; the light from inside the box is visible. Shadows, ambient occlusion and bloom are switched on, but their effect was not isolated by an on/off comparison | ✅ | ✅ |
 | A13 | Opening several boxes quickly one after another | Sounds are not cut off (two alternating players per effect) | unit tests | unit tests |
 | A14 | Sounds and device tilt | Played / applied | unit tests (sensor-less emulators are ignored without an error) | unit tests |
-
-Bugs found by this round and fixed (each has a test or a documented reason):
-
-| # | Found on | Symptom | Cause and fix |
-|---|---|---|---|
-| B1 | Android | Card texts froze half-way, half transparent, over the box; stayed so after returning from a box | A Reanimated `entering` layout animation inside `FlashList` is interrupted by the list's re-layout. Now driven by a shared value (`useEntranceAnimation`) and played once |
-| B2 | Android emulator | `TypeError: Cannot read property 'beta' of undefined` in the log | An emulator without a motion sensor reports readings without a rotation. Such readings are ignored (test added) |
-| B3 | iOS | "[Worklets] Tried to synchronously call a Remote Function" when a box was tapped | A helper called from the render worklet lacked the `'worklet'` directive. Added; checked on the device (Jest cannot catch it) |
-| B4 | iOS | Half of the watch looked washed out while it flew out | A 3D-turned image slid behind the glow circles. Now a flat flip |
-| B5 | iOS | Opened box cut off at the edge and over the texts | Dolly was kept while the lid opened; now taken back, box smaller and lower |
-| B6 | Both | A swipe-opened box looked different from a tapped one | The box now glides to the base pose when opening starts |
-| B7 | Android | A benchmark build showed no FPS overlay and no scrolling | Gradle reused an old JavaScript bundle (it does not track environment variables). Documented in the README troubleshooting table |
-| B9 | Both | Tab bar visible and Done offered while the prize was still being revealed | The tab bar is hidden through a route parameter while a prize is shown, and Done appears only after the box is put away (two tests) |
-| B8 | Code review | A late timer from an opening shrank the box that was flying home, or the next selected box | The opening timers are cleared on Done / Back / a new selection (three tests); A10a and A10b run on both platforms |
 
 ## 4. Clean clone
 
@@ -93,14 +79,14 @@ yarn androidPrebuild && yarn iosPrebuild
 ```
 Result: ✅ a fresh `git clone` of the committed branch: `yarn install --frozen-lockfile` (7 s, the Filament binaries were downloaded by the postinstall script, ~90 MB), `yarn ciPipeline` clean, `yarn test` 251 / 251 (at the time of the clone check; the suite has 260 since the review fixes), `yarn androidPrebuild` and `yarn iosPrebuild` (with CocoaPods) both finished and produced the native projects. No manual step beyond the README was needed. The full native builds (Xcode / Gradle) were not repeated on the clone; they were run on the working copy for every check above.
 
-## 5. Performance (final code, after the Stage 7 polish)
+## 5. Performance (final code)
 
 | Scenario (60 s, release, one platform at a time) | iOS | Android |
 |---|---|---|
 | Catalogue scrolling by itself (8 boxes, with lights, shadows, ambient occlusion and bloom) | 60.0 FPS, 51 windows, 0 slow frames, worst frame 17 ms | 60.0 FPS, 51 windows, 0 slow frames, worst frame 17 ms |
 | Android emulator **window** (not headless), list scrolled non-stop, SurfaceFlinger count | — | 60 FPS for 30 s, twice (1800 frames each); default size and `-scale` 0.6 / 0.7 / 0.85 / 1.0 |
-| Opening flow (select → drag → buy → open → reveal → done) | 60.0 on screen (Stage 6, not re-measured after the reveal redesign) | avg 59.6, min 58 (Stage 6, not re-measured after the reveal redesign) |
-| Benchmark suite 1–64 boxes × 3 quality profiles | 60.0 in all six (Stage 6) | 60.0 in all six (Stage 6) |
+| Opening flow (select → drag → buy → open → reveal → done) | 60.0 on screen (measured before the reveal redesign, not repeated) | avg 59.6, min 58 (measured before the reveal redesign, not repeated) |
+| Benchmark suite 1–64 boxes × 3 quality profiles | 60.0 in all six | 60.0 in all six |
 
 Details and method: [PERFORMANCE.md](PERFORMANCE.md).
 

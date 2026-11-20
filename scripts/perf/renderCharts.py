@@ -1,7 +1,7 @@
 """Draws the performance charts (SVG, no dependencies) from the committed measurement logs.
 
-Inputs : docs/data/ios-suite.log, docs/data/android-suite.log, docs/data/android-windowed-emulator.json
-Outputs: docs/media/chart-fps-by-scenario.svg, docs/media/chart-emulator-window-effect.svg
+Inputs : docs/data/ios-suite.log, docs/data/android-suite.log
+Output: docs/media/chart-fps-by-scenario.svg
 Usage  : python3 scripts/perf/renderCharts.py   (or: yarn perfCharts)
 """
 import collections
@@ -13,7 +13,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 DATA = ROOT / "docs" / "data"
 MEDIA = ROOT / "docs" / "media"
 WARMUP_WINDOWS = 12
-COLORS = {"ios": "#2f6fed", "android": "#2aa876", "windowed": "#d9534f", "text": "#1f2933", "grid": "#d0d5dd"}
+COLORS = {"ios": "#2f6fed", "android": "#2aa876", "text": "#1f2933", "grid": "#d0d5dd"}
 
 
 def read_suite(path):
@@ -71,13 +71,9 @@ def grouped_bars(title, subtitle, labels, series, output):
 
 ios = read_suite(DATA / "ios-suite.log")
 android = read_suite(DATA / "android-suite.log")
-windowed = json.loads((DATA / "android-windowed-emulator.json").read_text())
 labels = [label.replace(" | ", "\n").split("\n")[0] + " " + label.split(" | ")[1] for label in ios]
 labels = [label.replace("1 boxes", "1 box").replace("boxes ", "boxes · ") for label in labels]
 
 grouped_bars("Average FPS per scenario", "Release builds, 30 s per scenario, one platform measured at a time",
              labels, [("iOS Simulator", COLORS["ios"], list(ios.values())), ("Android Emulator (headless)", COLORS["android"], list(android.values()))],
              MEDIA / "chart-fps-by-scenario.svg")
-grouped_bars("Why Android looked slow: the emulator window", "Same app, same build — only the way the emulator is started changes",
-             labels, [("Emulator with window (default)", COLORS["windowed"], windowed["averageFps"]), ("Emulator headless (-no-window)", COLORS["android"], list(android.values()))],
-             MEDIA / "chart-emulator-window-effect.svg")

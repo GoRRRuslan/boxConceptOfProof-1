@@ -26,7 +26,7 @@ How the app is tested, where each kind of test is documented, and the **rules** 
 | Measure FPS on iOS / Android | [section 7](#7-fps-testing) |
 | See every animation and where it lives in the code | [ANIMATIONS.md](ANIMATIONS.md) |
 | Understand the architecture and the folder layout | [README, sections 4 and 9](../README.md#4-project-architecture) |
-| Fix a build or emulator problem | [README, Troubleshooting](../README.md#12-troubleshooting) |
+| Fix a build or emulator problem | [README, Troubleshooting](../README.md#11-troubleshooting) |
 | Find the scripts and what they do | [section 7](#7-fps-testing) and [README, Scripts](../README.md#scripts) |
 
 ---

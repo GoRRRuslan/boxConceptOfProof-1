@@ -1,6 +1,6 @@
-# Stage 5 — Collection and navigation
+# Collection and navigation
 
-The app now has two tabs: **Boxes** (the 3D catalogue with the opening experience) and **Collection** (the watches you won this session).
+The app has two tabs: **Boxes** (the 3D catalogue with the opening experience) and **Collection** (the watches you won this session).
 
 | Boxes → Collection tab, empty | Collection with two watches | Back on the Boxes tab (3D still alive) |
 |---|---|---|
@@ -16,11 +16,9 @@ iOS: ![](media/ios-tabs-1-catalogue.png) ![](media/ios-tabs-5-collection.png)
 
 ## Decisions worth knowing
 - **One 3D canvas, kept alive.** The catalogue holds the app's only Filament scene (Android draws just one). The tab navigator is created with `detachInactiveScreens={false}`, so the catalogue screen stays attached while the Collection tab is shown and the surface is not destroyed and recreated on every switch. Verified on Android: the boxes are there immediately after coming back.
-- **The tab bar stays visible during the opening.** The opened box and its buttons live above it, so the viewport (and the 3D placement) never changes mid-animation.
+- **The tab bar keeps its place during the opening** (it is invisible, and cannot be tapped, while a prize is shown), so the viewport and the 3D placement never change mid-animation.
 - **Thumbnails in the list**, full images only in the reveal (`utils/watchImageSources.ts`).
 - **Shared header** (`components/ScreenHeader`) replaced the catalogue-only balance header, so both tabs look the same.
-- A tab badge with the number of watches was tried and removed: with the icons hidden it had nothing to attach to, and the count is already shown on the Collection screen.
-- Fixed on the way: the root container still had the Stage 0 centring styles, which collapsed the navigator to zero width on Android (blank screen).
 
 ## Where the code is
 `src/navigation/` (types, `TabNavigator`, container + theme), `src/flows/collectionFlow/` (`_facades/useCollectionFacade`, `_adapters/useAdapterCollectionItems`, `_facadesLogic/computeCollectionValue`, `screens/CollectionScreen`).

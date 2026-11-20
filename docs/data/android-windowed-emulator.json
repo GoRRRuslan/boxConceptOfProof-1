@@ -1,5 +1,0 @@
-{
-  "description": "Android emulator started WITH its window (default). Release build, 30 s per scenario, average renderer FPS.",
-  "scenarios": ["1 boxes | full", "4 boxes | full", "16 boxes | full", "64 boxes | full", "64 boxes | balanced", "64 boxes | performance"],
-  "averageFps": [22.0, 23.5, 24.9, 40.2, 31.3, 31.7]
-}

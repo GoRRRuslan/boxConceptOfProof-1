@@ -1,16 +1,16 @@
-# Performance report
+# Performance
 
 > **Result in one sentence:** the 3D mystery-box scene runs at a steady **60 FPS on both iOS and Android**, with **0 slow frames**, from 1 box up to **64 boxes (2 million triangles)**, in every quality profile.
 
 > **Before you measure anything, read the rules in [TESTING.md](TESTING.md#2-the-golden-rules).** The most important one: **run only one platform at a time**: either the Android emulator with the iOS simulator shut down, or the iOS simulator with the Android emulator shut down. They share the Mac's GPU and CPU, so running both produces false jank and unusable numbers. Use a **release** build, and do not trust a freshly booted emulator for the first minute.
 
-This page explains, in plain words, what we measured, how we measured it, what we changed to get there, and how anyone can repeat the tests with one command.
+This page explains what was measured, how, what keeps the app at 60 FPS, and how to repeat the tests with one command.
 
 - [1. The numbers](#1-the-numbers)
 - [2. What it looks like](#2-what-it-looks-like)
 - [3. How we measure](#3-how-we-measure)
-- [4. The Android mystery: why it looked slow](#4-the-android-mystery-why-it-looked-slow)
-- [5. What we did to make it fast](#5-what-we-did-to-make-it-fast)
+- [4. Android: emulator window and graphics backend](#4-android-emulator-window-and-graphics-backend)
+- [5. What keeps it fast](#5-what-keeps-it-fast)
 - [6. CPU and memory](#6-cpu-and-memory)
 - [7. Run the tests yourself](#7-run-the-tests-yourself)
 - [8. Honest limits](#8-honest-limits)
@@ -37,11 +37,11 @@ A "slow frame" is any frame that took longer than 25 ms (a visibly missed refres
 
 ![Average FPS per scenario](media/chart-fps-by-scenario.svg)
 
-**The real catalogue screen** (8 boxes in a scrolling list, one shared 3D scene) was measured too, with the list scrolling by itself for 60 s: **60.0 FPS on iOS and on Android, 0 slow frames, worst frame 17 ms** (details in [STAGE_3_CATALOGUE.md](STAGE_3_CATALOGUE.md)).
+**The real catalogue screen** (8 boxes in a scrolling list, one shared 3D scene) was measured too, with the list scrolling by itself for 60 s: **60.0 FPS on iOS and on Android, 0 slow frames, worst frame 17 ms** (details in [CATALOGUE.md](CATALOGUE.md)).
 
-**Re-run on the finished app (Stage 6):** catalogue scrolling for 60 s gives **60.0 FPS on both platforms, 0 slow frames** (iOS and Android, 51 one-second windows each; Android also confirmed by SurfaceFlinger: 600 frames in 10 s). Background → foreground keeps 60 FPS (no duplicated frame loops). Opening flow on Android: 59.6 FPS average, min 58 (the screenshots taken during the flow cost a few frames).
+**Finished app:** catalogue scrolling for 60 s gives **60.0 FPS on both platforms, 0 slow frames** (iOS and Android, 51 one-second windows each; Android also confirmed by SurfaceFlinger: 600 frames in 10 s). Background → foreground keeps 60 FPS (no duplicated frame loops). Opening flow on Android: 59.6 FPS average, min 58 (the screenshots taken during the flow cost a few frames).
 
-**Re-run after the visual polish (Stage 7: lights, shadows, ambient occlusion, bloom, new reveal):** the catalogue scrolls for 60 s at **60.0 FPS with 0 slow frames, worst frame 17 ms, on iOS and on Android** (51 one-second windows each). The Android emulator **window** was measured as well, scrolling the list non-stop with the release build: **60 FPS for 30 s, twice (1800 presented frames each, counted by SurfaceFlinger)**, at the default size and at `-scale 0.6 / 0.7 / 0.85 / 1.0`. The one slower reading (43 FPS) came right after a cold emulator boot and did not come back.
+**With lights, shadows, ambient occlusion and bloom on:** the catalogue scrolls for 60 s at **60.0 FPS with 0 slow frames, worst frame 17 ms, on iOS and on Android** (51 one-second windows each). The Android emulator **window** was measured as well, scrolling the list non-stop with the release build: **60 FPS for 30 s, twice (1800 presented frames each, counted by SurfaceFlinger)**, at the default size and at `-scale 0.6 / 0.7 / 0.85 / 1.0`. The one slower reading (43 FPS) came right after a cold emulator boot and did not come back.
 
 The Android result was reproduced three times, including once on the final code after the code review, and cross-checked with a second, independent counter (see section 3): **600 frames presented in 10 s = 60 FPS**.
 
@@ -105,47 +105,22 @@ Things that look useful but are **not** reliable for this app: `dumpsys gfxinfo`
 
 ---
 
-## 4. The Android mystery: why it looked slow
+## 4. Android: emulator window and graphics backend
 
-At first the Android emulator showed only **22–40 FPS**, while iOS showed 60. We did not guess: we removed suspects one by one.
+**The emulator window is not a limit.** The finished app scrolls at 60 FPS in the emulator window too (SurfaceFlinger count, section 1). Headless (`-no-window`, `yarn androidEmulatorStart`) is still the reference for exact numbers, because there is no window compositing to disturb them, and a freshly booted emulator reads lower for about a minute. Running the iOS Simulator and the Android Emulator at the same time slows both (one shared GPU), so one platform is measured at a time.
 
-```mermaid
-flowchart TD
-    S[Android: 22-25 FPS] --> Q1{Is our 3D content too heavy?}
-    Q1 -->|"Empty scene is just as slow"| N1[No]
-    S --> Q2{Too many pixels to fill?}
-    Q2 -->|"4x fewer pixels: same FPS"| N2[No]
-    S --> Q3{Wrong graphics backend?}
-    Q3 -->|"Vulkan / ANGLE / flags: no change"| N3[No]
-    S --> Q4{Is the emulator window the problem?}
-    Q4 -->|"Start with -no-window: 60 FPS"| Y[YES]
-```
-
-**Root cause:** the normal emulator draws every frame into a window on the Mac, and that extra step caps the phone inside at about 24 FPS. Started **headless** (`-no-window`), the very same app build runs at a perfect 60 FPS. No app code changed.
-
-> **Update (Stage 7):** with emulator 37.2.13 and the finished app the window no longer caps the frame rate: the same measurement in the window gave 60 FPS (see section 1). The story above is kept because it explains why headless is still the reference for exact numbers.
-
-![Effect of the emulator window](media/chart-emulator-window-effect.svg)
-
-Two more lessons from this hunt:
-1. Running the iOS Simulator and the Android Emulator **at the same time** makes both slower, because they share one GPU. We always measure one at a time now.
-2. A small window (`-scale 0.4`, no device frame) helped only the 1-box case (60 FPS) and then fell back to 32–55 FPS, so a window is simply not a reliable way to measure.
-
-**How to use it:** `yarn androidEmulatorStart` boots the emulator headless. You can still look at the screen with `adb exec-out screencap -p > shot.png` or record it with `adb shell screenrecord`.
-
-### Android backend: Vulkan (default) or OpenGL ES (2026-11-20)
+### Android backend: Vulkan (default) or OpenGL ES
 
 On a cold emulator the first catalogue frame with Filament's own pick (OpenGL ES, translated by the emulator) shows the list with **no boxes for 10 to 15 s**: the glTF shaders are still compiling. Creating the engine with the Vulkan backend removes it. `FilamentScene` takes a `backend` prop (`createEngine('vulkan')`), so repo 1 can do the same.
 
 Result with Vulkan: the boxes are on screen with the first list frame (about 1.8 s after launch on a cold emulator, 3 s screenshot shows them), and the catalogue scrolls at **60 FPS in every window, headless and in the emulator window** (in-app overlay: 60.0 fps, p95 16.7 ms, slow 0; `dumpsys SurfaceFlinger --latency` of the app layer: 60.0 presented FPS in six consecutive 1-second samples, after the boxes were up for 45 s). Log line confirming the backend: `FEngine resolved backend: Vulkan`.
 
-Correction: an earlier version of this section said the emulator **window** scrolled at only 34 to 40 FPS with Vulkan (two 60 s runs) and kept OpenGL ES as the default. That was measured right after the emulator booted; the same build measured again on a settled emulator held 60 FPS. TESTING.md, rule 3, warns that a fresh emulator needs about a minute; the two lower runs were taken too early. Do not take FPS numbers right after boot.
 
 Decision: Vulkan is the default on Android (`src/flows/catalogueFlow/_config/sceneRenderConfig.ts`); `EXPO_PUBLIC_ANDROID_BACKEND=opengl` switches back to Filament's pick. Not tested: a physical Android phone, where the emulator's translation layers do not exist (OpenGL ES may well compile fast there, Vulkan support depends on the device). The raw log of the headless Vulkan run is `docs/data/android-catalogue-scroll-vulkan-headless.log`.
 
 ---
 
-## 5. What we did to make it fast
+## 5. What keeps it fast
 
 Most of the work was making sure the app does **less**, so 60 FPS stays cheap.
 
@@ -160,8 +135,8 @@ Most of the work was making sure the app does **less**, so 60 FPS stays cheap.
 | 7 | **arm64-only Android build** | Ships one CPU architecture instead of four. | Release APK **36.4 MB** |
 | 8 | **Guards around a library start/stop bug** | See below. | Removed FPS counts of 111–255 (frame loops that multiplied) |
 
-### The library bug we worked around
-On Android, `FilamentChoreographer.stop()` cannot cancel the frame that is already queued. If `stop()` and `start()` happen within one frame, **two frame loops run forever** and the frame rate doubles, triples and so on (we saw 111–255 "FPS"). We cannot (and by project rule do not) patch the library, so the render-on-demand code:
+### A library start/stop bug the app works around
+On Android, `FilamentChoreographer.stop()` cannot cancel the frame that is already queued. If `stop()` and `start()` happen within one frame, **two frame loops run forever** and the frame rate doubles, triples and so on (the counter then shows 111–255 "FPS"). We cannot (and by project rule do not) patch the library, so the render-on-demand code:
 - never calls `start()` on something that is already running,
 - keeps `stop()` and the next `start()` at least 300 ms apart,
 - has a *continuous* mode that never stops (used while the benchmark animates).
@@ -253,9 +228,9 @@ yarn perfCharts                         # redraws docs/media/chart-*.svg from do
 ## 8. Honest limits
 
 - These are **simulator/emulator** results on an Apple M5 Pro. Their GPU is much faster than a phone GPU. The results prove that our pipeline (one scene, hinge animation, JS/worklet threads) is **not** the bottleneck; they do not prove that every phone reaches 60 FPS at 64 boxes. The real catalogue shows only a handful of boxes at once, far below the 64-box stress case.
-- The Android emulator **window** was measured at 60 FPS with the finished app (30 s, twice), but a freshly booted emulator can be slower for about a minute (one reading of 43 FPS right after boot). Headless stays the reference for exact numbers.
-- The Stage 7 reveal (flash, particles, pulsing circles, put-away animation) was not measured separately; the catalogue scroll was measured after the polish.
-- Physical iPhone/Android runs are planned for later. The same scripts work on a real device unchanged.
+- The Android emulator **window** holds 60 FPS with the finished app (30 s, twice), but a freshly booted emulator reads lower for about a minute. Headless stays the reference for exact numbers.
+- The reveal (flash, particles, pulsing circles, put-away animation) was not measured separately; the catalogue scroll was measured after the polish.
+- No physical iPhone or Android phone was measured. The same scripts work on a real device unchanged.
 - `react-native-filament` 2.0 is an unreleased release candidate (vendored and pinned, see `vendor/react-native-filament/VENDOR.md`).
 - Our render-on-demand code remembers whether the renderer is running. A background → foreground test on both platforms showed no problem (frame rate stays ≤ 60 FPS, the scene is intact), but it is still an assumption about the library; re-check on a real device.
 - One iOS Simulator screenshot (taken with `simctl` while the list was scrolling) showed a box torn in two horizontal halves. Six more screenshots of the same scene were clean and the meter reported no slow frame, so it looks like a capture artifact (the screenshot grabbed the Metal layer mid-update); it has not been seen on screen and is untested on a real device.
@@ -268,5 +243,4 @@ yarn perfCharts                         # redraws docs/media/chart-*.svg from do
 |---|---|
 | [`data/ios-suite.log`](data/ios-suite.log) | Every 1-second report from the iOS suite run |
 | [`data/android-suite.log`](data/android-suite.log) | Every 1-second report from the Android suite run |
-| [`data/android-windowed-emulator.json`](data/android-windowed-emulator.json) | Averages with the emulator window (the "slow" case) |
 | `media/*.png`, `media/*.svg` | Screenshots and charts used above |

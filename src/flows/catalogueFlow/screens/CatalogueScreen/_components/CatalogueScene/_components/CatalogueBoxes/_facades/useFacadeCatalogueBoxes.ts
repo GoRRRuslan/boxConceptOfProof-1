@@ -9,7 +9,8 @@ import {
 import { createSynchronizable } from 'react-native-worklets'
 
 import boxModelSource from '@assets/models/box.glb'
-import { BOX_CENTER_HEIGHT_UNITS, ENTRANCE_STAGGER_MILLISECONDS } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
+import { BOX_CENTER_HEIGHT_UNITS, ENTRANCE_DURATION_MILLISECONDS, ENTRANCE_STAGGER_MILLISECONDS } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
+import { SCENE_READY_MINIMUM_FRAMES, SCENE_READY_SETTLE_MILLISECONDS } from '@flows/catalogueFlow/_config/sceneRenderConfig'
 import { computeBoxPose } from '@flows/catalogueFlow/_facadesLogic/computeBoxPose'
 import { computeEntranceScale, computePressScale } from '@flows/catalogueFlow/_facadesLogic/computeCardAnimation'
 import type { ICatalogueCard, ICatalogueSceneSync, ICatalogueViewport } from '@flows/catalogueFlow/_types'
@@ -77,10 +78,12 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
   const { transformManager, renderableManager, nameComponentManager } = useFilamentContext()
   const model = useModel(boxModelSource, { instanceCount: cards.length })
   const { width: viewportWidth, height: viewportHeight } = viewport
-  const { scrollOffset, openingScene, dragState, tilt, pressState } = sceneSync
+  const { scrollOffset, openingScene, dragState, tilt, pressState, sceneReadiness } = sceneSync
 
   // -------------------------- Values ------------------------- //
   const entranceStartedAt = useMemo(() => createSynchronizable<number>(ENTRANCE_NOT_STARTED), [])
+  // Frames drawn since the entrance started: the scene is ready (and says so) only after enough of them.
+  const framesSinceEntrance = useMemo(() => createSynchronizable<number>(0), [])
   // Last glow strength written to a box (so a material is only touched when the strength really changes).
   const lastGlowStrength = useMemo(() => createSynchronizable<number>(0), [])
   const instances = useMemo(() => (model.state === 'loaded' ? model.asset.getAssetInstances() : []), [model])
@@ -235,6 +238,19 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
       const press = pressState.getBlocking()
       const pressScale = computePressScale(press, nowMilliseconds)
       const entranceStart = entranceStartedAt.getBlocking()
+
+      // Ready to be shown: the model is loaded, every box has popped in, enough frames were drawn since (the first ones compile shaders
+      // and run unevenly) and the picture has settled. The list and the loader wait for this flag.
+      if (entranceStart !== ENTRANCE_NOT_STARTED && !sceneReadiness.getBlocking()) {
+        const framesDrawn = framesSinceEntrance.getBlocking() + 1
+        const entranceEnd = entranceStart + (cards.length - 1) * ENTRANCE_STAGGER_MILLISECONDS + ENTRANCE_DURATION_MILLISECONDS
+
+        framesSinceEntrance.setBlocking(framesDrawn)
+
+        if (framesDrawn >= SCENE_READY_MINIMUM_FRAMES && nowMilliseconds >= entranceEnd + SCENE_READY_SETTLE_MILLISECONDS) {
+          sceneReadiness.setBlocking(true)
+        }
+      }
 
       const poses: IOpeningPose[] = []
       let focusedPose: IOpeningPose | null = null
@@ -396,7 +412,12 @@ export const useFacadeCatalogueBoxes = ({ cards, viewport, sceneSync }: IUseFaca
       lastIridescenceTints,
       looks,
       lastSeamIntensity,
+      scrollVelocityState,
       swayState,
+      parallaxOffsetState,
+      framesSinceEntrance,
+      sceneReadiness,
+      cards.length,
       updateSceneEffects,
       viewportWidth,
       viewportHeight,

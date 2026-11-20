@@ -39,3 +39,12 @@ export const SCENE_LIGHTS: ISceneLight[] = [
   { intensity: 5_500, colorKelvin: 9_000, direction: [-0.65, -0.25, 0.7], castShadows: false },
   { intensity: 1_800, colorKelvin: 6_500, direction: [-0.2, 0.9, -0.4], castShadows: false },
 ]
+
+// The list is shown (and the loader taken away) only when the scene is really ready: the model is loaded, every box has popped in,
+// this many frames have been drawn since (the first frames compile shaders and are uneven) and the picture has settled for a moment.
+// Without this the loader ended while the tiles were still empty, and the first scroll right after it rattled.
+export const SCENE_READY_MINIMUM_FRAMES = 45
+export const SCENE_READY_SETTLE_MILLISECONDS = 400
+// Never wait longer than this for the scene (a failed model load must not keep the loader forever).
+export const SCENE_READY_TIMEOUT_MILLISECONDS = 8000
+export const SCENE_READY_POLL_MILLISECONDS = 100

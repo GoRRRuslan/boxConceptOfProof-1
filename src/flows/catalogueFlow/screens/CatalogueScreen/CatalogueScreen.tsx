@@ -31,6 +31,7 @@ const CatalogueScreen = () => {
     errorText,
     retryLabelText,
     isLoadingBoxes,
+    isSceneReady,
     isErrorBoxes,
     cards,
     viewport,
@@ -91,7 +92,8 @@ const CatalogueScreen = () => {
   )
 
   const renderStatus = () => {
-    if (isLoadingBoxes) {
+    // The loader stays until the scene is ready: the boxes have popped in and the frames are steady.
+    if (isLoadingBoxes || (!isSceneReady && !isErrorBoxes)) {
       return (
         <View style={styles.status} testID="catalogueLoading">
           <AppText>{loadingText}</AppText>
@@ -122,7 +124,7 @@ const CatalogueScreen = () => {
       <View style={styles.listRegion} onLayout={handleListLayout}>
         {renderScene()}
         <SceneVignette />
-        <FadingView isVisible={!opening.isListHidden} style={styles.listLayer}>
+        <FadingView isVisible={!opening.isListHidden && isSceneReady} style={styles.listLayer}>
           {renderList()}
         </FadingView>
         {opening.isOverlayVisible ? <OpeningOverlay opening={opening} /> : null}

@@ -39,6 +39,8 @@ export interface ICatalogueSceneSync {
   tilt: Synchronizable<[number, number]>
   // Which card the finger is on (it is squeezed a little).
   pressState: Synchronizable<IPressState>
+  // Set by the scene itself once it is ready to be shown (model loaded, boxes popped in, frames steady).
+  sceneReadiness: Synchronizable<boolean>
 }
 
 export interface ICatalogueViewport {
@@ -54,6 +56,8 @@ export interface ICatalogueFacade {
   errorText: string
   retryLabelText: string
   isLoadingBoxes: boolean
+  // False until the 3D scene is ready to be shown: the loader stays up until then, the list is hidden.
+  isSceneReady: boolean
   isErrorBoxes: boolean
   cards: ICatalogueCard[]
   viewport: ICatalogueViewport | null

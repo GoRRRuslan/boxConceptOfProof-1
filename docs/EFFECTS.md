@@ -2,6 +2,10 @@
 
 Everything that happens in the 3D scene besides the box itself: the light in the seams, the light curtain, the shock waves, the sparks, the dust, the glow behind every box, the camera punch and the little physical touches. The look is the same in all three repositories; the numbers are one configuration file, [`effectsConfig.ts`](../src/flows/openingFlow/_config/effectsConfig.ts), and the maths is one pure file, [`computeSceneEffects.ts`](../src/flows/openingFlow/_facadesLogic/computeSceneEffects.ts) (unit tested, no engine in it).
 
+Left: iOS, the light curtain rises from the open box. Right: Android, the shock wave and the sparks at the moment the lid is let go.
+
+![](media/effects-ios-light-curtain.png) ![](media/effects-android-shock-wave.png)
+
 ## Timeline of an opening
 
 | Moment | What you see | Where |

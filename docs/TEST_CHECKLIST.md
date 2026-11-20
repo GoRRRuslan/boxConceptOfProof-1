@@ -98,3 +98,6 @@ Details and method: [PERFORMANCE.md](PERFORMANCE.md).
 - Android: drag / pinch / double tap, press squeeze, the Rare and Legendary reveals, and the collection screens were not run again after the polish (they were run on iOS). Run on Android after the polish: entrance, inspect header, swipe-up open, Common and Epic reveals, putting the box away, Done, the tab bar returning.
 - Sounds are not heard and haptics not felt in the simulators: only the calls are unit tested. Device tilt cannot be tested in a simulator.
 - The reveal redesign (pill, hero price, put-away box) was not measured for FPS separately.
+
+
+| The show around the box | iOS 27 (iPhone 17 Simulator) and Android 37 (emulator), release builds: breathing and flashing seams, soft light curtain from the open box to the watch, shock wave, sparks, dust behind the box, camera punch, lid settle, hold to open, haptic ramp | ✅ looked at with screenshots of every step ([docs/EFFECTS.md](EFFECTS.md)); the first Android build showed hard discs because Filament ignores vertex alpha, fixed with alpha textures |

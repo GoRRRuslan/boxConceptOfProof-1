@@ -1,7 +1,5 @@
 # Stage 2 — Domain, mock API and purchase state
 
-Branch: `feat/stage-2-domain-mock-api`.
-
 ## What exists now
 | Layer | Location | Content |
 |---|---|---|

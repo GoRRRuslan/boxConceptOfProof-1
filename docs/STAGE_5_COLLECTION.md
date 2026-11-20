@@ -1,7 +1,5 @@
 # Stage 5 — Collection and navigation
 
-Branch: `feat/stage-5-collection-tabs` (on top of Stages 2–4).
-
 The app now has two tabs: **Boxes** (the 3D catalogue with the opening experience) and **Collection** (the watches you won this session).
 
 | Boxes → Collection tab, empty | Collection with two watches | Back on the Boxes tab (3D still alive) |

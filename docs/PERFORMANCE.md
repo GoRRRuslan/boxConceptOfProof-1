@@ -135,11 +135,11 @@ Two more lessons from this hunt:
 
 ### Android backend: Vulkan (default) or OpenGL ES (2026-11-20)
 
-On a cold emulator the first catalogue frame with Filament's own pick (OpenGL ES, translated by the emulator) shows the list with **no boxes for 10 to 15 s**: the glTF shaders are still compiling. The native-module repo (boxConceptOfProof-3) removed this by creating its engine with the Vulkan backend. `FilamentScene` takes a `backend` prop (`createEngine('vulkan')`), so repo 1 can do the same.
+On a cold emulator the first catalogue frame with Filament's own pick (OpenGL ES, translated by the emulator) shows the list with **no boxes for 10 to 15 s**: the glTF shaders are still compiling. Creating the engine with the Vulkan backend removes it. `FilamentScene` takes a `backend` prop (`createEngine('vulkan')`), so repo 1 can do the same.
 
 Result with Vulkan: the boxes are on screen with the first list frame (about 1.8 s after launch on a cold emulator, 3 s screenshot shows them), and the catalogue scrolls at **60 FPS in every window, headless and in the emulator window** (in-app overlay: 60.0 fps, p95 16.7 ms, slow 0; `dumpsys SurfaceFlinger --latency` of the app layer: 60.0 presented FPS in six consecutive 1-second samples, after the boxes were up for 45 s). Log line confirming the backend: `FEngine resolved backend: Vulkan`.
 
-Correction: an earlier version of this section said the emulator **window** scrolled at only 34 to 40 FPS with Vulkan (two 60 s runs) and kept OpenGL ES as the default. That was measured right after the emulator booted; the same build measured again on a settled emulator held 60 FPS. The same transient had been recorded for the native repo (43 to 46 FPS). TESTING.md, rule 3, already warned that a fresh emulator needs about a minute; the two lower runs were taken too early. Do not take FPS numbers right after boot.
+Correction: an earlier version of this section said the emulator **window** scrolled at only 34 to 40 FPS with Vulkan (two 60 s runs) and kept OpenGL ES as the default. That was measured right after the emulator booted; the same build measured again on a settled emulator held 60 FPS. TESTING.md, rule 3, warns that a fresh emulator needs about a minute; the two lower runs were taken too early. Do not take FPS numbers right after boot.
 
 Decision: Vulkan is the default on Android (`src/flows/catalogueFlow/_config/sceneRenderConfig.ts`); `EXPO_PUBLIC_ANDROID_BACKEND=opengl` switches back to Filament's pick. Not tested: a physical Android phone, where the emulator's translation layers do not exist (OpenGL ES may well compile fast there, Vulkan support depends on the device). The raw log of the headless Vulkan run is `docs/data/android-catalogue-scroll-vulkan-headless.log`.
 

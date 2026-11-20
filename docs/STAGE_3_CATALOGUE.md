@@ -1,6 +1,6 @@
 # Stage 3 — Live 3D catalogue
 
-Branch: `feat/stage-2-domain-mock-api` (Stage 3 builds on Stage 2). Note: in Stage 6 the box was made a little smaller in its slot (`BOX_SLOT_FILL` 0.72 → 0.64) so that at strong parallax it never touches the card text.
+Note: in Stage 6 the box was made a little smaller in its slot (`BOX_SLOT_FILL` 0.72 → 0.64) so that at strong parallax it never touches the card text.
 
 ## What you see
 A scrollable list of 8 mystery boxes. Every box is a **real-time 3D model**, not an image: it has its own colour, turns a little while you scroll, and shows its price, the best possible prize and (when the balance is too low) "Not enough balance". The balance sits in a header above the list.

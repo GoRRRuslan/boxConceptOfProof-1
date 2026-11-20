@@ -14,7 +14,7 @@ Start here. Each row says what a document is for, so you can open the right one 
 | **Test the app (rules, iOS, Android, FPS)** | **[TESTING.md](TESTING.md)** |
 | See what was tested and the result, plus bugs found | [TEST_CHECKLIST.md](TEST_CHECKLIST.md) |
 | See FPS numbers, method and history | [PERFORMANCE.md](PERFORMANCE.md) |
-| Read the development story stage by stage | [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) and the stage notes below |
+| Read how the work went, stage by stage | the `STAGE_*` notes in the table below |
 
 ## The most important rule
 
@@ -25,11 +25,9 @@ Start here. Each row says what a document is for, so you can open the right one 
 | Document | What it holds |
 |---|---|
 | [ASSIGNMENT.md](ASSIGNMENT.md) | The original assignment |
-| [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) | Stages 0–7, goals and status |
 | [STAGE_1_FINDINGS.md](STAGE_1_FINDINGS.md) | Filament spike: what works, what does not, decisions |
 | [STAGE_2_DOMAIN.md](STAGE_2_DOMAIN.md) | Domain types, mock API, stores, the purchase guarantee |
 | [STAGE_3_CATALOGUE.md](STAGE_3_CATALOGUE.md) | The live 3D catalogue over one shared scene |
-| [STAGE_4_OPENING.md](STAGE_4_OPENING.md) | Inspect, buy, open, reveal (the first version; the current animations are in ANIMATIONS.md) |
 | [STAGE_5_COLLECTION.md](STAGE_5_COLLECTION.md) | Tabs and the collection |
 | [ANIMATIONS.md](ANIMATIONS.md) | All animations (Stage 7) with screenshots |
 | [TESTING.md](TESTING.md) | Testing guide and the golden rules |

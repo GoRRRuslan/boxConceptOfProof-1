@@ -44,7 +44,7 @@ The code base follows the conventions of an enterprise React Native app: feature
 
 **Key Features:**
 
-- 🧊 Real-time 3D with **Google Filament** (Metal on iOS, OpenGL ES on Android), driven from worklets
+- 🧊 Real-time 3D with **Google Filament** (Metal on iOS, Vulkan on Android; OpenGL ES is a build switch), driven from worklets
 - 🎯 **One shared 3D scene** for the whole app — the same box models are in the list and in the opening screen
 - 🔩 Exact **hinge kinematics** for the lid and wordmark (pivot `[0, 0.914876, 0.359181]`, 0° → 115°)
 - ✋ **Inspect with your fingers:** drag with inertia, pinch to zoom, double tap to reset, swipe up to open, device tilt; anticipation shake, animated lid with light from inside, rarity-based reveal (Common → Legendary), sounds and haptics
@@ -172,7 +172,7 @@ Two tabs: **Boxes** and **Collection**.
 5. **Reveal.** A rarity pill (Common, Rare, Epic, Legendary!), the watch in two glowing circles, a flash and particles for the better prizes, then the price, name and brand. After a moment the opened box is put away; only then does **Done** appear. While a prize is shown the tab bar is invisible. **Done** returns to the list.
 6. **Collection tab.** Your watches, newest first, with the total value; tap a row for a large picture; an empty state with a "Browse boxes" button when you have none. A restart starts a new session (nothing is persisted, as required).
 
-Detailed write-ups with screenshots: [animations](docs/ANIMATIONS.md) · [Stage 2 domain](docs/STAGE_2_DOMAIN.md) · [Stage 3 catalogue](docs/STAGE_3_CATALOGUE.md) · [Stage 4 opening (first version)](docs/STAGE_4_OPENING.md) · [Stage 5 collection](docs/STAGE_5_COLLECTION.md) · [test checklist](docs/TEST_CHECKLIST.md).
+Detailed write-ups with screenshots: [animations](docs/ANIMATIONS.md) · [Stage 2 domain](docs/STAGE_2_DOMAIN.md) · [Stage 3 catalogue](docs/STAGE_3_CATALOGUE.md) · [Stage 5 collection](docs/STAGE_5_COLLECTION.md) · [test checklist](docs/TEST_CHECKLIST.md).
 
 ### The phases of one box
 
@@ -434,7 +434,7 @@ boxConceptOfProof-1/
 ├── eslint.config.mjs · .prettierrc.json
 ├── docs/                             # see docs/README.md for the map
 │   ├── README.md · TESTING.md · TEST_CHECKLIST.md · PERFORMANCE.md · ANIMATIONS.md
-│   ├── ASSIGNMENT · DEVELOPMENT_PLAN · STAGE_1…5 · MODEL
+│   ├── ASSIGNMENT · STAGE_1…3, 5 · MODEL
 │   ├── media/                        # screenshots, charts, animations/ (frames used by ANIMATIONS.md)
 │   └── data/                         # raw measurement logs
 ├── scripts/
@@ -471,7 +471,7 @@ boxConceptOfProof-1/
 | 1 | Filament spike: GLB, lighting, hinge, multi-box strategy, vendoring, performance analysis | ✅ done |
 | 2 | Domain, asynchronous mock API, stores, purchase mutation — [docs](docs/STAGE_2_DOMAIN.md) | ✅ done |
 | 3 | Live 3D catalogue over one shared canvas — [docs](docs/STAGE_3_CATALOGUE.md) | ✅ done |
-| 4 | Opening experience: inspect, buy, lid, reveal, haptics, errors — [docs](docs/STAGE_4_OPENING.md) | ✅ done |
+| 4 | Opening experience: inspect, buy, lid, reveal, haptics, errors — [docs](docs/ANIMATIONS.md#4-buying-and-opening) | ✅ done |
 | 5 | Tabs and the collection — [docs](docs/STAGE_5_COLLECTION.md) | ✅ done |
 | 6 | Tests, review, manual checklist, final performance run, handoff — [checklist](docs/TEST_CHECKLIST.md) | ✅ done |
 | 7 | Animation and visual polish: gestures, anticipation, rarity reveals, lights and shadows, sounds, review fixes — [animations](docs/ANIMATIONS.md) | ✅ done |
@@ -505,6 +505,7 @@ boxConceptOfProof-1/
 | Only the first 3D view renders on Android | Use one `FilamentScene` per app (see [Real-time 3D](#5-real-time-3d)) |
 | Choppy frames, FPS well below 60 | First check that **only one** simulator/emulator is running (`adb devices`, `xcrun simctl list devices booted`) and that you installed a **release** build; see [docs/TESTING.md](docs/TESTING.md#2-the-golden-rules) |
 | Android emulator feels slow (below 60 FPS) | Let a freshly booted emulator settle for a minute, use an AVD with ≥ 4 cores / ≥ 4 GB / `hw.gpu.mode=host`, start it with `-gpu host` (optionally `-scale 0.7` for a smaller window), and install a **release** build (`yarn androidRunRelease`), not the development client. The window itself was measured at 60 FPS |
+| Android: list shows but no boxes for 10 to 15 s | Only with `EXPO_PUBLIC_ANDROID_BACKEND=opengl`: the emulator compiles the glTF shaders slowly on OpenGL ES. The default is Vulkan (see [docs/PERFORMANCE.md](docs/PERFORMANCE.md)) |
 | Android emulator window does not open from a script or sandboxed shell | The windowed emulator needs a GUI session; start it from Android Studio or a normal terminal, or use the headless start (`yarn androidEmulatorStart`) |
 | Android emulator crawls / UI shows *Updating…* | Use an AVD with ≥ 4 cores / ≥ 4 GB / host GPU; let the post-boot update finish |
 | The list scrolls up and down by itself / an FPS overlay is on screen | You installed a **benchmark build** (`*RunCatalogueScroll`, `*RunOpening`, `*RunSuite`, `*RunBenchmark`). Install a normal one: `yarn iosRunRelease` / `yarn androidRunRelease` (or the development client: `yarn iosRun` / `yarn androidRun` + `yarn start`) |

@@ -61,7 +61,14 @@ jest.mock('react-native-worklets', () => ({
       },
     }
   },
-  scheduleOnRN: jest.fn(),
+  scheduleOnRN: (callback: (...parameters: unknown[]) => void, ...parameters: unknown[]) => {
+    callback(...parameters)
+  },
+}))
+
+// The scroll handler is handed back as the plain object of its worklets, so that the cases can call them.
+jest.mock('react-native-reanimated', () => ({
+  useAnimatedScrollHandler: (handlers: unknown) => handlers,
 }))
 
 jest.mock('@services/performance/useRenderFpsMeter', () => ({
@@ -73,8 +80,6 @@ const createWrapper = () => {
 
   return ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client: queryClient }, children)
 }
-
-const scrollEvent = (offsetY: number) => ({ nativeEvent: { contentOffset: { y: offsetY } } }) as never
 
 describe('useCatalogueFacade', () => {
   beforeEach(() => {
@@ -155,42 +160,54 @@ describe('useCatalogueFacade', () => {
     expect(result.current.balanceInCents).toBe(55_000)
   })
 
-  it('writes the scroll offset for the 3D scene and reports scrolling until the list is idle', async () => {
+  interface IScrollHandlers {
+    onScroll: (event: { contentOffset: { y: number } }) => void
+    onBeginDrag: () => void
+    onEndDrag: () => void
+    onMomentumBegin: () => void
+    onMomentumEnd: () => void
+  }
+
+  const getScrollHandlers = (result: { current: { scrollHandler: unknown } }) => result.current.scrollHandler as IScrollHandlers
+
+  it('writes the scroll offset for the 3D scene (on the UI thread, no state involved)', async () => {
+    const { result } = await renderHook(() => useCatalogueFacade(), { wrapper: createWrapper() })
+
+    getScrollHandlers(result).onScroll({ contentOffset: { y: 240 } })
+
+    expect(mockSetBlocking).toHaveBeenCalledWith(240)
+  })
+
+  it('reports scrolling from the start of a drag until the fling is over and a moment has passed', async () => {
     jest.useFakeTimers()
 
     const { result } = await renderHook(() => useCatalogueFacade(), { wrapper: createWrapper() })
 
     await act(() => {
-      result.current.handleScroll(scrollEvent(240))
+      getScrollHandlers(result).onBeginDrag()
     })
 
-    expect(mockSetBlocking).toHaveBeenCalledWith(240)
+    expect(result.current.isRenderContinuous).toBe(true)
+
+    await act(() => {
+      getScrollHandlers(result).onEndDrag()
+
+      getScrollHandlers(result).onMomentumBegin()
+    })
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(2000)
+    })
 
     expect(result.current.isRenderContinuous).toBe(true)
 
     await act(async () => {
+      getScrollHandlers(result).onMomentumEnd()
+
       await jest.advanceTimersByTimeAsync(300)
     })
 
     expect(result.current.isRenderContinuous).toBe(false)
-
-    jest.useRealTimers()
-  })
-
-  it('keeps reporting scrolling while scroll events keep arriving', async () => {
-    jest.useFakeTimers()
-
-    const { result } = await renderHook(() => useCatalogueFacade(), { wrapper: createWrapper() })
-
-    for (const offset of [10, 20, 30, 40]) {
-      await act(async () => {
-        result.current.handleScroll(scrollEvent(offset))
-
-        await jest.advanceTimersByTimeAsync(100)
-      })
-    }
-
-    expect(result.current.isRenderContinuous).toBe(true)
 
     jest.useRealTimers()
   })

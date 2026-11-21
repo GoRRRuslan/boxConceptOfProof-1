@@ -3,8 +3,9 @@ import { useNavigation } from '@react-navigation/native'
 import type { FlashListRef } from '@shopify/flash-list'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppState, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
-import { createSynchronizable } from 'react-native-worklets'
+import { AppState, type LayoutChangeEvent } from 'react-native'
+import { useAnimatedScrollHandler } from 'react-native-reanimated'
+import { createSynchronizable, scheduleOnRN } from 'react-native-worklets'
 
 import { CARD_HEIGHT, LIST_TOP_PADDING } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
 import { SCENE_READY_POLL_MILLISECONDS, SCENE_READY_TIMEOUT_MILLISECONDS } from '@flows/catalogueFlow/_config/sceneRenderConfig'
@@ -59,7 +60,6 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   const scrollIdleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const isScrollingLogged = useRef<boolean>(false)
   // Diagnostics: when the scroll events of the current gesture arrived (how evenly does the list deliver them to the scene?).
-  const scrollEventTimestamps = useRef<number[]>([])
 
   // --------------------------- Store ------------------------- //
   const balanceInCents = useStore(state => state.balanceInCents)
@@ -79,6 +79,7 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   const scrollOffset = useMemo(() => createSynchronizable(0), [])
   const isRenderContinuous =
     isScrolling ||
+    IS_AUTO_SCROLL ||
     isPressing ||
     opening.isDragging ||
     [EOpeningPhase.Inspecting, EOpeningPhase.Purchasing, EOpeningPhase.Ready, EOpeningPhase.Opening].includes(opening.phase) ||
@@ -105,39 +106,61 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     setViewport(previous => (previous?.width === width && previous.height === height ? previous : { width, height }))
   }
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    scrollOffset.setBlocking(event.nativeEvent.contentOffset.y)
-
-    scrollEventTimestamps.current.push(performance.now())
-
+  // The list is scrolling: the renderer must draw continuously (called when a drag or a fling begins).
+  const handleScrollActivity = () => {
     if (!isScrollingLogged.current) {
       isScrollingLogged.current = true
 
-      logDiagnostic('scroll.start', { offset: event.nativeEvent.contentOffset.y })
+      logDiagnostic('scroll.start', {})
     }
 
-    setIsScrolling(true)
+    clearTimeout(scrollIdleTimer.current)
 
+    setIsScrolling(true)
+  }
+
+  // The drag or the fling has ended (nothing follows it within a moment): the renderer may rest after the idle hold.
+  const handleScrollSettled = () => {
     clearTimeout(scrollIdleTimer.current)
 
     scrollIdleTimer.current = setTimeout(() => {
       isScrollingLogged.current = false
 
-      const timestamps = scrollEventTimestamps.current
-      const gaps = timestamps.slice(1).map((timestamp, index) => timestamp - timestamps[index]).sort((first, second) => first - second)
-
-      logDiagnostic('scroll.end', {
-        events: timestamps.length,
-        medianGapMilliseconds: Math.round((gaps[Math.floor(gaps.length / 2)] ?? 0) * 10) / 10,
-        p95GapMilliseconds: Math.round((gaps[Math.floor(gaps.length * 0.95)] ?? 0) * 10) / 10,
-        maxGapMilliseconds: Math.round((gaps[gaps.length - 1] ?? 0) * 10) / 10,
-      })
-
-      scrollEventTimestamps.current = []
+      logDiagnostic('scroll.end', {})
 
       setIsScrolling(false)
     }, SCROLL_IDLE_MILLISECONDS)
   }
+
+  // The offset reaches the scene from the UI thread, in step with the native scrolling, and never waits for the JavaScript thread:
+  // that wait was the cause of the boxes jerking against the texts. JavaScript hears only about the start and the end of a scroll.
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: event => {
+      'worklet'
+
+      scrollOffset.setBlocking(event.contentOffset.y)
+    },
+    onBeginDrag: () => {
+      'worklet'
+
+      scheduleOnRN(handleScrollActivity)
+    },
+    onEndDrag: () => {
+      'worklet'
+
+      scheduleOnRN(handleScrollSettled)
+    },
+    onMomentumBegin: () => {
+      'worklet'
+
+      scheduleOnRN(handleScrollActivity)
+    },
+    onMomentumEnd: () => {
+      'worklet'
+
+      scheduleOnRN(handleScrollSettled)
+    },
+  })
 
   // A finger touching the list wakes the renderer before the first scroll event: after a long idle the renderer was stopped, and its
   // restart takes 100-500 ms, during which the texts moved and the boxes stood still.
@@ -322,7 +345,7 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     renderFrameStats,
     isRenderPaused,
     handleListLayout,
-    handleScroll,
+    scrollHandler,
     handleListTouchStart,
     handleRetryPress,
     handleCardPressIn,

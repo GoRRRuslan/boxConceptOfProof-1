@@ -1,6 +1,7 @@
 import type { FlashListRef } from '@shopify/flash-list'
 import type { RefObject } from 'react'
-import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
+import type { LayoutChangeEvent } from 'react-native'
+import type { useAnimatedScrollHandler } from 'react-native-reanimated'
 import type { FrameInfo } from 'react-native-filament'
 import type { Synchronizable } from 'react-native-worklets'
 
@@ -76,7 +77,8 @@ export interface ICatalogueFacade {
   isRenderPaused: boolean
   handleListLayout: (event: LayoutChangeEvent) => void
   handleListTouchStart: () => void
-  handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  // Reanimated scroll handler: writes the offset on the UI thread (see the facade).
+  scrollHandler: ReturnType<typeof useAnimatedScrollHandler>
   handleRetryPress: () => void
   handleCardPressIn: (boxIdentifier: EBoxIdentifier) => void
   handleCardPressOut: () => void

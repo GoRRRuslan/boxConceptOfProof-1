@@ -2,6 +2,7 @@ import { FlashList } from '@shopify/flash-list'
 import { useMemo } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { FilamentScene } from 'react-native-filament'
+import Animated from 'react-native-reanimated'
 
 import { AppText } from '@components/AppText'
 import { FadingView } from '@components/FadingView'
@@ -19,6 +20,9 @@ import { BoxCard } from '@flows/catalogueFlow/screens/CatalogueScreen/_component
 import { CatalogueScene } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene'
 import { makeStyles } from '@flows/catalogueFlow/screens/CatalogueScreen/CatalogueScreen.styles'
 import { OpeningOverlay } from '@flows/openingFlow/screens/OpeningOverlay'
+
+// The list's scroll events are handled on the UI thread (see the facade).
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList) as typeof FlashList
 
 const CatalogueScreen = () => {
   const styles = useMemo(() => makeStyles(theme), [])
@@ -47,7 +51,7 @@ const CatalogueScreen = () => {
     renderFrameStats,
     isRenderPaused,
     handleListLayout,
-    handleScroll,
+    scrollHandler,
     handleListTouchStart,
     handleRetryPress,
     handleCardPressIn,
@@ -81,14 +85,14 @@ const CatalogueScreen = () => {
   )
 
   const renderList = () => (
-    <FlashList
+    <AnimatedFlashList
       ref={listRef}
       data={cards}
       renderItem={renderCard}
       keyExtractor={card => card.identifier}
-      onScroll={handleScroll}
+      onScroll={scrollHandler}
       onTouchStart={handleListTouchStart}
-      scrollEventThrottle={1}
+      scrollEventThrottle={16}
       contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}
       testID="catalogueList"

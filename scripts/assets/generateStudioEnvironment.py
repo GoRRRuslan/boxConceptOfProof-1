@@ -27,7 +27,7 @@ SOFTBOXES = [
     # from a lamp (see SCENE_POINT_LIGHTS), not from the environment.
     ((0.0, 0.1, 1.0), (0, 1, 0), 1.2, 0.9, 0.6, 1.5),          # a faint even fill in front
     ((0.0, 1.0, -0.1), (0, 0, -1), 0.55, 0.3, 0.1, 2.2),        # overhead panel: a little light on the lids
-    ((1.0, 0.15, 0.1), (0, 1, 0), 0.08, 0.8, 0.05, 9.0),        # strip on the right: a bright line along the edges
+    ((1.0, 0.15, 0.1), (0, 1, 0), 0.08, 0.8, 0.05, 3.5),        # strip on the right: a bright line along the edges
     ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 6.0),        # strip behind: bright rims against the dark background
 ]
 # Tints: the panels are not pure white, a faint cool/warm split is what makes metal look rich.

@@ -12,7 +12,7 @@ iOS: ![](media/ios-tabs-1-catalogue.png) ![](media/ios-tabs-5-collection.png)
 - **Bottom tabs** (React Navigation 7), themed like the rest of the app, text labels from the translation file.
 - **Collection screen:** same header as the catalogue (title on the left, one labelled figure on the right: *Total value*), a count ("1 watch" / "2 watches"), then a list of the won watches, **newest first**: thumbnail, name, brand, value and which box it came from. Duplicates are separate rows.
 - **Empty state:** "No watches yet" with a **Browse boxes** button that switches to the Boxes tab.
-- The collection is session-scoped (a restart starts empty, as the assignment asks). One successful purchase = one new row.
+- The collection is saved to a file together with the balance, so a bought watch survives the system removing the app from memory (a deliberate step beyond the assignment's session scope). One successful purchase = one new row.
 
 ## Decisions worth knowing
 - **One 3D canvas, kept alive.** The catalogue holds the app's only Filament scene (Android draws just one). The tab navigator is created with `detachInactiveScreens={false}`, so the catalogue screen stays attached while the Collection tab is shown and the surface is not destroyed and recreated on every switch. Verified on Android: the boxes are there immediately after coming back.

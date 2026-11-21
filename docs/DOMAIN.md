@@ -6,7 +6,7 @@
 | Domain types | `src/networking/api/MysteryBoxApi/_types` | Watches, boxes (price in **integer cents**, colour, weighted drop table), purchase request/response, error codes, failure modes |
 | Mock data | `.../MysteryBoxApi/_mockData` | 4 watches, 4 boxes (Starter $50, Classic $150, Elite $400, Legend $1,200 — Legend is above the $1,000 start balance on purpose) |
 | Mock API | `.../MysteryBoxApi/MysteryBoxApiImplementation.ts` | Async (`latencyInMilliseconds`, default 700 ms), `getBoxes`, `purchaseBox`; failure switch `EMockFailureMode` (`none`, `networkError`, `serverError`, `responseLost`); **idempotent per key**; weighted prize roll is deterministic per key |
-| Stores | `src/models/mainStorage/{WalletStore,CollectionStore,PurchaseStore}` | Session-scoped Zustand slices (immer), no persistence, reset helper |
+| Stores | `src/models/mainStorage/{WalletStore,CollectionStore,PurchaseStore}` | Zustand slices (immer); balance and collection are saved to a file (`src/services/persistence`), reset helper |
 | Requests | `src/networking/requests` | `useGetBoxesQuery`, `usePostPurchaseBoxMutation`, pure `runBoxPurchase` |
 
 ## The purchase guarantee

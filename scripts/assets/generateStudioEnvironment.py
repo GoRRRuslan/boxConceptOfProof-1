@@ -28,11 +28,10 @@ SOFTBOXES = [
     ((0.0, 0.1, 1.0), (0, 1, 0), 1.2, 0.9, 0.6, 1.5),          # a faint even fill in front
     ((0.0, 1.0, -0.1), (0, 0, -1), 0.55, 0.3, 0.1, 2.2),        # overhead panel: a little light on the lids
     ((1.0, 0.15, 0.1), (0, 1, 0), 0.08, 0.8, 0.05, 9.0),        # strip on the right: a bright line along the edges
-    ((-1.0, 0.1, -0.2), (0, 1, 0), 0.06, 0.8, 0.05, 3.0),       # strip on the left-back
     ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 6.0),        # strip behind: bright rims against the dark background
 ]
 # Tints: the panels are not pure white, a faint cool/warm split is what makes metal look rich.
-TINTS = [(1.0, 1.0, 1.0), (1.0, 1.0, 1.0), (0.85, 0.93, 1.0), (1.0, 0.92, 0.85), (1.0, 0.95, 0.9)]
+TINTS = [(1.0, 1.0, 1.0), (1.0, 1.0, 1.0), (1.0, 0.97, 0.93), (1.0, 0.95, 0.9)]
 
 
 def smoothstep(edge0, edge1, x):

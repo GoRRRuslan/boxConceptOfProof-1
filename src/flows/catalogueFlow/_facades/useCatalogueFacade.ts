@@ -17,7 +17,7 @@ import useStore from '@models/mainStorage/_storeConfigured'
 import type { EBoxIdentifier } from '@networking/api/MysteryBoxApi/_types'
 import { ETabRoute, type TTabParamList } from '@navigation/_types'
 import { useGetBoxesQuery } from '@networking/requests/queries/BoxQueries/useGetBoxesQuery'
-import { logDiagnostic } from '@services/performance/diagnosticLog'
+import { logDiagnostic, startJavaScriptStallMonitor } from '@services/performance/diagnosticLog'
 import { useRenderFpsMeter } from '@services/performance/useRenderFpsMeter'
 
 // The list counts as "scrolling" until this long after its last scroll event (covers the fling).
@@ -183,6 +183,11 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
       clearInterval(autoScrollTimer)
     }
   }, [viewport, cards.length])
+
+  // Diagnostics only (a measurement build): reports every time the JavaScript thread was busy for longer than a frame.
+  useEffect(() => {
+    startJavaScriptStallMonitor()
+  }, [])
 
   // The scene says when it is ready (a flag it sets on the render thread); this watches for it. The wait is capped, so that a scene that
   // never gets ready (a model that fails to load) does not keep the loader up forever.

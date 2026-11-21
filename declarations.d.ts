@@ -21,3 +21,9 @@ declare module '*.png' {
 
   export default imageModule
 }
+
+declare module '*.ktx' {
+  const environmentModule: number
+
+  export default environmentModule
+}

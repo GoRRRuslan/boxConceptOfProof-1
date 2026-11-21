@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Camera, EnvironmentalLight, FilamentView, type FrameInfo, Light } from 'react-native-filament'
 
+import studioEnvironmentSource from '@assets/environments/studio_ibl.ktx'
 import { CAMERA_DISTANCE, CAMERA_FOCAL_LENGTH_MILLIMETERS } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
 import { ENVIRONMENT_LIGHT_INTENSITY, SCENE_LIGHTS } from '@flows/catalogueFlow/_config/sceneRenderConfig'
 import type { ICatalogueCard, ICatalogueSceneSync, ICatalogueViewport } from '@flows/catalogueFlow/_types'
@@ -35,7 +36,7 @@ export const CatalogueScene = ({
         cameraTarget={[0, 0, 0]}
         focalLengthInMillimeters={CAMERA_FOCAL_LENGTH_MILLIMETERS}
       />
-      <EnvironmentalLight source={{ uri: 'RNF_default_env_ibl.ktx' }} intensity={ENVIRONMENT_LIGHT_INTENSITY} />
+      <EnvironmentalLight source={studioEnvironmentSource} intensity={ENVIRONMENT_LIGHT_INTENSITY} />
       {SCENE_LIGHTS.map(light => (
         <Light
           key={light.direction.join()}

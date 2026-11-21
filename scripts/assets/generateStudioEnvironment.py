@@ -1,0 +1,137 @@
+"""Draws the reflection environment of the 3D scene: a dark photo studio with a few bright soft-boxes, as a Filament image-based light.
+
+Output: src/assets/environments/studio_ibl.ktx  (KTX 1, cube map 256 px, 5 mip levels, R11G11B10F, with the 9 spherical-harmonics
+irradiance coefficients that Filament reads from the "sh" key; the same layout `cmgen` writes).
+Usage : python3 scripts/assets/generateStudioEnvironment.py   (needs numpy: pip install numpy)
+
+Why: glossy and metallic boxes only look glossy and metallic if they have something contrasty to reflect. The default environment of
+react-native-filament is an evenly lit sky, which gives flat, plasticky reflections. A studio (black room, white panels) gives the sharp,
+saturated highlights of a car paint finish. Mip level k holds the room blurred for roughness k/4 (level 0 is a mirror).
+"""
+import pathlib
+import struct
+
+import numpy as np
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+OUTPUT = ROOT / "src" / "assets" / "environments" / "studio_ibl.ktx"
+SIZE = 256
+LEVELS = 5
+# Overall brightness of the room relative to the default environment (the light intensity in the scene config stays the same).
+GAIN = 0.4
+
+# Soft-boxes: (direction, up hint, half width, half height in radians, edge softness in radians, luminance). +Y is up, +Z is towards the
+# camera, the boxes face +Z.
+SOFTBOXES = [
+    ((-0.75, 0.55, 0.65), (0, 1, 0), 0.55, 0.38, 0.12, 22.0),   # key light: big, upper left, in front
+    ((0.95, 0.25, 0.25), (0, 1, 0), 0.12, 0.75, 0.06, 30.0),    # strip light on the right: a thin bright line along the edges
+    ((0.0, 1.0, 0.1), (0, 0, -1), 0.7, 0.5, 0.15, 14.0),        # overhead panel
+    ((0.35, -0.35, 0.85), (0, 1, 0), 0.4, 0.12, 0.1, 6.0),      # low fill in front: lifts the underside a little
+    ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 12.0),       # strip behind: bright rims against the dark background
+]
+# Tints: the panels are not pure white, a faint cool/warm split is what makes metal look rich.
+TINTS = [(1.0, 0.96, 0.9), (0.85, 0.93, 1.0), (1.0, 1.0, 1.0), (0.9, 0.95, 1.0), (1.0, 0.92, 0.85)]
+
+
+def smoothstep(edge0, edge1, x):
+    t = np.clip((x - edge0) / (edge1 - edge0), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def radiance(directions):
+    """HDR radiance (..., 3) of the studio seen along `directions` (..., 3) (unit vectors)."""
+    x, y, z = directions[..., 0], directions[..., 1], directions[..., 2]
+    # The room: a dim, slightly cool ceiling, a dark middle and an almost black floor.
+    gradient = np.where(y > 0, 0.16 + 0.2 * y, 0.16 + 0.1 * y)
+    result = np.stack([gradient * 0.95, gradient * 0.98, gradient * 1.05], -1)
+    for (direction, up_hint, half_width, half_height, softness, luminance), tint in zip(SOFTBOXES, TINTS):
+        forward = np.array(direction, dtype=float)
+        forward /= np.linalg.norm(forward)
+        right = np.cross(np.array(up_hint, dtype=float), forward)
+        right /= np.linalg.norm(right)
+        up = np.cross(forward, right)
+        along = directions @ forward
+        u = np.arctan2(directions @ right, along)
+        v = np.arctan2(directions @ up, along)
+        inside = smoothstep(half_width + softness, half_width - softness, np.abs(u)) * smoothstep(half_height + softness, half_height - softness, np.abs(v))
+        inside = np.where(along > 0, inside, 0.0)
+        result = result + inside[..., None] * luminance * np.array(tint)
+    return result * GAIN
+
+
+def face_directions(face, size):
+    axis = (np.arange(size) + 0.5) / size * 2 - 1
+    s, t = np.meshgrid(axis, axis)
+    one = np.ones_like(s)
+    x, y, z = [
+        (one, -t, -s), (-one, -t, s), (s, one, t), (s, -one, -t), (s, -t, one), (-s, -t, -one),
+    ][face]
+    directions = np.stack([x, y, z], -1)
+    return directions / np.linalg.norm(directions, axis=-1, keepdims=True)
+
+
+def blurred_radiance(directions, sigma, samples=96):
+    """Radiance averaged over a cone (gaussian, `sigma` radians) around every direction: the room seen through a rough surface."""
+    rng = np.random.default_rng(3)
+    flat = directions.reshape(-1, 3)
+    helper = np.where(np.abs(flat[:, :1]) < 0.9, np.array([[1.0, 0, 0]]), np.array([[0, 1.0, 0]]))
+    tangent = np.cross(flat, helper)
+    tangent /= np.linalg.norm(tangent, axis=-1, keepdims=True)
+    bitangent = np.cross(flat, tangent)
+    total = np.zeros((flat.shape[0], 3))
+    for _ in range(samples):
+        angle = np.abs(rng.normal(0, sigma, flat.shape[0]))
+        azimuth = rng.uniform(0, 2 * np.pi, flat.shape[0])
+        sample = (np.cos(angle)[:, None] * flat + np.sin(angle)[:, None] * (np.cos(azimuth)[:, None] * tangent + np.sin(azimuth)[:, None] * bitangent))
+        total += radiance(sample)
+    return (total / samples).reshape(directions.shape)
+
+
+def encode_r11g11b10(rgb):
+    """Packs float RGB into the 32 bit unsigned-int-10f-11f-11f layout (truncating, never rounding up)."""
+    half = np.clip(rgb, 0, 65000).astype(np.float16).view(np.uint16).astype(np.uint32)
+    red = (half[..., 0] >> 4) & 0x7FF   # 5 bit exponent + top 6 mantissa bits
+    green = (half[..., 1] >> 4) & 0x7FF
+    blue = (half[..., 2] >> 5) & 0x3FF  # 5 bit exponent + top 5 mantissa bits
+    return red | (green << 11) | (blue << 22)
+
+
+def spherical_harmonics():
+    """9 RGB coefficients of the diffuse (cosine-convolved) irradiance, in the form Filament reads them."""
+    size = 64
+    total = np.zeros((9, 3))
+    for face in range(6):
+        directions = face_directions(face, size)
+        axis = (np.arange(size) + 0.5) / size * 2 - 1
+        s, t = np.meshgrid(axis, axis)
+        solid_angle = 4 / (size * size) / (1 + s * s + t * t) ** 1.5
+        x, y, z = directions[..., 0], directions[..., 1], directions[..., 2]
+        basis = np.stack([0.282095 + 0 * x, 0.488603 * y, 0.488603 * z, 0.488603 * x, 1.092548 * x * y, 1.092548 * y * z, 0.315392 * (3 * z * z - 1), 1.092548 * x * z, 0.546274 * (x * x - y * y)], -1)
+        total += np.einsum("hwk,hwc,hw->kc", basis, radiance(directions), solid_angle)
+    cosine = np.array([1.0, 2 / 3, 2 / 3, 2 / 3, 0.25, 0.25, 0.25, 0.25, 0.25])
+    constants = np.array([0.282095, 0.488603, 0.488603, 0.488603, 1.092548, 1.092548, 0.315392, 1.092548, 0.546274])
+    return total * (cosine * constants)[:, None]
+
+
+def main():
+    sh = spherical_harmonics()
+    text = "".join(f"{r:.6g} {g:.6g} {b:.6g}\n" for r, g, b in sh)
+    key_value = b"sh\0" + text.encode() + b"\0"
+    key_value = struct.pack("<I", len(key_value)) + key_value
+    key_value += b"\0" * (-len(key_value) % 4)
+    header = b"\xabKTX 11\xbb\r\n\x1a\n" + struct.pack("<13I", 0x04030201, 35898, 1, 6407, 35898, 35898, SIZE, SIZE, 0, 0, 6, LEVELS, len(key_value))
+    body = bytearray(header + key_value)
+    for level in range(LEVELS):
+        size = SIZE >> level
+        sigma = 0.0 if level == 0 else max(0.03, (level / 4) ** 2.2 * 1.1)
+        body += struct.pack("<I", size * size * 4)
+        for face in range(6):
+            directions = face_directions(face, size)
+            rgb = radiance(directions) if level == 0 else blurred_radiance(directions, sigma)
+            body += encode_r11g11b10(rgb).astype("<u4").tobytes()
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT.write_bytes(bytes(body))
+    print(f"wrote {OUTPUT.relative_to(ROOT)} ({OUTPUT.stat().st_size // 1024} KB), sh[0] = {sh[0]}")
+
+
+main()

@@ -2,6 +2,7 @@ import { useIsFocused } from '@react-navigation/native'
 import { useEffect } from 'react'
 
 import { RenderOnDemand } from '@components/RenderOnDemand'
+import { IDLE_RENDER_HOLD_MILLISECONDS, IDLE_RENDER_MAXIMUM_MILLISECONDS } from '@flows/catalogueFlow/_config/sceneRenderConfig'
 import type { ICatalogueCard, ICatalogueSceneSync, ICatalogueViewport } from '@flows/catalogueFlow/_types'
 import { useFacadeCatalogueBoxes } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene/_components/CatalogueBoxes/_facades/useFacadeCatalogueBoxes'
 import type { IOpeningPhaseKey } from '@flows/openingFlow/_types'
@@ -36,6 +37,8 @@ export const CatalogueBoxes = ({
     <RenderOnDemand
       activityKey={`${cards.length}|${viewport.width}x${viewport.height}|${modelState}|${phaseKey}`}
       warmupKey={modelState}
+      minimumMilliseconds={IDLE_RENDER_HOLD_MILLISECONDS}
+      maximumMilliseconds={IDLE_RENDER_MAXIMUM_MILLISECONDS}
       isContinuous={isRenderContinuous}
       isScreenFocused={isScreenFocused}
     />

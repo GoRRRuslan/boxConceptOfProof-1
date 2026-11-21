@@ -23,6 +23,8 @@ import { useRenderFpsMeter } from '@services/performance/useRenderFpsMeter'
 // The list counts as "scrolling" until this long after its last scroll event (covers the fling).
 // Back from the background after at least this long: the 3D view is rebuilt (iOS may have taken its drawing surface away).
 const REBUILD_SCENE_AFTER_BACKGROUND_MILLISECONDS = 1500
+// An opening in one of these phases is closed when the user leaves the Boxes tab.
+const LEAVE_TAB_CLOSES_PHASES = [EOpeningPhase.Inspecting, EOpeningPhase.Ready, EOpeningPhase.Revealed]
 const SCROLL_IDLE_MILLISECONDS = 250
 const PRESS_RELEASE_RENDER_MILLISECONDS = 350
 const LIST_TOUCH_RENDER_MILLISECONDS = 800
@@ -70,6 +72,7 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
 
   // ------------------------- Opening -------------------------- //
   const opening = useOpeningFacade({ boxesData, cards })
+  const openingRef = useRef(opening)
 
   // -------------------------- Values ------------------------- //
   // Shared with the 3D scene: written on every scroll event, read on every rendered frame.
@@ -262,6 +265,10 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     }
   }, [isSceneReady, cards.length, sceneReadiness])
 
+  useEffect(() => {
+    openingRef.current = opening
+  })
+
   // The Boxes tab coming and going (e.g. a trip to the Collection and back): the renderer's behaviour around it is what is looked at.
   useEffect(() => {
     const unsubscribeFocus = navigation.addListener('focus', () => {
@@ -269,6 +276,11 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     })
     const unsubscribeBlur = navigation.addListener('blur', () => {
       logDiagnostic('tab.blur', { tab: 'catalogue' })
+
+      // An opened box is put away when the tab is left: coming back to Boxes shows the list, not the box that was open.
+      if (LEAVE_TAB_CLOSES_PHASES.includes(openingRef.current.phase)) {
+        openingRef.current.handleBackPress()
+      }
     })
 
     return () => {

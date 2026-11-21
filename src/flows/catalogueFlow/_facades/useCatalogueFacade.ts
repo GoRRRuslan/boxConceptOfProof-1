@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native'
 import type { FlashListRef } from '@shopify/flash-list'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppState, type LayoutChangeEvent } from 'react-native'
+import { Alert, AppState, type LayoutChangeEvent } from 'react-native'
 import { useAnimatedScrollHandler } from 'react-native-reanimated'
 import { createSynchronizable, scheduleOnRN } from 'react-native-worklets'
 
@@ -17,6 +17,8 @@ import type { ICatalogueCard, ICatalogueFacade, ICatalogueSceneSync, ICatalogueV
 import useStore from '@models/mainStorage/_storeConfigured'
 import type { EBoxIdentifier } from '@networking/api/MysteryBoxApi/_types'
 import { ETabRoute, type TTabParamList } from '@navigation/_types'
+import { INITIAL_BALANCE_IN_CENTS } from '@models/mainStorage/WalletStore/initialState'
+import { formatCurrency } from '@utils/formatCurrency'
 import { useGetBoxesQuery } from '@networking/requests/queries/BoxQueries/useGetBoxesQuery'
 import { logDiagnostic, startJavaScriptStallMonitor } from '@services/performance/diagnosticLog'
 import { useRenderFpsMeter } from '@services/performance/useRenderFpsMeter'
@@ -174,6 +176,20 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     }, LIST_TOUCH_RENDER_MILLISECONDS)
   }
 
+  // The balance goes back to the starting one after a confirmation (the watches stay): for testing the purchases again and again.
+  const handleResetBalancePress = () => {
+    Alert.alert(t('catalogue.resetBalanceTitle'), t('catalogue.resetBalanceMessage', { amount: formatCurrency(INITIAL_BALANCE_IN_CENTS) }), [
+      { text: t('catalogue.resetBalanceCancel'), style: 'cancel' },
+      {
+        text: t('catalogue.resetBalanceConfirm'),
+        style: 'destructive',
+        onPress: () => {
+          useStore.getState().resetWallet()
+        },
+      },
+    ])
+  }
+
   const handleRetryPress = () => {
     void boxesRefetch()
   }
@@ -329,6 +345,7 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     loadingText: t('catalogue.loading'),
     errorText: t('catalogue.error'),
     retryLabelText: t('catalogue.retry'),
+    resetBalanceLabelText: t('catalogue.resetBalance'),
     isLoadingBoxes,
     isSceneReady,
     sceneEpoch,
@@ -348,6 +365,7 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     scrollHandler,
     handleListTouchStart,
     handleRetryPress,
+    handleResetBalancePress,
     handleCardPressIn,
     handleCardPressOut,
   }

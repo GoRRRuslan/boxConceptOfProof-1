@@ -56,6 +56,7 @@ export interface ICatalogueFacade {
   loadingText: string
   errorText: string
   retryLabelText: string
+  resetBalanceLabelText: string
   isLoadingBoxes: boolean
   // False until the 3D scene is ready to be shown: the loader stays up until then, the list is hidden.
   isSceneReady: boolean
@@ -80,6 +81,7 @@ export interface ICatalogueFacade {
   // Reanimated scroll handler: writes the offset on the UI thread (see the facade).
   scrollHandler: ReturnType<typeof useAnimatedScrollHandler>
   handleRetryPress: () => void
+  handleResetBalancePress: () => void
   handleCardPressIn: (boxIdentifier: EBoxIdentifier) => void
   handleCardPressOut: () => void
 }

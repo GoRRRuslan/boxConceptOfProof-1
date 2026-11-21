@@ -25,7 +25,7 @@ GAIN = 0.62
 SOFTBOXES = [
     # A flat, even studio: the faces keep one saturated colour (no big gradients), the rims catch light, and the bright spot of a face comes
     # from a lamp (see SCENE_POINT_LIGHTS), not from the environment.
-    ((0.0, 0.1, 1.0), (0, 1, 0), 1.2, 0.9, 0.6, 1.5),          # a faint even fill in front
+    ((0.0, 0.1, 1.0), (0, 1, 0), 1.2, 0.9, 0.6, 0.15),          # a faint even fill in front
     ((0.0, 1.0, -0.1), (0, 0, -1), 0.55, 0.3, 0.1, 2.2),        # overhead panel: a little light on the lids
     ((1.0, 0.15, 0.1), (0, 1, 0), 0.08, 0.8, 0.05, 3.5),        # strip on the right: a bright line along the edges
     ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 6.0),        # strip behind: bright rims against the dark background
@@ -43,7 +43,7 @@ def radiance(directions):
     """HDR radiance (..., 3) of the studio seen along `directions` (..., 3) (unit vectors)."""
     x, y, z = directions[..., 0], directions[..., 1], directions[..., 2]
     # The room: a dim, slightly cool ceiling, a dark middle and an almost black floor.
-    gradient = np.where(y > 0, 0.3 + 0.1 * y, 0.3 + 0.06 * y)
+    gradient = np.where(y > 0, 0.04 + 0.04 * y, 0.04 + 0.03 * y)
     result = np.stack([gradient * 0.95, gradient * 0.98, gradient * 1.05], -1)
     for (direction, up_hint, half_width, half_height, softness, luminance), tint in zip(SOFTBOXES, TINTS):
         forward = np.array(direction, dtype=float)
@@ -102,6 +102,14 @@ def encode_r11g11b10(rgb):
     return red | (green << 11) | (blue << 22)
 
 
+def diffuse_radiance(directions):
+    """What the box 'sees' for its colour (the diffuse light, stored as the spherical harmonics): an even, slightly top-lit room. It is kept apart
+    from the reflections (the cube map), which are nearly black, so that the faces keep one saturated colour and only a lamp makes a shine."""
+    y = directions[..., 1]
+    value = 0.62 + 0.22 * y
+    return np.stack([value, value, value], -1)
+
+
 def spherical_harmonics():
     """9 RGB coefficients of the diffuse (cosine-convolved) irradiance, in the form Filament reads them."""
     size = 64
@@ -113,7 +121,7 @@ def spherical_harmonics():
         solid_angle = 4 / (size * size) / (1 + s * s + t * t) ** 1.5
         x, y, z = directions[..., 0], directions[..., 1], directions[..., 2]
         basis = np.stack([0.282095 + 0 * x, 0.488603 * y, 0.488603 * z, 0.488603 * x, 1.092548 * x * y, 1.092548 * y * z, 0.315392 * (3 * z * z - 1), 1.092548 * x * z, 0.546274 * (x * x - y * y)], -1)
-        total += np.einsum("hwk,hwc,hw->kc", basis, radiance(directions), solid_angle)
+        total += np.einsum("hwk,hwc,hw->kc", basis, diffuse_radiance(directions), solid_angle)
     cosine = np.array([1.0, 2 / 3, 2 / 3, 2 / 3, 0.25, 0.25, 0.25, 0.25, 0.25])
     constants = np.array([0.282095, 0.488603, 0.488603, 0.488603, 1.092548, 1.092548, 0.315392, 1.092548, 0.546274])
     return total * (cosine * constants)[:, None]

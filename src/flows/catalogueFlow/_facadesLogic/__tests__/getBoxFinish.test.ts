@@ -6,7 +6,7 @@ describe('getBoxFinish', () => {
     const cheap = getBoxFinish(5_000)
     const expensive = getBoxFinish(250_000)
 
-    expect(cheap).toEqual({ roughness: 0.3, metallic: 0.75, clearCoat: 0.5 })
+    expect(cheap).toEqual({ roughness: 0.45, metallic: 0.35, clearCoat: 0.6 })
 
     expect(expensive.roughness).toBeLessThan(cheap.roughness)
 

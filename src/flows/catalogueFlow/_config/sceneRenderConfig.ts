@@ -18,7 +18,7 @@ export const CATALOGUE_SCENE_RENDER_PROPS: Pick<
   // Soft darkening in corners and creases (between lid and base, around the cushion).
   ambientOcclusionOptions: { enabled: true, radius: 0.35, power: 1.2, intensity: 1, quality: 'LOW' },
   // The light inside an opened box (and bright highlights) bleeds softly into the picture.
-  bloomOptions: { enabled: true, strength: 0.22, resolution: 360, levels: 5, quality: 'LOW', threshold: true, highlight: 1000 },
+  bloomOptions: { enabled: true, strength: 0.4, resolution: 360, levels: 5, quality: 'LOW', threshold: true, highlight: 1000 },
 }
 
 // Reflections of the environment (what makes glossy and metallic boxes look glossy and metallic).
@@ -52,7 +52,8 @@ export interface IScenePointLight {
 // light in a corner (a highlight depends on the angle between the viewer, the surface and the lamp, which differs across a face only
 // for a lamp that is near). The camera stands at z = 6, the boxes at z = 0. As the list scrolls, the boxes pass through the light.
 export const SCENE_POINT_LIGHTS: IScenePointLight[] = [
-  { intensity: 200_000, colorKelvin: 5_600, position: [-1.4, 2.0, 2.0], falloffRadius: 9 },
+  { intensity: 700_000, colorKelvin: 6_000, position: [-1.3, 1.8, 2.2], falloffRadius: 9 },
+  { intensity: 900_000, colorKelvin: 6_000, position: [0.9, 1.2, 2.2], falloffRadius: 9 },
 ]
 
 // The list is shown (and the loader taken away) only when the scene is really ready: the model is loaded, every box has popped in,

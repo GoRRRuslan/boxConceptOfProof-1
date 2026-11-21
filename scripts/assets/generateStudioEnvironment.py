@@ -23,18 +23,16 @@ GAIN = 0.62
 # Soft-boxes: (direction, up hint, half width, half height in radians, edge softness in radians, luminance). +Y is up, +Z is towards the
 # camera, the boxes face +Z.
 SOFTBOXES = [
-    # Big soft-boxes with fairly crisp edges: a flat lacquered face mirrors a panel as a light shape with a clean edge that slides across the
-    # face as the box turns (the "refrigerator door" reflection of the native version), and is dark in between.
-    ((-0.8, 0.35, 0.5), (0, 1, 0), 0.45, 0.4, 0.05, 4.8),       # window on the left
-    ((0.55, 0.75, 0.35), (0, 1, 0), 0.4, 0.3, 0.05, 4.2),       # panel upper right
-    ((0.0, 1.0, -0.1), (0, 0, -1), 0.55, 0.3, 0.06, 4.8),       # overhead panel
-    ((0.0, 0.1, 1.0), (0, 1, 0), 0.5, 0.25, 0.1, 1.2),          # faint panel straight ahead: the front never goes fully flat
-    ((1.0, 0.15, 0.1), (0, 1, 0), 0.08, 0.8, 0.04, 14.0),       # strip on the right: a bright line along the edges
-    ((-1.0, 0.1, -0.2), (0, 1, 0), 0.06, 0.8, 0.05, 9.0),      # strip on the left-back
-    ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 8.0),        # strip behind: bright rims against the dark background
+    # A flat, even studio: the faces keep one saturated colour (no big gradients), the rims catch light, and the bright spot of a face comes
+    # from a lamp (see SCENE_POINT_LIGHTS), not from the environment.
+    ((0.0, 0.1, 1.0), (0, 1, 0), 1.2, 0.9, 0.6, 1.5),          # a faint even fill in front
+    ((0.0, 1.0, -0.1), (0, 0, -1), 0.55, 0.3, 0.1, 2.2),        # overhead panel: a little light on the lids
+    ((1.0, 0.15, 0.1), (0, 1, 0), 0.08, 0.8, 0.05, 9.0),        # strip on the right: a bright line along the edges
+    ((-1.0, 0.1, -0.2), (0, 1, 0), 0.06, 0.8, 0.05, 3.0),       # strip on the left-back
+    ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 6.0),        # strip behind: bright rims against the dark background
 ]
 # Tints: the panels are not pure white, a faint cool/warm split is what makes metal look rich.
-TINTS = [(1.0, 0.97, 0.93), (0.9, 0.95, 1.0), (1.0, 1.0, 1.0), (1.0, 0.98, 0.95), (0.85, 0.93, 1.0), (1.0, 0.92, 0.85), (1.0, 0.95, 0.9)]
+TINTS = [(1.0, 1.0, 1.0), (1.0, 1.0, 1.0), (0.85, 0.93, 1.0), (1.0, 0.92, 0.85), (1.0, 0.95, 0.9)]
 
 
 def smoothstep(edge0, edge1, x):
@@ -46,7 +44,7 @@ def radiance(directions):
     """HDR radiance (..., 3) of the studio seen along `directions` (..., 3) (unit vectors)."""
     x, y, z = directions[..., 0], directions[..., 1], directions[..., 2]
     # The room: a dim, slightly cool ceiling, a dark middle and an almost black floor.
-    gradient = np.where(y > 0, 0.05 + 0.08 * y, 0.05 + 0.05 * y)
+    gradient = np.where(y > 0, 0.3 + 0.1 * y, 0.3 + 0.06 * y)
     result = np.stack([gradient * 0.95, gradient * 0.98, gradient * 1.05], -1)
     for (direction, up_hint, half_width, half_height, softness, luminance), tint in zip(SOFTBOXES, TINTS):
         forward = np.array(direction, dtype=float)

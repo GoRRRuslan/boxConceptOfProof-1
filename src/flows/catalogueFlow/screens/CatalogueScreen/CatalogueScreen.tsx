@@ -1,6 +1,6 @@
 import { FlashList } from '@shopify/flash-list'
 import { useMemo } from 'react'
-import { View } from 'react-native'
+import { ActivityIndicator, View } from 'react-native'
 import { FilamentScene } from 'react-native-filament'
 
 import { AppText } from '@components/AppText'
@@ -11,6 +11,7 @@ import { PerformanceOverlay } from '@components/PerformanceOverlay'
 import { EPerformanceOverlayPlacement } from '@components/PerformanceOverlay/_types'
 import { AppButton } from '@components/buttons/AppButton'
 import { ScreenContainer } from '@components/_layout/ScreenContainer'
+import { theme } from '@utils/designSystem/Theme'
 import { CATALOGUE_SCENE_RENDER_PROPS } from '@flows/catalogueFlow/_config/sceneRenderConfig'
 import { useCatalogueFacade } from '@flows/catalogueFlow/_facades/useCatalogueFacade'
 import type { ICatalogueCard } from '@flows/catalogueFlow/_types'
@@ -20,7 +21,7 @@ import { makeStyles } from '@flows/catalogueFlow/screens/CatalogueScreen/Catalog
 import { OpeningOverlay } from '@flows/openingFlow/screens/OpeningOverlay'
 
 const CatalogueScreen = () => {
-  const styles = useMemo(() => makeStyles(), [])
+  const styles = useMemo(() => makeStyles(theme), [])
 
   // -------------------- Service hooks -------------------- //
   const {
@@ -95,8 +96,8 @@ const CatalogueScreen = () => {
     // The loader stays until the scene is ready: the boxes have popped in and the frames are steady.
     if (isLoadingBoxes || (!isSceneReady && !isErrorBoxes)) {
       return (
-        <View style={styles.status} testID="catalogueLoading">
-          <AppText>{loadingText}</AppText>
+        <View style={styles.loadingOverlay} testID="catalogueLoading">
+          <ActivityIndicator size="large" color={theme.Colors.accent} accessibilityLabel={loadingText} testID="catalogueLoadingIndicator" />
         </View>
       )
     }

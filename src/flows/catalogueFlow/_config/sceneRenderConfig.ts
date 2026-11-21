@@ -40,6 +40,23 @@ export const SCENE_LIGHTS: ISceneLight[] = [
   { intensity: 1_800, colorKelvin: 6_500, direction: [-0.2, 0.9, -0.4], castShadows: false },
 ]
 
+export interface IScenePointLight {
+  // Lumen.
+  intensity: number
+  colorKelvin: number
+  position: [number, number, number]
+  falloffRadius: number
+}
+
+// Studio spot lamps: small, close to the boxes, so that a flat lacquered face does not shine all over but carries one bright spot of
+// light in a corner (a highlight depends on the angle between the viewer, the surface and the lamp, which differs across a face only
+// for a lamp that is near). The camera stands at z = 6, the boxes at z = 0. As the list scrolls, the boxes pass through the light.
+export const SCENE_POINT_LIGHTS: IScenePointLight[] = [
+  { intensity: 420_000, colorKelvin: 5_200, position: [-1.4, 2.4, 2.0], falloffRadius: 9 },
+  { intensity: 420_000, colorKelvin: 5_200, position: [-1.4, 0.2, 2.0], falloffRadius: 9 },
+  { intensity: 420_000, colorKelvin: 7_000, position: [1.4, -1.8, 2.0], falloffRadius: 9 },
+]
+
 // The list is shown (and the loader taken away) only when the scene is really ready: the model is loaded, every box has popped in,
 // this many frames have been drawn since (the first frames compile shaders and are uneven) and the picture has settled for a moment.
 // Without this the loader ended while the tiles were still empty, and the first scroll right after it rattled.

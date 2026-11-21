@@ -3,7 +3,7 @@ import { Camera, EnvironmentalLight, FilamentView, type FrameInfo, Light } from 
 
 import studioEnvironmentSource from '@assets/environments/studio_ibl.ktx'
 import { CAMERA_DISTANCE, CAMERA_FOCAL_LENGTH_MILLIMETERS } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
-import { ENVIRONMENT_LIGHT_INTENSITY, SCENE_LIGHTS } from '@flows/catalogueFlow/_config/sceneRenderConfig'
+import { ENVIRONMENT_LIGHT_INTENSITY, SCENE_LIGHTS, SCENE_POINT_LIGHTS } from '@flows/catalogueFlow/_config/sceneRenderConfig'
 import type { ICatalogueCard, ICatalogueSceneSync, ICatalogueViewport } from '@flows/catalogueFlow/_types'
 import { CatalogueBoxes } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene/_components/CatalogueBoxes/CatalogueBoxes'
 import { makeStyles } from '@flows/catalogueFlow/screens/CatalogueScreen/_components/CatalogueScene/CatalogueScene.styles'
@@ -45,6 +45,17 @@ export const CatalogueScene = ({
           colorKelvin={light.colorKelvin}
           direction={light.direction}
           castShadows={light.castShadows}
+        />
+      ))}
+      {SCENE_POINT_LIGHTS.map(light => (
+        <Light
+          key={light.position.join()}
+          type="point"
+          intensity={light.intensity}
+          colorKelvin={light.colorKelvin}
+          position={light.position}
+          falloffRadius={light.falloffRadius}
+          castShadows={false}
         />
       ))}
       {cards.length > 0 && viewport ? (

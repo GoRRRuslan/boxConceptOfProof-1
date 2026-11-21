@@ -74,7 +74,6 @@ export interface ICatalogueFacade {
   isRenderPaused: boolean
   handleListLayout: (event: LayoutChangeEvent) => void
   handleListTouchStart: () => void
-  handleListTouchStart: () => void
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   handleRetryPress: () => void
   handleCardPressIn: (boxIdentifier: EBoxIdentifier) => void

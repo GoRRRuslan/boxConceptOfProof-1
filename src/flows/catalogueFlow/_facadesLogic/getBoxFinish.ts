@@ -1,18 +1,18 @@
 import type { IBoxFinish } from '@flows/catalogueFlow/_types'
 
-// The dearer the box, the more it shines: every box is metal under a lacquer; the dearer the box, the smoother and the more mirror-like it is.
+// The dearer the box, the more it shines: the dearer the box, the more it shines: cheap boxes are matte, expensive ones are glossy metal (the same finishes as the native version).
 export const getBoxFinish = (priceInCents: number): IBoxFinish => {
   if (priceInCents < 10_000) {
-    return { roughness: 0.6, metallic: 0.15, clearCoat: 0.85 }
+    return { roughness: 0.85, metallic: 0, clearCoat: 0 }
   }
 
   if (priceInCents < 30_000) {
-    return { roughness: 0.55, metallic: 0.2, clearCoat: 0.9 }
+    return { roughness: 0.55, metallic: 0.1, clearCoat: 0.2 }
   }
 
   if (priceInCents < 70_000) {
-    return { roughness: 0.5, metallic: 0.25, clearCoat: 0.95 }
+    return { roughness: 0.3, metallic: 0.3, clearCoat: 0.7 }
   }
 
-  return { roughness: 0.45, metallic: 0.3, clearCoat: 1 }
+  return { roughness: 0.18, metallic: 0.65, clearCoat: 1 }
 }

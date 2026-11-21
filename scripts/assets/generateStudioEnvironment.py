@@ -18,7 +18,11 @@ OUTPUT = ROOT / "src" / "assets" / "environments" / "studio_ibl.ktx"
 SIZE = 256
 LEVELS = 5
 # Overall brightness of the room relative to the default environment (the light intensity in the scene config stays the same).
-GAIN = 0.62
+GAIN = 3.5
+# The reflections need the panels to be much brighter than a plain picture (clearcoat reflects only a few percent): the bright spot of the native version.
+PANEL_BOOST = 1.0
+# The panels of the native environment picture: (left, top, width, height) in pixels of a 512 x 256 image.
+PANELS = [(60, 40, 90, 40), (300, 30, 120, 36), (200, 110, 50, 20)]
 
 # Soft-boxes: (direction, up hint, half width, half height in radians, edge softness in radians, luminance). +Y is up, +Z is towards the
 # camera, the boxes face +Z.
@@ -39,25 +43,29 @@ def smoothstep(edge0, edge1, x):
     return t * t * (3 - 2 * t)
 
 
-def radiance(directions):
-    """HDR radiance (..., 3) of the studio seen along `directions` (..., 3) (unit vectors)."""
+def rounded_box_alpha(px, py, left, top, width, height, radius):
+    """1 inside a rounded rectangle (pixels), 0 outside, with a one pixel soft edge."""
+    cx, cy = left + width / 2, top + height / 2
+    qx = np.abs(px - cx) - (width / 2 - radius)
+    qy = np.abs(py - cy) - (height / 2 - radius)
+    outside = np.hypot(np.maximum(qx, 0), np.maximum(qy, 0)) + np.minimum(np.maximum(qx, qy), 0) - radius
+    return np.clip(0.5 - outside, 0, 1)
+
+
+def radiance(directions, panel_boost=None):
+    """The environment of the native (SceneKit) version, which this one copies: a 512 x 256 equirectangular picture of a dark room with three
+    soft white panels (a vertical gradient 0.55 -> 0.16 -> 0.04 and three rounded rectangles of 0.9 white), see BoxScene.swift EnvironmentImage."""
     x, y, z = directions[..., 0], directions[..., 1], directions[..., 2]
-    # The room: a dim, slightly cool ceiling, a dark middle and an almost black floor.
-    gradient = np.where(y > 0, 0.04 + 0.04 * y, 0.04 + 0.03 * y)
-    result = np.stack([gradient * 0.95, gradient * 0.98, gradient * 1.05], -1)
-    for (direction, up_hint, half_width, half_height, softness, luminance), tint in zip(SOFTBOXES, TINTS):
-        forward = np.array(direction, dtype=float)
-        forward /= np.linalg.norm(forward)
-        right = np.cross(np.array(up_hint, dtype=float), forward)
-        right /= np.linalg.norm(right)
-        up = np.cross(forward, right)
-        along = directions @ forward
-        u = np.arctan2(directions @ right, along)
-        v = np.arctan2(directions @ up, along)
-        inside = np.exp(-((u / (half_width + softness)) ** 2 + (v / (half_height + softness)) ** 2) * 1.6) * smoothstep(half_width + 2 * softness, half_width, np.abs(u) * 0.55) ** 0.0
-        inside = np.where(along > 0, inside, 0.0)
-        result = result + inside[..., None] * luminance * np.array(tint)
-    return result * GAIN
+    u = np.arctan2(x, z) / (2 * np.pi) + 0.5           # azimuth, 0..1 (the middle of the picture is straight ahead, towards the camera)
+    v = np.arccos(np.clip(y, -1, 1)) / np.pi             # from the top (north pole), 0..1
+    px, py = u * 512, v * 256
+    t = v
+    gradient = np.where(t < 0.5, 0.55 + (0.16 - 0.55) * (t / 0.5), 0.16 + (0.04 - 0.16) * ((t - 0.5) / 0.5))
+    value = gradient
+    for left, top, width, height in PANELS:
+        alpha = 0.9 * rounded_box_alpha(px, py, left, top, width, height, 10)
+        value = value * (1 - alpha) + (1.0 if panel_boost is None else panel_boost) * alpha
+    return np.stack([value, value, value], -1) * GAIN
 
 
 def face_directions(face, size):
@@ -88,7 +96,7 @@ def blurred_radiance(directions, sigma, samples=192):
         azimuth = index * 2.399963229728653
         weight = np.exp(-0.5 * (radius / sigma) ** 2)
         sample = np.cos(radius) * flat + np.sin(radius) * (np.cos(azimuth) * tangent + np.sin(azimuth) * bitangent)
-        total += weight * radiance(sample)
+        total += weight * radiance(sample, PANEL_BOOST)
         weight_sum += weight
     return (total / weight_sum).reshape(directions.shape)
 
@@ -121,7 +129,7 @@ def spherical_harmonics():
         solid_angle = 4 / (size * size) / (1 + s * s + t * t) ** 1.5
         x, y, z = directions[..., 0], directions[..., 1], directions[..., 2]
         basis = np.stack([0.282095 + 0 * x, 0.488603 * y, 0.488603 * z, 0.488603 * x, 1.092548 * x * y, 1.092548 * y * z, 0.315392 * (3 * z * z - 1), 1.092548 * x * z, 0.546274 * (x * x - y * y)], -1)
-        total += np.einsum("hwk,hwc,hw->kc", basis, diffuse_radiance(directions), solid_angle)
+        total += np.einsum("hwk,hwc,hw->kc", basis, radiance(directions), solid_angle)
     cosine = np.array([1.0, 2 / 3, 2 / 3, 2 / 3, 0.25, 0.25, 0.25, 0.25, 0.25])
     constants = np.array([0.282095, 0.488603, 0.488603, 0.488603, 1.092548, 1.092548, 0.315392, 1.092548, 0.546274])
     return total * (cosine * constants)[:, None]
@@ -141,7 +149,7 @@ def main():
         body += struct.pack("<I", size * size * 4)
         for face in range(6):
             directions = face_directions(face, size)
-            rgb = radiance(directions) if level == 0 else blurred_radiance(directions, sigma)
+            rgb = radiance(directions, PANEL_BOOST) if level == 0 else blurred_radiance(directions, sigma)
             body += encode_r11g11b10(rgb).astype("<u4").tobytes()
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_bytes(bytes(body))

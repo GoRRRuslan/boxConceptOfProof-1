@@ -18,11 +18,11 @@ export const CATALOGUE_SCENE_RENDER_PROPS: Pick<
   // Soft darkening in corners and creases (between lid and base, around the cushion).
   ambientOcclusionOptions: { enabled: true, radius: 0.35, power: 1.2, intensity: 1, quality: 'LOW' },
   // The light inside an opened box (and bright highlights) bleeds softly into the picture.
-  bloomOptions: { enabled: true, strength: 0.4, resolution: 360, levels: 5, quality: 'LOW', threshold: true, highlight: 1000 },
+  bloomOptions: { enabled: true, strength: 0.3, resolution: 360, levels: 5, quality: 'LOW', threshold: true, highlight: 1000 },
 }
 
 // Reflections of the environment (what makes glossy and metallic boxes look glossy and metallic).
-export const ENVIRONMENT_LIGHT_INTENSITY = 40_000
+export const ENVIRONMENT_LIGHT_INTENSITY = 22_000
 
 export interface ISceneLight {
   intensity: number
@@ -35,8 +35,8 @@ export interface ISceneLight {
 // A three-point-ish rig: a warm key light from the upper left in front, a cool rim light from behind on
 // the right (bright edges that separate the box from the dark background), and a soft fill from below.
 export const SCENE_LIGHTS: ISceneLight[] = [
-  { intensity: 9_000, colorKelvin: 5_600, direction: [0.45, -0.75, -0.55], castShadows: true },
-  { intensity: 4_000, colorKelvin: 7_500, direction: [-0.65, -0.25, 0.7], castShadows: false },
+  { intensity: 11_000, colorKelvin: 5_600, direction: [0.45, -0.75, -0.55], castShadows: true },
+  { intensity: 5_500, colorKelvin: 9_000, direction: [-0.65, -0.25, 0.7], castShadows: false },
   { intensity: 1_800, colorKelvin: 6_500, direction: [-0.2, 0.9, -0.4], castShadows: false },
 ]
 
@@ -51,10 +51,7 @@ export interface IScenePointLight {
 // Studio spot lamps: small, close to the boxes, so that a flat lacquered face does not shine all over but carries one bright spot of
 // light in a corner (a highlight depends on the angle between the viewer, the surface and the lamp, which differs across a face only
 // for a lamp that is near). The camera stands at z = 6, the boxes at z = 0. As the list scrolls, the boxes pass through the light.
-export const SCENE_POINT_LIGHTS: IScenePointLight[] = [
-  { intensity: 150_000, colorKelvin: 5_200, position: [-0.2, 1.8, 3.0], falloffRadius: 9 },
-  { intensity: 1_100_000, colorKelvin: 5_200, position: [0.9, 1.2, 2.2], falloffRadius: 9 },
-]
+export const SCENE_POINT_LIGHTS: IScenePointLight[] = []
 
 // The list is shown (and the loader taken away) only when the scene is really ready: the model is loaded, every box has popped in,
 // this many frames have been drawn since (the first frames compile shaders and are uneven) and the picture has settled for a moment.

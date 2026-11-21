@@ -18,7 +18,7 @@ OUTPUT = ROOT / "src" / "assets" / "environments" / "studio_ibl.ktx"
 SIZE = 256
 LEVELS = 5
 # Overall brightness of the room relative to the default environment (the light intensity in the scene config stays the same).
-GAIN = 0.4
+GAIN = 0.6
 
 # Soft-boxes: (direction, up hint, half width, half height in radians, edge softness in radians, luminance). +Y is up, +Z is towards the
 # camera, the boxes face +Z.

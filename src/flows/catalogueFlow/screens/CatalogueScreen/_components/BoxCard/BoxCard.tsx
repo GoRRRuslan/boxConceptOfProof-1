@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 
@@ -18,7 +18,7 @@ interface IBoxCardProps {
 }
 
 // A card is transparent on top (the 3D box shows through the slot) with the box facts below it.
-export const BoxCard = ({ card, index, onPress, onPressIn, onPressOut }: IBoxCardProps) => {
+const BoxCardComponent = ({ card, index, onPress, onPressIn, onPressOut }: IBoxCardProps) => {
   const styles = useMemo(() => makeStyles(theme), [])
   const { animatedStyle } = useFacadeBoxCard(index)
 
@@ -53,3 +53,5 @@ export const BoxCard = ({ card, index, onPress, onPressIn, onPressOut }: IBoxCar
     </Animated.View>
   )
 }
+
+export const BoxCard = memo(BoxCardComponent)

@@ -167,11 +167,11 @@ describe('computeSceneEffects', () => {
     it('shimmers only glossy metallic boxes, more the glossier', () => {
       expect(getIridescenceStrength(0)).toBe(0)
 
-      expect(getIridescenceStrength(0.1)).toBe(0)
+      expect(getIridescenceStrength(0.55)).toBe(0)
 
-      expect(getIridescenceStrength(0.3)).toBeGreaterThan(0)
+      expect(getIridescenceStrength(0.85)).toBeGreaterThan(0)
 
-      expect(getIridescenceStrength(0.65)).toBe(1)
+      expect(getIridescenceStrength(1)).toBeCloseTo(1, 6)
 
       expect(computeIridescenceTint(0, 1, 1, 1000)).toEqual([0, 0, 0])
     })

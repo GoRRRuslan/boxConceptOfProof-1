@@ -15,7 +15,7 @@ interface ICatalogueSceneProps {
   sceneSync: ICatalogueSceneSync
   phaseKey: IOpeningPhaseKey
   isRenderContinuous: boolean
-  renderCallback: (frameInfo: FrameInfo) => void
+  renderCallback: ((frameInfo: FrameInfo) => void) | undefined
 }
 
 // The ONE 3D canvas of the app; it fills the list area and sits behind the transparent cards.
@@ -30,7 +30,7 @@ export const CatalogueScene = ({
   const styles = useMemo(() => makeStyles(), [])
 
   return (
-    <FilamentView style={styles.filamentView} renderCallback={renderCallback} testID="catalogueFilamentView">
+    <FilamentView style={styles.filamentView} {...(renderCallback ? { renderCallback } : {})} testID="catalogueFilamentView">
       <Camera
         cameraPosition={[0, 0, CAMERA_DISTANCE]}
         cameraTarget={[0, 0, 0]}

@@ -26,7 +26,8 @@ const RESUME_GAP_MILLISECONDS = 1000
 
 // Measures the real renderer frame rate: it counts the callbacks Filament's choreographer fires
 // (one per rendered frame) and reports a summary roughly once per second.
-export const useRenderFpsMeter = (scenarioLabel = '') => {
+// With `isEnabled` false (a normal build) it does nothing at all: no callback on the render thread, no timers, no re-renders.
+export const useRenderFpsMeter = (scenarioLabel = '', isEnabled = true) => {
   const [renderFrameStats, setRenderFrameStats] = useState<IRenderFrameStats | null>(null)
   const [isRenderPaused, setIsRenderPaused] = useState<boolean>(false)
   const lastReportTimestamp = useRef<number | null>(null)
@@ -102,6 +103,10 @@ export const useRenderFpsMeter = (scenarioLabel = '') => {
   }, [scenarioLabel])
 
   useEffect(() => {
+    if (!isEnabled) {
+      return undefined
+    }
+
     // No frame reports for a while means the choreographer is stopped (render on demand).
     const pauseWatcher = setInterval(() => {
       const now = Date.now()
@@ -114,7 +119,7 @@ export const useRenderFpsMeter = (scenarioLabel = '') => {
     return () => {
       clearInterval(pauseWatcher)
     }
-  }, [])
+  }, [isEnabled])
 
   return { renderCallback, renderFrameStats, isRenderPaused }
 }

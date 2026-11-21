@@ -2,11 +2,11 @@ import { getBoxFinish } from '@flows/catalogueFlow/_facadesLogic/getBoxFinish'
 import { BOX_CATALOGUE } from '@networking/api/MysteryBoxApi/_mockData/boxCatalogue'
 
 describe('getBoxFinish', () => {
-  it('makes cheap boxes matte and expensive boxes glossy metal', () => {
+  it('makes every box metal and the dearer ones smoother and more mirror-like', () => {
     const cheap = getBoxFinish(5_000)
     const expensive = getBoxFinish(250_000)
 
-    expect(cheap).toEqual({ roughness: 0.85, metallic: 0, clearCoat: 0 })
+    expect(cheap).toEqual({ roughness: 0.42, metallic: 0.55, clearCoat: 0.35 })
 
     expect(expensive.roughness).toBeLessThan(cheap.roughness)
 

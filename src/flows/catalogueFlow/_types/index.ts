@@ -69,10 +69,12 @@ export interface ICatalogueFacade {
   // True while anything moves (scroll, drag, opening): the renderer must keep drawing.
   isRenderContinuous: boolean
   isPerformanceOverlayVisible: boolean
-  renderCallback: (frameInfo: FrameInfo) => void
+  renderCallback: ((frameInfo: FrameInfo) => void) | undefined
   renderFrameStats: IRenderFrameStats | null
   isRenderPaused: boolean
   handleListLayout: (event: LayoutChangeEvent) => void
+  handleListTouchStart: () => void
+  handleListTouchStart: () => void
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   handleRetryPress: () => void
   handleCardPressIn: (boxIdentifier: EBoxIdentifier) => void

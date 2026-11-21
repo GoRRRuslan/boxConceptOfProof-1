@@ -23,6 +23,7 @@ import { useRenderFpsMeter } from '@services/performance/useRenderFpsMeter'
 // The list counts as "scrolling" until this long after its last scroll event (covers the fling).
 const SCROLL_IDLE_MILLISECONDS = 250
 const PRESS_RELEASE_RENDER_MILLISECONDS = 350
+const LIST_TOUCH_RENDER_MILLISECONDS = 800
 // Measurement builds show the live frame-rate overlay: EXPO_PUBLIC_SHOW_PERFORMANCE=1
 const IS_PERFORMANCE_OVERLAY_VISIBLE = process.env.EXPO_PUBLIC_SHOW_PERFORMANCE === '1'
 // Measurement builds can scroll the list up and down by themselves: EXPO_PUBLIC_AUTO_SCROLL=1
@@ -35,7 +36,7 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   const { t } = useTranslation()
 
   // ------------------------ Services ----------------------- //
-  const { renderCallback, renderFrameStats, isRenderPaused } = useRenderFpsMeter(PERFORMANCE_SCENARIO_LABEL)
+  const { renderCallback: meterRenderCallback, renderFrameStats, isRenderPaused } = useRenderFpsMeter(PERFORMANCE_SCENARIO_LABEL, IS_PERFORMANCE_OVERLAY_VISIBLE)
 
   // ------------------------ Navigation ----------------------- //
   const navigation = useNavigation<BottomTabNavigationProp<TTabParamList, ETabRoute.Catalogue>>()
@@ -128,6 +129,18 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
 
       setIsScrolling(false)
     }, SCROLL_IDLE_MILLISECONDS)
+  }
+
+  // A finger touching the list wakes the renderer before the first scroll event: after a long idle the renderer was stopped, and its
+  // restart takes 100-500 ms, during which the texts moved and the boxes stood still.
+  const handleListTouchStart = () => {
+    clearTimeout(pressTimer.current)
+
+    setIsPressing(true)
+
+    pressTimer.current = setTimeout(() => {
+      setIsPressing(false)
+    }, LIST_TOUCH_RENDER_MILLISECONDS)
   }
 
   const handleRetryPress = () => {
@@ -257,11 +270,12 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     phaseKey: opening.phase,
     isRenderContinuous,
     isPerformanceOverlayVisible: IS_PERFORMANCE_OVERLAY_VISIBLE,
-    renderCallback,
+    renderCallback: IS_PERFORMANCE_OVERLAY_VISIBLE ? meterRenderCallback : undefined,
     renderFrameStats,
     isRenderPaused,
     handleListLayout,
     handleScroll,
+    handleListTouchStart,
     handleRetryPress,
     handleCardPressIn,
     handleCardPressOut,

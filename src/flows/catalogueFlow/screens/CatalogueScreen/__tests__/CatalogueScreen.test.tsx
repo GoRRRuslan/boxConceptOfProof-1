@@ -62,6 +62,7 @@ const baseFacade = {
   isRenderPaused: false,
   handleListLayout: jest.fn(),
   handleScroll: jest.fn(),
+  handleListTouchStart: jest.fn(),
   handleRetryPress: jest.fn(),
   handleCardPressIn: jest.fn(),
   handleCardPressOut: jest.fn(),

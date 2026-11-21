@@ -47,6 +47,7 @@ const CatalogueScreen = () => {
     isRenderPaused,
     handleListLayout,
     handleScroll,
+    handleListTouchStart,
     handleRetryPress,
     handleCardPressIn,
     handleCardPressOut,
@@ -85,6 +86,7 @@ const CatalogueScreen = () => {
       renderItem={renderCard}
       keyExtractor={card => card.identifier}
       onScroll={handleScroll}
+      onTouchStart={handleListTouchStart}
       scrollEventThrottle={1}
       contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}

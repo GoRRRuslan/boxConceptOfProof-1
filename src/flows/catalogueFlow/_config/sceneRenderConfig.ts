@@ -22,7 +22,7 @@ export const CATALOGUE_SCENE_RENDER_PROPS: Pick<
 }
 
 // Reflections of the environment (what makes glossy and metallic boxes look glossy and metallic).
-export const ENVIRONMENT_LIGHT_INTENSITY = 30_000
+export const ENVIRONMENT_LIGHT_INTENSITY = 24_000
 
 export interface ISceneLight {
   intensity: number
@@ -35,8 +35,8 @@ export interface ISceneLight {
 // A three-point-ish rig: a warm key light from the upper left in front, a cool rim light from behind on
 // the right (bright edges that separate the box from the dark background), and a soft fill from below.
 export const SCENE_LIGHTS: ISceneLight[] = [
-  { intensity: 9_000, colorKelvin: 5_600, direction: [0.45, -0.75, -0.55], castShadows: true },
-  { intensity: 5_500, colorKelvin: 9_000, direction: [-0.65, -0.25, 0.7], castShadows: false },
+  { intensity: 3_500, colorKelvin: 5_600, direction: [0.45, -0.75, -0.55], castShadows: true },
+  { intensity: 4_500, colorKelvin: 9_000, direction: [-0.65, -0.25, 0.7], castShadows: false },
   { intensity: 1_800, colorKelvin: 6_500, direction: [-0.2, 0.9, -0.4], castShadows: false },
 ]
 

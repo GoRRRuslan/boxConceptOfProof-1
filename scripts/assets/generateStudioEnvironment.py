@@ -18,19 +18,19 @@ OUTPUT = ROOT / "src" / "assets" / "environments" / "studio_ibl.ktx"
 SIZE = 256
 LEVELS = 5
 # Overall brightness of the room relative to the default environment (the light intensity in the scene config stays the same).
-GAIN = 0.6
+GAIN = 0.5
 
 # Soft-boxes: (direction, up hint, half width, half height in radians, edge softness in radians, luminance). +Y is up, +Z is towards the
 # camera, the boxes face +Z.
 SOFTBOXES = [
-    ((-0.75, 0.55, 0.65), (0, 1, 0), 0.55, 0.38, 0.12, 22.0),   # key light: big, upper left, in front
-    ((0.95, 0.25, 0.25), (0, 1, 0), 0.12, 0.75, 0.06, 30.0),    # strip light on the right: a thin bright line along the edges
-    ((0.0, 1.0, 0.1), (0, 0, -1), 0.7, 0.5, 0.15, 14.0),        # overhead panel
-    ((0.35, -0.35, 0.85), (0, 1, 0), 0.4, 0.12, 0.1, 6.0),      # low fill in front: lifts the underside a little
-    ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 12.0),       # strip behind: bright rims against the dark background
+    ((-0.95, 0.35, 0.1), (0, 1, 0), 0.2, 0.3, 0.2, 14.0),       # key light: to the left, side-on, so it rims the left edges instead of flooding the front
+    ((-0.5, 0.55, 0.65), (0, 1, 0), 0.7, 0.5, 0.6, 0.9),        # a wide, faint radial glow upper left in front: the gentle gradient across the faces
+    ((1.0, 0.2, 0.1), (0, 1, 0), 0.07, 0.7, 0.07, 20.0),        # strip light on the right: a thin bright line along the edges
+    ((0.0, 1.0, -0.1), (0, 0, -1), 0.5, 0.3, 0.3, 9.0),         # overhead panel: light on the lids
+    ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 10.0),       # strip behind: bright rims against the dark background
 ]
 # Tints: the panels are not pure white, a faint cool/warm split is what makes metal look rich.
-TINTS = [(1.0, 0.96, 0.9), (0.85, 0.93, 1.0), (1.0, 1.0, 1.0), (0.9, 0.95, 1.0), (1.0, 0.92, 0.85)]
+TINTS = [(1.0, 0.96, 0.9), (1.0, 0.97, 0.93), (0.85, 0.93, 1.0), (1.0, 1.0, 1.0), (1.0, 0.92, 0.85)]
 
 
 def smoothstep(edge0, edge1, x):
@@ -42,7 +42,7 @@ def radiance(directions):
     """HDR radiance (..., 3) of the studio seen along `directions` (..., 3) (unit vectors)."""
     x, y, z = directions[..., 0], directions[..., 1], directions[..., 2]
     # The room: a dim, slightly cool ceiling, a dark middle and an almost black floor.
-    gradient = np.where(y > 0, 0.16 + 0.2 * y, 0.16 + 0.1 * y)
+    gradient = np.where(y > 0, 0.08 + 0.15 * y, 0.08 + 0.08 * y)
     result = np.stack([gradient * 0.95, gradient * 0.98, gradient * 1.05], -1)
     for (direction, up_hint, half_width, half_height, softness, luminance), tint in zip(SOFTBOXES, TINTS):
         forward = np.array(direction, dtype=float)
@@ -53,7 +53,7 @@ def radiance(directions):
         along = directions @ forward
         u = np.arctan2(directions @ right, along)
         v = np.arctan2(directions @ up, along)
-        inside = smoothstep(half_width + softness, half_width - softness, np.abs(u)) * smoothstep(half_height + softness, half_height - softness, np.abs(v))
+        inside = np.exp(-((u / (half_width + softness)) ** 2 + (v / (half_height + softness)) ** 2) * 1.6) * smoothstep(half_width + 2 * softness, half_width, np.abs(u) * 0.55) ** 0.0
         inside = np.where(along > 0, inside, 0.0)
         result = result + inside[..., None] * luminance * np.array(tint)
     return result * GAIN

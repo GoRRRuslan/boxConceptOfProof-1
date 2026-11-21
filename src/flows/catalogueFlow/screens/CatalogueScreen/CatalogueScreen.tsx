@@ -33,6 +33,7 @@ const CatalogueScreen = () => {
     retryLabelText,
     isLoadingBoxes,
     isSceneReady,
+    sceneEpoch,
     isErrorBoxes,
     cards,
     viewport,
@@ -66,7 +67,7 @@ const CatalogueScreen = () => {
 
   const renderScene = () => (
     <View style={styles.sceneLayer} pointerEvents="none">
-      <FilamentScene {...CATALOGUE_SCENE_RENDER_PROPS}>
+      <FilamentScene key={sceneEpoch} {...CATALOGUE_SCENE_RENDER_PROPS}>
         <CatalogueScene
           cards={cards}
           viewport={viewport}

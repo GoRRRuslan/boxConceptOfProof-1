@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native'
 import type { FlashListRef } from '@shopify/flash-list'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
+import { AppState, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
 import { createSynchronizable } from 'react-native-worklets'
 
 import { CARD_HEIGHT, LIST_TOP_PADDING } from '@flows/catalogueFlow/_config/catalogueLayoutConfig'
@@ -21,6 +21,8 @@ import { logDiagnostic, startJavaScriptStallMonitor } from '@services/performanc
 import { useRenderFpsMeter } from '@services/performance/useRenderFpsMeter'
 
 // The list counts as "scrolling" until this long after its last scroll event (covers the fling).
+// Back from the background after at least this long: the 3D view is rebuilt (iOS may have taken its drawing surface away).
+const REBUILD_SCENE_AFTER_BACKGROUND_MILLISECONDS = 1500
 const SCROLL_IDLE_MILLISECONDS = 250
 const PRESS_RELEASE_RENDER_MILLISECONDS = 350
 const LIST_TOUCH_RENDER_MILLISECONDS = 800
@@ -45,6 +47,9 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
   const [viewport, setViewport] = useState<ICatalogueViewport | null>(null)
   const [isScrolling, setIsScrolling] = useState<boolean>(false)
   const [isSceneReady, setIsSceneReady] = useState<boolean>(false)
+  // Bumped when the app comes back after a while in the background: the 3D scene is built anew (see the effect below).
+  const [sceneEpoch, setSceneEpoch] = useState<number>(0)
+  const backgroundedAt = useRef<number | null>(null)
   // A finger is on a card (or just left it): the squeeze animation needs frames.
   const [isPressing, setIsPressing] = useState<boolean>(false)
   const pressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -197,6 +202,36 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     }
   }, [viewport, cards.length])
 
+  // After a stay in the background the 3D view could show frozen boxes (the list scrolled, the boxes did not) or a box left over from an
+  // opening: the drawing surface is rebuilt, and the scene redraws everything from the opening state, which is the single truth.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'background') {
+        backgroundedAt.current = Date.now()
+
+        return
+      }
+
+      if (nextState !== 'active' || backgroundedAt.current === null) {
+        return
+      }
+
+      const awayMilliseconds = Date.now() - backgroundedAt.current
+
+      backgroundedAt.current = null
+
+      if (awayMilliseconds >= REBUILD_SCENE_AFTER_BACKGROUND_MILLISECONDS) {
+        logDiagnostic('scene.rebuild', { awayMilliseconds })
+
+        setSceneEpoch(previous => previous + 1)
+      }
+    })
+
+    return () => {
+      subscription.remove()
+    }
+  }, [])
+
   // Diagnostics only (a measurement build): reports every time the JavaScript thread was busy for longer than a frame.
   useEffect(() => {
     startJavaScriptStallMonitor()
@@ -261,6 +296,7 @@ export const useCatalogueFacade = (): ICatalogueFacade => {
     retryLabelText: t('catalogue.retry'),
     isLoadingBoxes,
     isSceneReady,
+    sceneEpoch,
     isErrorBoxes,
     cards,
     viewport,

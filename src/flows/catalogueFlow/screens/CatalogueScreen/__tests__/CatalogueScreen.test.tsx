@@ -33,6 +33,7 @@ const baseFacade = {
   errorText: 'Could not load the boxes.',
   retryLabelText: 'Try again',
   isLoadingBoxes: false,
+  sceneEpoch: 0,
   isSceneReady: true,
   isErrorBoxes: false,
   cards: [

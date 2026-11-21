@@ -24,13 +24,16 @@ GAIN = 0.5
 # camera, the boxes face +Z.
 SOFTBOXES = [
     ((-0.3, 0.4, 0.87), (0, 1, 0), 0.5, 0.5, 0.45, 3.0),        # the studio light: one big, round, soft glow upper left in front; every flat face shows it as a round hot spot
+    ((-0.55, 0.35, 0.76), (0, 1, 0), 0.14, 0.14, 0.1, 26.0),    # spot lights: compact round hot spots in front; as a box turns (the list parallax, a drag) a spot
+    ((0.5, 0.1, 0.86), (0, 1, 0), 0.12, 0.12, 0.09, 22.0),      # slides across its faces, lighting half a face at a time, like a lamp sweeping over lacquer
+    ((0.05, 0.6, 0.8), (0, 1, 0), 0.13, 0.13, 0.1, 24.0),
     ((-0.95, 0.35, 0.1), (0, 1, 0), 0.2, 0.3, 0.2, 12.0),       # a compact key light on the left: rims the left edges
     ((1.0, 0.2, 0.1), (0, 1, 0), 0.07, 0.7, 0.07, 18.0),        # strip light on the right: a thin bright line along the edges
     ((0.0, 1.0, -0.1), (0, 0, -1), 0.5, 0.3, 0.3, 8.0),         # overhead panel: light on the lids
     ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 9.0),        # strip behind: bright rims against the dark background
 ]
 # Tints: the panels are not pure white, a faint cool/warm split is what makes metal look rich.
-TINTS = [(1.0, 0.96, 0.9), (1.0, 0.97, 0.93), (0.85, 0.93, 1.0), (1.0, 1.0, 1.0), (1.0, 0.92, 0.85)]
+TINTS = [(1.0, 0.96, 0.9), (1.0, 0.97, 0.93), (1.0, 0.95, 0.88), (0.9, 0.95, 1.0), (1.0, 1.0, 0.96), (0.85, 0.93, 1.0), (1.0, 1.0, 1.0), (1.0, 0.92, 0.85)]
 
 
 def smoothstep(edge0, edge1, x):

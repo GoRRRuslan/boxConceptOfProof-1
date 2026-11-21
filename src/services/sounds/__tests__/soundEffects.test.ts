@@ -89,9 +89,15 @@ describe('soundEffects', () => {
   })
 
   it('prepares a player for every effect ahead of time', async () => {
+    jest.useFakeTimers()
+
     soundEffects.prepare()
 
     await flushPromises()
+
+    jest.advanceTimersByTime(5000)
+
+    jest.useRealTimers()
 
     // Two players for each of the effects (a fresh copy of the module is not used here: some may exist already).
     expect(mockCreateAudioPlayer.mock.calls.length).toBeGreaterThan(0)
@@ -105,9 +111,15 @@ describe('soundEffects', () => {
       freshSoundEffects = require('@services/sounds/soundEffects').soundEffects as typeof soundEffects
     })
 
+    jest.useFakeTimers()
+
     freshSoundEffects?.prepare()
 
     await flushPromises()
+
+    jest.advanceTimersByTime(5000)
+
+    jest.useRealTimers()
 
     const createdByPrepare = mockCreateAudioPlayer.mock.calls.length
 

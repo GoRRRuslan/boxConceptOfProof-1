@@ -63,7 +63,7 @@ interface IUseOpeningFacadeParams {
 }
 
 // When the sounds are prepared: after the entrance of the boxes, before anyone has tapped anything.
-const SOUND_PREPARE_DELAY_MILLISECONDS = 2500
+const SOUND_PREPARE_DELAY_MILLISECONDS = 5000
 
 const INTERACTIVE_PHASES = [EOpeningPhase.Inspecting, EOpeningPhase.Ready, EOpeningPhase.Revealed]
 

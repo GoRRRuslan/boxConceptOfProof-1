@@ -108,16 +108,21 @@ const getPlayer = (effect: ESoundEffect): AudioPlayer => {
 // Creates the audio session and EVERY player of the pool of every effect ahead of time, so that the first sound finds a loaded player
 // (a player created at the moment of the sound needs 0.4 to 1 s to load, the sound would come late). Doing it on the first sound
 // also blocks the JS thread for about a second, so it is done once, while the app is idle after the start.
+// One player at a time, a little apart: creating all of them in one go held the JavaScript thread for about 40 ms, right as the list appeared.
+const PREPARE_STEP_MILLISECONDS = 120
+
 const prepare = () => {
   void ensureAudioMode().then(() => {
-    Object.values(ESoundEffect).forEach(effect => {
-      for (let index = 0; index < POOL_SIZE; index += 1) {
+    const poolSlots = Object.values(ESoundEffect).flatMap(effect => Array.from({ length: POOL_SIZE }, (_, index) => ({ effect, index })))
+
+    poolSlots.forEach(({ effect, index }, step) => {
+      setTimeout(() => {
         try {
           getPoolPlayer(effect, index)
         } catch (error) {
           logDiagnosticFailure('sound.prepare.failed', error)
         }
-      }
+      }, step * PREPARE_STEP_MILLISECONDS)
     })
   })
 }

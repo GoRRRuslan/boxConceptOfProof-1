@@ -23,11 +23,11 @@ GAIN = 0.5
 # Soft-boxes: (direction, up hint, half width, half height in radians, edge softness in radians, luminance). +Y is up, +Z is towards the
 # camera, the boxes face +Z.
 SOFTBOXES = [
-    ((-0.95, 0.35, 0.1), (0, 1, 0), 0.2, 0.3, 0.2, 14.0),       # key light: to the left, side-on, so it rims the left edges instead of flooding the front
-    ((-0.5, 0.55, 0.65), (0, 1, 0), 0.7, 0.5, 0.6, 0.9),        # a wide, faint radial glow upper left in front: the gentle gradient across the faces
-    ((1.0, 0.2, 0.1), (0, 1, 0), 0.07, 0.7, 0.07, 20.0),        # strip light on the right: a thin bright line along the edges
-    ((0.0, 1.0, -0.1), (0, 0, -1), 0.5, 0.3, 0.3, 9.0),         # overhead panel: light on the lids
-    ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 10.0),       # strip behind: bright rims against the dark background
+    ((-0.3, 0.4, 0.87), (0, 1, 0), 0.5, 0.5, 0.45, 3.0),        # the studio light: one big, round, soft glow upper left in front; every flat face shows it as a round hot spot
+    ((-0.95, 0.35, 0.1), (0, 1, 0), 0.2, 0.3, 0.2, 12.0),       # a compact key light on the left: rims the left edges
+    ((1.0, 0.2, 0.1), (0, 1, 0), 0.07, 0.7, 0.07, 18.0),        # strip light on the right: a thin bright line along the edges
+    ((0.0, 1.0, -0.1), (0, 0, -1), 0.5, 0.3, 0.3, 8.0),         # overhead panel: light on the lids
+    ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 9.0),        # strip behind: bright rims against the dark background
 ]
 # Tints: the panels are not pure white, a faint cool/warm split is what makes metal look rich.
 TINTS = [(1.0, 0.96, 0.9), (1.0, 0.97, 0.93), (0.85, 0.93, 1.0), (1.0, 1.0, 1.0), (1.0, 0.92, 0.85)]
@@ -70,21 +70,26 @@ def face_directions(face, size):
     return directions / np.linalg.norm(directions, axis=-1, keepdims=True)
 
 
-def blurred_radiance(directions, sigma, samples=96):
-    """Radiance averaged over a cone (gaussian, `sigma` radians) around every direction: the room seen through a rough surface."""
-    rng = np.random.default_rng(3)
+def blurred_radiance(directions, sigma, samples=192):
+    """Radiance averaged over a cone (gaussian, `sigma` radians) around every direction: the room seen through a rough surface.
+
+    The same sample pattern (a golden-angle spiral) is used for every texel, so the result is smooth: random samples per texel gave a
+    mottled, blotchy reflection."""
     flat = directions.reshape(-1, 3)
     helper = np.where(np.abs(flat[:, :1]) < 0.9, np.array([[1.0, 0, 0]]), np.array([[0, 1.0, 0]]))
     tangent = np.cross(flat, helper)
     tangent /= np.linalg.norm(tangent, axis=-1, keepdims=True)
     bitangent = np.cross(flat, tangent)
     total = np.zeros((flat.shape[0], 3))
-    for _ in range(samples):
-        angle = np.abs(rng.normal(0, sigma, flat.shape[0]))
-        azimuth = rng.uniform(0, 2 * np.pi, flat.shape[0])
-        sample = (np.cos(angle)[:, None] * flat + np.sin(angle)[:, None] * (np.cos(azimuth)[:, None] * tangent + np.sin(azimuth)[:, None] * bitangent))
-        total += radiance(sample)
-    return (total / samples).reshape(directions.shape)
+    weight_sum = 0.0
+    for index in range(samples):
+        radius = np.sqrt((index + 0.5) / samples) * 2.5 * sigma  # up to 2.5 sigma
+        azimuth = index * 2.399963229728653
+        weight = np.exp(-0.5 * (radius / sigma) ** 2)
+        sample = np.cos(radius) * flat + np.sin(radius) * (np.cos(azimuth) * tangent + np.sin(azimuth) * bitangent)
+        total += weight * radiance(sample)
+        weight_sum += weight
+    return (total / weight_sum).reshape(directions.shape)
 
 
 def encode_r11g11b10(rgb):

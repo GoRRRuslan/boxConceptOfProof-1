@@ -18,21 +18,23 @@ OUTPUT = ROOT / "src" / "assets" / "environments" / "studio_ibl.ktx"
 SIZE = 256
 LEVELS = 5
 # Overall brightness of the room relative to the default environment (the light intensity in the scene config stays the same).
-GAIN = 0.55
+GAIN = 0.62
 
 # Soft-boxes: (direction, up hint, half width, half height in radians, edge softness in radians, luminance). +Y is up, +Z is towards the
 # camera, the boxes face +Z.
 SOFTBOXES = [
-    ((-0.3, 0.4, 0.87), (0, 1, 0), 0.9, 0.85, 0.7, 0.6),        # concentric radial glow: wide outer halo ...
-    ((-0.3, 0.4, 0.87), (0, 1, 0), 0.4, 0.38, 0.35, 0.9),       # ... a brighter middle ...
-    ((-0.3, 0.4, 0.87), (0, 1, 0), 0.16, 0.16, 0.14, 1.2),      # ... and a hot core, so every face gets a round, graded hot spot        # the studio light: one big, round, soft glow upper left in front; every flat face shows it as a round hot spot
-    ((-0.95, 0.35, 0.1), (0, 1, 0), 0.3, 0.45, 0.25, 15.0),       # a compact key light on the left: rims the left edges
-    ((1.0, 0.2, 0.1), (0, 1, 0), 0.14, 0.75, 0.1, 18.0),        # strip light on the right: a thin bright line along the edges
-    ((0.0, 1.0, -0.1), (0, 0, -1), 0.5, 0.3, 0.3, 8.0),         # overhead panel: light on the lids
-    ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 9.0),        # strip behind: bright rims against the dark background
+    # Big soft-boxes with fairly crisp edges: a flat lacquered face mirrors a panel as a light shape with a clean edge that slides across the
+    # face as the box turns (the "refrigerator door" reflection of the native version), and is dark in between.
+    ((-0.8, 0.35, 0.5), (0, 1, 0), 0.45, 0.4, 0.05, 4.8),       # window on the left
+    ((0.55, 0.75, 0.35), (0, 1, 0), 0.4, 0.3, 0.05, 4.2),       # panel upper right
+    ((0.0, 1.0, -0.1), (0, 0, -1), 0.55, 0.3, 0.06, 4.8),       # overhead panel
+    ((0.0, 0.1, 1.0), (0, 1, 0), 0.5, 0.25, 0.1, 1.2),          # faint panel straight ahead: the front never goes fully flat
+    ((1.0, 0.15, 0.1), (0, 1, 0), 0.08, 0.8, 0.04, 14.0),       # strip on the right: a bright line along the edges
+    ((-1.0, 0.1, -0.2), (0, 1, 0), 0.06, 0.8, 0.05, 9.0),      # strip on the left-back
+    ((-0.2, 0.3, -1.0), (0, 1, 0), 0.9, 0.2, 0.15, 8.0),        # strip behind: bright rims against the dark background
 ]
 # Tints: the panels are not pure white, a faint cool/warm split is what makes metal look rich.
-TINTS = [(1.0, 0.96, 0.9), (1.0, 0.97, 0.93), (1.0, 0.99, 0.96), (1.0, 0.97, 0.93), (0.85, 0.93, 1.0), (1.0, 1.0, 1.0), (1.0, 0.92, 0.85)]
+TINTS = [(1.0, 0.97, 0.93), (0.9, 0.95, 1.0), (1.0, 1.0, 1.0), (1.0, 0.98, 0.95), (0.85, 0.93, 1.0), (1.0, 0.92, 0.85), (1.0, 0.95, 0.9)]
 
 
 def smoothstep(edge0, edge1, x):
@@ -44,7 +46,7 @@ def radiance(directions):
     """HDR radiance (..., 3) of the studio seen along `directions` (..., 3) (unit vectors)."""
     x, y, z = directions[..., 0], directions[..., 1], directions[..., 2]
     # The room: a dim, slightly cool ceiling, a dark middle and an almost black floor.
-    gradient = np.where(y > 0, 0.07 + 0.1 * y, 0.07 + 0.06 * y)
+    gradient = np.where(y > 0, 0.05 + 0.08 * y, 0.05 + 0.05 * y)
     result = np.stack([gradient * 0.95, gradient * 0.98, gradient * 1.05], -1)
     for (direction, up_hint, half_width, half_height, softness, luminance), tint in zip(SOFTBOXES, TINTS):
         forward = np.array(direction, dtype=float)

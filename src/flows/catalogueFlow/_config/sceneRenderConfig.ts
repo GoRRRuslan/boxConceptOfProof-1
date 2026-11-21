@@ -52,9 +52,7 @@ export interface IScenePointLight {
 // light in a corner (a highlight depends on the angle between the viewer, the surface and the lamp, which differs across a face only
 // for a lamp that is near). The camera stands at z = 6, the boxes at z = 0. As the list scrolls, the boxes pass through the light.
 export const SCENE_POINT_LIGHTS: IScenePointLight[] = [
-  { intensity: 420_000, colorKelvin: 5_200, position: [-1.4, 2.4, 2.0], falloffRadius: 9 },
-  { intensity: 420_000, colorKelvin: 5_200, position: [-1.4, 0.2, 2.0], falloffRadius: 9 },
-  { intensity: 420_000, colorKelvin: 7_000, position: [1.4, -1.8, 2.0], falloffRadius: 9 },
+  { intensity: 200_000, colorKelvin: 5_600, position: [-1.4, 2.0, 2.0], falloffRadius: 9 },
 ]
 
 // The list is shown (and the loader taken away) only when the scene is really ready: the model is loaded, every box has popped in,
